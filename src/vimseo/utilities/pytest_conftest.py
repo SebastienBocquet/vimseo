@@ -85,9 +85,10 @@ def skip_under_windows(request):
 
     Use it like a usual skip marker.
     """
-    if request.node.get_closest_marker("skip_under_windows"):
-        if sys.platform.startswith("win"):
-            pytest.skip("skipped on windows")
+    if request.node.get_closest_marker(
+        "skip_under_windows"
+    ) and sys.platform.startswith("win"):
+        pytest.skip("skipped on windows")
 
 
 @pytest.fixture(autouse=True)
@@ -96,9 +97,10 @@ def skip_under_linux(request):
 
     Use it like a usual skip marker.
     """
-    if request.node.get_closest_marker("skip_under_linux"):
-        if not sys.platform.startswith("win"):
-            pytest.skip("skipped on linux")
+    if request.node.get_closest_marker(
+        "skip_under_linux"
+    ) and not sys.platform.startswith("win"):
+        pytest.skip("skipped on linux")
 
 
 @pytest.fixture

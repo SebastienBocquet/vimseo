@@ -25,21 +25,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from dataclasses import field
 from json import dumps
-from typing import TYPE_CHECKING
 
 from gemseo.utils.string_tools import MultiLineString
+from numpy import ndarray
 
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-    from collections.abc import Mapping
+from vimseo.core.load_case import LoadCase
 
-    from numpy import ndarray
 
-    from vimseo.core.load_case import LoadCase
+class BaseDescription:
+    """A dummy base class for ruff to ``runtime-evaluated-base-classes``."""
 
 
 @dataclass
-class ModelDescription:
+class ModelDescription(BaseDescription):
     """The description of a model."""
 
     name: str = ""
@@ -51,13 +49,13 @@ class ModelDescription:
     load_case: LoadCase = None
     """The load case."""
 
-    dataflow: Mapping[str, Mapping[str, Iterable[str]]] = field(default_factory=dict)
+    dataflow: dict[str, dict[str, list[str]]] = field(default_factory=dict)
     """The model dataflow."""
 
-    default_inputs: Mapping[str, ndarray] = field(default_factory=dict)
+    default_inputs: dict[str, ndarray] = field(default_factory=dict)
     """The model default inputs."""
 
-    curves: Iterable[tuple[str]] = ()
+    curves: list[tuple[str]] = ()
 
     verbose: bool = False
 

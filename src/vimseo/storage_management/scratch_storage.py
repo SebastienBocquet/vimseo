@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import logging
 import shutil
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from pydantic import Field
 
@@ -32,9 +32,6 @@ from vimseo.core.model_metadata import MetaDataNames
 from vimseo.storage_management.base_storage_manager import BaseStorageManager
 from vimseo.storage_management.base_storage_manager import PersistencyPolicy
 from vimseo.tools.base_settings import BaseSettings
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
 

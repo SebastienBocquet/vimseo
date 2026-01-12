@@ -168,7 +168,7 @@ class StatisticsTool(BaseTool):
         constant_df = df.loc[:, (df == df.iloc[0]).all()]
         for constant_name in constant_df.columns:
             df[constant_name] = df[constant_name] * (
-                1 + 1e-6 * random.uniform(-1, 1, size=len(df[constant_name]))
+                1 + 1e-6 * random.uniform(-1, 1, size=len(df[constant_name]))  # noqa: NPY002
             )
 
         analysis = create_statistics(

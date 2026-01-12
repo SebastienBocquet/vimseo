@@ -22,22 +22,17 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
+from collections import OrderedDict
 from dataclasses import dataclass
 from json import dumps
-from typing import TYPE_CHECKING
 
 from gemseo.third_party.prettytable.prettytable import PrettyTable
+from gemseo.uncertainty.statistics.base_statistics import BaseStatistics
 from gemseo.utils.string_tools import MultiLineString
+from pandas import DataFrame
 
 from vimseo.tools.base_result import BaseResult
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
-
-if TYPE_CHECKING:
-    from collections import OrderedDict
-    from collections.abc import Mapping
-
-    from gemseo.uncertainty.statistics.base_statistics import BaseStatistics
-    from pandas import DataFrame
 
 
 @dataclass
@@ -47,7 +42,7 @@ class StatisticsResult(BaseResult):
     analysis: BaseStatistics | None = None
     """The statistics analysis."""
 
-    best_fitting_distributions: Mapping[str, str] | None = None
+    best_fitting_distributions: dict[str, str] | None = None
 
     statistics: OrderedDict | DataFrame | None = None
     """The reduced statistics."""

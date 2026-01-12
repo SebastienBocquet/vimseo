@@ -26,18 +26,15 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field
 from json import dumps
-from typing import TYPE_CHECKING
 
+from gemseo.disciplines.surrogate import SurrogateDiscipline
 from gemseo.mlearning.core.quality.base_ml_algo_quality import BaseMLAlgoQuality
 from gemseo.third_party.prettytable.prettytable import PrettyTable
 from gemseo.utils.string_tools import MultiLineString
+from numpy import ndarray
 
 from vimseo.tools.base_result import BaseResult
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
-
-if TYPE_CHECKING:
-    from gemseo.disciplines.surrogate import SurrogateDiscipline
-    from numpy import ndarray
 
 QualitiesType = Mapping[str, Mapping[str, Mapping[str, type(BaseMLAlgoQuality)]]]
 
@@ -78,12 +75,11 @@ class SurrogateResult(BaseResult):
         Raise:
             KeyError: When no surrogate model is available.
         """
-        try:
+        if len(self.qualities.keys()) > 0:
             measures = list(self.qualities.keys())
-
-        except KeyError:
-            msg = "Surrogate is not available"
-            raise KeyError(msg)
+        else:
+            msg = "No surrogate model is available."
+            raise ValueError(msg)
 
         methods = list(self.qualities[measures[0]].keys())
 

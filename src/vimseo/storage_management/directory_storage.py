@@ -112,9 +112,9 @@ class DirectoryArchive(BaseArchiveManager):
             archive_dir = Path(file).parent
             try:
                 archive_result = self.get_result(archive_dir)
-            except Exception as e:
-                msg = f"{e!s} \nError encountered while parsing file {file}"
-                raise Exception(msg)
+            except FileNotFoundError as err:  # noqa: BLE001
+                msg = f"{err!s} \nError encountered while parsing file {file}"
+                raise FileNotFoundError(msg) from err
 
             # wrap job results in the #i item of the bundle
             results[i] = {

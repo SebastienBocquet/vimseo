@@ -22,9 +22,9 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
-from collections import namedtuple
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import NamedTuple
 
 from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.datasets.dataset import Dataset
@@ -53,16 +53,15 @@ if TYPE_CHECKING:
 
 SEP = ";"
 
-Variable = namedtuple(
-    "Variable",
-    ["name", "order_of_magnitude", "cov", "size", "is_constant_value"],
-    defaults=(
-        0.1,
-        True,
-        1,
-    ),
-)
-"""A convenient data class to define a variable to be placed in a Dataset."""
+
+class Variable(NamedTuple):
+    """A convenient data class to define a variable to be placed in a Dataset."""
+
+    name: str
+    order_of_magnitude: float
+    cov: float = 0.1
+    size: int = 1
+    is_constant_value: bool = True
 
 
 def generate_dataset(

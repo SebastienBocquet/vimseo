@@ -32,8 +32,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from pydantic import ConfigDict
-
 from vimseo.tools.base_tool import BaseResult
 
 if TYPE_CHECKING:
@@ -43,8 +41,6 @@ if TYPE_CHECKING:
 @dataclass
 class SpaceToolResult(BaseResult):
     """The result of the :class:`~.SpaceTool`."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     parameter_space: ParameterSpace | None = None
     """The parameter space."""

@@ -44,6 +44,7 @@ from vimseo.tools.post_tools.verification_plots import ErrorMetricHistogram
 from vimseo.tools.verification.dashboard.utils import REFERENCE_PREFIX
 from vimseo.tools.verification.dashboard.utils import comparison_renaming
 from vimseo.tools.verification.dashboard.utils import prepare_overall_dataset
+from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
 from vimseo.tools.verification.verification_result import VerificationResult
 from vimseo.utilities.datasets import get_nb_input_variables
 
@@ -52,8 +53,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from plotly.graph_objs import Figure
-
-    from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
 
 
 def check_output_names(output_names, model) -> None:

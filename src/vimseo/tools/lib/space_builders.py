@@ -214,14 +214,14 @@ class FromMinAndMax(SpaceBuilder):
         "OTTriangularDistribution",
     )
 
-    def _compute_full_options(self, center, min, max):
+    def _compute_full_options(self, center, minimum, maximum):
         """Compute the full distribution options."""
 
         return {
             "mu": None,
             "sigma": None,
-            "lower": min,
-            "upper": max,
+            "lower": minimum,
+            "upper": maximum,
             "mode": center,
         }
 

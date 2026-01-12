@@ -22,6 +22,7 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -36,8 +37,6 @@ from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.base_tool import BaseResult
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from plotly.graph_objs import Figure
 
     from vimseo.core.base_integrated_model import IntegratedModel

@@ -24,17 +24,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import field
-from typing import TYPE_CHECKING
 
 from docstring_inheritance import GoogleDocstringInheritanceMeta
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 
 @dataclass
 class PlotParameters(metaclass=GoogleDocstringInheritanceMeta):
     """The parameters of a model plot."""
 
-    curves: Iterable[tuple[str]] = field(default_factory=list)
+    curves: list[tuple[str, str]] = field(default_factory=list)
     """The parameters of the x-y curves."""

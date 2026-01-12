@@ -22,6 +22,7 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
+from collections.abc import Iterable
 from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field
@@ -42,8 +43,6 @@ from vimseo.utilities.curves import Curve
 from vimseo.utilities.fields import Field
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from statsmodels.base.data import ModelData
 
 ScalarDataType = Mapping[str, float | int | str]

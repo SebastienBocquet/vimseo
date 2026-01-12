@@ -58,6 +58,10 @@ ignore = [
     # because a naming rule is that component class name
     # are of the form Model_LoadCase
     "N801",
+    # try-except in loop
+    "PERF203",
+    # Add / to signature for positional-only arguments
+    "PYI063",
 ]
 
 select = [
@@ -108,6 +112,7 @@ select = [
     "W",
     "UP",
     "YTT",
+
 ]
 
 [lint.flake8-type-checking]
@@ -139,6 +144,16 @@ runtime-evaluated-base-classes = [
     "gemseo.algos.opt.base_milp_settings.BaseMILPSettings",
     "gemseo.algos.opt.base_gradient_based_algorithm_settings.BaseGradientBasedAlgorithmSettings",
     "gemseo.algos.opt.scipy_milp.settings.scipy_milp_settings.SciPyMILP_Settings",
+    "vimseo.tools.base_settings.BaseSettings",
+    "vimseo.tools.base_settings.BaseInputs",
+    "vimseo.tools.base_result.BaseResult",
+    "vimseo.core.model_description.BaseDescription",
+    "vimseo.tools.base_metadata.BaseMetadata",
+    "vimseo.tools.io.reader_file_dataframe.ReaderFileDataFrameSettings",
+    "vimseo.tools.doe.custom_doe.CustomDOESettings",
+    "vimseo.tools.doe.doe.DOESettings",
+    "vimseo.tools.space.space_tool.SpaceInputs",
+
 ]
 
 [lint.isort]

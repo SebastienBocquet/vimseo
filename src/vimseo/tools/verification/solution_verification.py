@@ -85,12 +85,12 @@ from pydantic import Field
 from strenum import StrEnum
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.doe.custom_doe import CustomDOESettings
 from vimseo.tools.doe.custom_doe import CustomDOETool
-from vimseo.tools.lib.visualisation.utils import camel_case_to_snake_case
 from vimseo.tools.post_tools.verification_plots import ConvergenceCrossValidation
 from vimseo.tools.post_tools.verification_plots import ErrorVersusElementSize
 from vimseo.tools.post_tools.verification_plots import RelativeErrorVersusCpuTime
@@ -102,15 +102,14 @@ from vimseo.tools.verification.solution_verification_indicators import compute_r
 from vimseo.tools.verification.solution_verification_indicators import (
     compute_richardson,
 )
+from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
 from vimseo.tools.verification.verification_result import SolutionVerificationResult
+from vimseo.utilities.file_utils import camel_case_to_snake_case
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from plotly.graph_objs import Figure
-
-    from vimseo.core.base_integrated_model import IntegratedModel
-    from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
 
 
 class Analysis(StrEnum):
@@ -126,8 +125,10 @@ class Analysis(StrEnum):
 
 # TODO remove fields 'input_names' and 'output_names'
 class SolutionVerificationSettings(CustomDOESettings):
-    metric_names: list[str] = ["AbsoluteErrorMetric"]
-
+    metric_names: list[str] = Field(
+        default=["AbsoluteErrorMetric"],
+        description="The name of the error metrics to compute.",
+    )
     element_size_variable_name: str = Field(
         default="", description="The input variable name used as element size."
     )

@@ -45,6 +45,7 @@ from numpy import inf
 from pydantic import Field
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_settings import BaseInputs
@@ -52,14 +53,12 @@ from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.lib.space_builder_factory import SpaceBuilderFactory
 from vimseo.tools.space.space_tool_result import SpaceToolResult
+from vimseo.tools.statistics.statistics_tool import StatisticsResult
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from plotly.graph_objs import Figure
-
-    from vimseo.core.base_integrated_model import IntegratedModel
-    from vimseo.tools.statistics.statistics_tool import StatisticsResult
 
 
 def update_space_from_statistics(
@@ -103,29 +102,49 @@ def update_space_from_statistics(
 class SpaceToolSettings(BaseSettings):
     distribution_name: str = "OTTriangularDistribution"
     space_builder_name: str = "FromModelCenterAndCov"
-    minimum_values: dict[str, float] | None = None
-    maximum_values: dict[str, float] | None = None
+    minimum_values: dict[str, float] | None = Field(
+        default=None, description="The mapping between names and minimum values."
+    )
+    maximum_values: dict[str, float] | None = Field(
+        default=None, description="The mapping between names and maximum values."
+    )
     center_value_expr: str = ""
     use_default_values_as_center: bool = True
-    variable_names: list[str] = []
-    center_values: dict[str, float] | None = None
+    variable_names: list[str] = Field(default=[], description="List of variable names")
+    center_values: dict[str, float] | None = Field(
+        default=None, description="The mapping between names and central values."
+    )
     cov: Annotated[float, Field(strict=True, gt=0)] = (
         0.05  # confloat(strict=True, gt=0) = 0.05
     )
     truncate_to_model_bounds: bool = True
-    lower_bounds: dict[str, float | None] | None = None
-    upper_bounds: dict[str, float | None] | None = None
+    lower_bounds: dict[str, float | None] | None = Field(
+        default=None, description="The mapping between names and lower bounds."
+    )
+    upper_bounds: dict[str, float | None] | None = Field(
+        default=None, description="The mapping between names and upper bounds."
+    )
     size: int = 1
 
 
 class StreamlitSpaceToolSettings(SpaceToolSettings):
-    """Foo."""
+    """The ``SpaceToolSettings`` for the workflow Streamlit dashboard."""
 
-    minimum_values: dict[str, float] = {}
-    maximum_values: dict[str, float] = {}
-    center_values: dict[str, float] = {}
-    lower_bounds: dict[str, float] = {}
-    upper_bounds: dict[str, float] = {}
+    minimum_values: dict[str, float] = Field(
+        default={}, description="The mapping between names and minimum values."
+    )
+    maximum_values: dict[str, float] = Field(
+        default={}, description="The mapping between names and maximum values."
+    )
+    center_values: dict[str, float] = Field(
+        default={}, description="The mapping between names and central values."
+    )
+    lower_bounds: dict[str, float] = Field(
+        default={}, description="The mapping between names and lower bounds."
+    )
+    upper_bounds: dict[str, float] = Field(
+        default={}, description="The mapping between names and upper bounds."
+    )
 
     def model_post_init(self, __context: Any) -> None:
         dict_attr_names = [

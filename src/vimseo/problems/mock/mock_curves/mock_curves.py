@@ -22,6 +22,7 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import ClassVar
 
 from gemseo.core.discipline import Discipline
@@ -32,6 +33,9 @@ from vimseo.core.base_discipline_model import BaseDisciplineModel
 from vimseo.utilities.curves_generator import expressions_convexity
 from vimseo.utilities.curves_generator import expressions_oscillate
 from vimseo.utilities.curves_generator import get_history
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class MockCurvesDiscipline(Discipline):
@@ -64,9 +68,9 @@ class MockCurvesDiscipline(Discipline):
 
 
 class MockCurves(BaseDisciplineModel):
-    CURVES = [("y_axis", "y")]
+    CURVES: ClassVar[Sequence[tuple[str]]] = [("y_axis", "y")]
 
-    _DISCIPLINE: Discipline = MockCurvesDiscipline()
+    _DISCIPLINE: ClassVar[Discipline] = MockCurvesDiscipline()
 
     _EXPECTED_LOAD_CASE = "Dummy"
 
@@ -111,7 +115,7 @@ class MockCurvesXRangeDiscipline(Discipline):
 
 
 class MockCurvesXRange(BaseDisciplineModel):
-    CURVES = [("y_axis", "y")]
+    CURVES: ClassVar[Sequence[tuple[str]]] = [("y_axis", "y")]
 
     _DISCIPLINE = MockCurvesXRangeDiscipline()
     _EXPECTED_LOAD_CASE = "Dummy"

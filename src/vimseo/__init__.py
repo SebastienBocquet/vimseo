@@ -22,13 +22,8 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
-from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version
 
-try:
-    __version__ = version("vimseo")
-except PackageNotFoundError:
-    # package is not installed
-    pass
+__version__ = version("vimseo")
 
 EXAMPLE_RUNS_DIR_NAME = "model_runs"

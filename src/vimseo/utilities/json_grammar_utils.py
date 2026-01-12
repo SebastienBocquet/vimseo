@@ -163,8 +163,7 @@ class BaseJsonIO(BaseModel):
     @classmethod
     def from_json(cls, file_name: str | Path, dir_path: Path | str = ""):
         dir_path = Path.cwd() if dir_path == "" else dir_path
-        with Path(dir_path / file_name).open() as f:
-            return cls.model_validate_json(f.read())
+        return cls.model_validate_json(Path(dir_path / file_name).read_text())
 
     def to_json(self, dir_path: Path | str = "", file_name: str | Path = ""):
         dir_path = Path.cwd() if dir_path == "" else dir_path

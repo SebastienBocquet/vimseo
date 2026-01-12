@@ -33,6 +33,7 @@ from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.base_settings import BaseSettings
@@ -45,7 +46,6 @@ if TYPE_CHECKING:
 
     from plotly.graph_objs import Figure
 
-    from vimseo.core.base_integrated_model import IntegratedModel
 
 LOGGER = logging.getLogger(__name__)
 

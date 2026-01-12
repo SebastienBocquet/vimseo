@@ -22,14 +22,10 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from gemseo.algos.parameter_space import ParameterSpace
 
+from vimseo.material.material import Material
 from vimseo.tools.base_result import BaseResult
-
-if TYPE_CHECKING:
-    from gemseo.algos.parameter_space import ParameterSpace
-
-    from vimseo.material.material import Material
 
 
 class MaterialResult(BaseResult):

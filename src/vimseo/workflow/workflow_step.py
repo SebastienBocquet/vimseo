@@ -86,13 +86,15 @@ def deserialize_pydantic_settings(input_settings: Mapping[str, Any]):
                             create_pydantic_model(name_, value_, settings[name])
                         else:
                             for name__, value__ in value_.items():
-                                if isinstance(value__, dict):
-                                    if "__pydantic_model__" in value__:
-                                        create_pydantic_model(
-                                            name__,
-                                            value__,
-                                            settings[name][name_],
-                                        )
+                                if (
+                                    isinstance(value__, dict)
+                                    and "__pydantic_model__" in value__
+                                ):
+                                    create_pydantic_model(
+                                        name__,
+                                        value__,
+                                        settings[name][name_],
+                                    )
     return settings
 
 
@@ -167,12 +169,12 @@ class WorkflowStep(Discipline):
         self._outputs = outputs
         self._tool_settings = tool_settings
 
-        for input in self._inputs:
-            data = self._tool._options[input.option_key]
+        for i in self._inputs:
+            data = self._tool._options[i.option_key]
             if data is None:
-                self.input_grammar.update_from_types({input.name: None})
+                self.input_grammar.update_from_types({i.name: None})
             else:
-                self.input_grammar.update_from_data({input.name: data})
+                self.input_grammar.update_from_data({i.name: data})
 
         for output in self._outputs:
             output_data = (
@@ -206,7 +208,7 @@ class WorkflowStep(Discipline):
         return {
             "name": self.name,
             "tool_name": self._tool_name,
-            "inputs": [asdict(input) for input in self._inputs],
+            "inputs": [asdict(i) for i in self._inputs],
             "outputs": [asdict(output) for output in self._outputs],
             "tool_constructor_options": self._tool_constructor_options,
             "tool_settings": serialize_pydantic_settings(self._tool_settings),
@@ -258,8 +260,8 @@ class WorkflowStep(Discipline):
             self._tool.execute(settings=self._tool_settings)
         else:
             inputs = {}
-            for input in self._inputs:
-                inputs.update(**{input.option_key: self.get_input_data()[input.name]})
+            for i in self._inputs:
+                inputs.update(**{i.option_key: self.get_input_data()[i.name]})
             self._tool.execute(
                 inputs=self._tool._INPUTS(**inputs), settings=self._tool_settings
             )

@@ -32,6 +32,15 @@ from vimseo.core.load import LoadType
 if TYPE_CHECKING:
     from vimseo.core.load_case import Load
 
+DIR_MAP = {
+    LoadDirectionLiteral.LL: 0,
+    LoadDirectionLiteral.TT: 1,
+    LoadDirectionLiteral.ZZ: 2,
+    LoadDirectionLiteral.LT: 3,
+    LoadDirectionLiteral.LZ: 4,
+    LoadDirectionLiteral.TZ: 5,
+}
+
 
 def c_load_vectors_normed(load: Load):
 
@@ -72,17 +81,8 @@ def c_stress_vector_normed(load: Load):
 
 
 def c_index_vector(load: Load):
-
     # VIMS vector ordering = Abaqus implicit convention
-    map = {
-        LoadDirectionLiteral.LL: 0,
-        LoadDirectionLiteral.TT: 1,
-        LoadDirectionLiteral.ZZ: 2,
-        LoadDirectionLiteral.LT: 3,
-        LoadDirectionLiteral.LZ: 4,
-        LoadDirectionLiteral.TZ: 5,
-    }
-    return map[load.direction]
+    return DIR_MAP[load.direction]
 
 
 def i_load_vectors_normed(load: Load):

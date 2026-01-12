@@ -1,5 +1,0 @@
-GROUP;inputs;outputs;outputs;outputs
-VARIABLE;x;y1;y2;y2
-COMPONENT;0;0;0;1
-0;0.0;1.0;2.0;3.0
-1;0.5;1.5;2.5;3.5

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,6 +32,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 from gemseo.algos.design_space import DesignSpace
+from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
 from gemseo.algos.opt.nlopt.settings.nlopt_cobyla_settings import NLOPT_COBYLA_Settings
 from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.datasets.dataset import Dataset
@@ -43,6 +45,7 @@ from numpy import array
 from numpy import atleast_1d
 from numpy import inf
 from numpy import linspace
+from numpy import ndarray
 from pandas import DataFrame
 from pydantic import ConfigDict
 from pydantic import Field
@@ -63,10 +66,7 @@ from vimseo.utilities.model_data import decapsulate_length_one_array
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Mapping
 
-    from gemseo.algos.opt.base_optimizer_settings import BaseOptimizerSettings
-    from numpy import ndarray
     from plotly.graph_objs import Figure
 
 LOGGER = logging.getLogger(__name__)
@@ -230,11 +230,11 @@ class CalibrationStep(BaseAnalysisTool):
                 raise ValueError(msg)
             CalibrationMetricSettings(**next(iter(options["control_outputs"].values())))
             control_outputs = dict.fromkeys(load_cases, options["control_outputs"])
-        except ValidationError:
+        except ValidationError as err:
             control_outputs = options["control_outputs"]
             if not control_outputs:
                 msg = "At least one control output must be specified."
-                raise ValueError(msg)
+                raise ValueError(msg) from err
 
         if len(input_names) == 0:
             for model in models:

@@ -23,6 +23,8 @@
 from __future__ import annotations
 
 import shutil
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 import numpy as np
 from numpy import array
@@ -35,14 +37,23 @@ from vimseo.core.components.component_factory import ComponentFactory
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.problems.mock.mock_model_persistent import PATH_MOCK_FILES_PERSISTENT
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
 
 class MockComponentStandalonePersistent_LC1(BaseComponent):
     """Standalone component for MockModelPersistent."""
 
     USE_JOB_DIRECTORY = True
-    _PERSISTENT_FILE_NAMES = ["green_ellipse.png", "blue_line.png"]
+    _PERSISTENT_FILE_NAMES: ClassVar[Sequence[str]] = [
+        "green_ellipse.png",
+        "blue_line.png",
+    ]
 
-    MOCK_FILES_NAMES = ["original_blue_line.png", "original_green_ellipse.png"]
+    MOCK_FILES_NAMES: ClassVar[Sequence[str]] = [
+        "original_blue_line.png",
+        "original_green_ellipse.png",
+    ]
 
     auto_detect_grammar_files = False
 

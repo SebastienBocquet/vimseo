@@ -59,10 +59,10 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
     summary: str = ""
     """A brief description of the load case ."""
 
-    plot_parameters: PlotParameters = None
+    plot_parameters: PlotParameters = field(default_factory=PlotParameters)
     """The parameters of the plot."""
 
-    bc_variable_names: Iterable[str] = field(default_factory=list)
+    bc_variable_names: list[str] = field(default_factory=list)
     """The names of the variables defining the boundary conditions."""
 
     load: Load = field(default_factory=Load)
@@ -83,14 +83,15 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
 
     def __post_init__(self):
         self.summary = self.__doc__ if self.summary == "" else self.summary
-        if self.plot_parameters is None:
-            self.plot_parameters = PlotParameters()
         self.bc_variable_names = self.get_bc_variable_names()
         self.load = self.get_load()
 
     def get_bc_variable_names(self) -> Iterable[str]:
         """The name of the boundary condition variables."""
         return []
+
+    def get_plot_parameters(self) -> PlotParameters:
+        return PlotParameters()
 
     def get_load(self) -> Load:
         return Load()

@@ -23,9 +23,15 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from vimseo.core.pre_run_post_model import PreRunPostModel
 from vimseo.material_lib import MATERIAL_LIB_DIR
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,7 +63,12 @@ class BendingTestAnalytical(PreRunPostModel):
     RUN_FAMILY = "RunBendingTestAnalytical"
     POST_PROC_FAMILY = "PostBendingTestAnalytical"
     MATERIAL_FILE = MATERIAL_LIB_DIR / "Ta6v.json"
-    CURVES = [("dplt_grid", "dplt"), ("moment_grid", "moment")]
+    CURVES: ClassVar[Sequence[tuple[str]]] = [
+        ("dplt_grid", "dplt"),
+        ("moment_grid", "moment"),
+    ]
 
-    _MATERIAL_GRAMMAR_FILE = MATERIAL_LIB_DIR / "Ta6v_grammar.json"
+    _MATERIAL_GRAMMAR_FILE: ClassVar[Path | str] = (
+        MATERIAL_LIB_DIR / "Ta6v_grammar.json"
+    )
     _LOAD_CASE_DOMAIN = "Beam"

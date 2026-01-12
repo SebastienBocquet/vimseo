@@ -46,13 +46,13 @@ from vimseo.tools.bayes.bayes_analysis import BayesTool
 if TYPE_CHECKING:
     from vimseo.tools.bayes.bayes_analysis_result import BayesAnalysisResult
 
-random.seed(1)
+random.seed(1)  # noqa: NPY002
 
 
 @pytest.fixture(scope="module")
 def data() -> array:
     """The dataset used to calibrate the probabilistic model."""
-    return random.randn(10) + 2
+    return random.randn(10) + 2  # noqa: NPY002
 
 
 @pytest.fixture(scope="module")
