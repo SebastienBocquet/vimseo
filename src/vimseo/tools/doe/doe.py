@@ -38,6 +38,7 @@ from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.base_settings import BaseSettings
@@ -47,8 +48,6 @@ from vimseo.tools.doe.doe_result import DOEResult
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
-
-    from vimseo.core.base_integrated_model import IntegratedModel
 
 
 def _set_output_names(

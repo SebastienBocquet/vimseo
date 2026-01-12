@@ -52,7 +52,7 @@ EXAMPLES_TO_DEACTIVATE = [
 
 if __name__ == "__main__":
     paths_to_prefix = [
-        glob.glob(str(RUNNABLE_DIR / path.parent / f"{INPUT_PREFIX}{path.name}"))
+        glob.glob(str(RUNNABLE_DIR / path.parent / f"{INPUT_PREFIX}{path.name}"))  # noqa: PTH207
         for path in EXAMPLES_TO_DEACTIVATE
     ]
     paths_to_prefix = [Path(p) for path_list in paths_to_prefix for p in path_list]

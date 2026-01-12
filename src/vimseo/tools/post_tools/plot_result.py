@@ -23,12 +23,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from vimseo.tools.base_tool import BaseResult
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure as MplFigure
+    from plotly.graph_objs import Figure as PlotlyFigure
 
 
 @dataclass
 class PlotResult(BaseResult):
     """A plot result."""
 
-    figure = None
+    figure: MplFigure | PlotlyFigure | None = None

@@ -26,7 +26,7 @@ from vimseo.tools.bayes.bayes_analysis import BayesTool
 from vimseo.tools.bayes.bayes_analysis_result import PosteriorChecks
 from vimseo.tools.statistics.statistics_tool import StatisticsTool
 
-random.seed(0)
+random.seed(0)  # noqa: NPY002
 
 activate_logger()
 
@@ -35,7 +35,7 @@ activate_logger()
 # ==================================
 # We start loading the experimental data
 # that will be processed to calibrate models:
-data_modulus = random.logistic(150000, 8000, 8)
+data_modulus = random.logistic(150000, 8000, 8)  # noqa: NPY002
 
 
 # %%

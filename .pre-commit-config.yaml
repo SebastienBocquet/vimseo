@@ -1,4 +1,4 @@
-exclude: ^src/vims/lib_vims/.*$|^src/vims/utilities/sandbox/.*$
+exclude: ^src/vimseo/lib_vims/.*$|^src/vimseo/utilities/sandbox/.*$
 
 repos:
 

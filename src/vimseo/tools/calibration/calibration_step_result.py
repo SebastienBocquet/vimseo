@@ -23,22 +23,18 @@
 from __future__ import annotations
 
 import pickle
+from collections.abc import Iterable
 from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from gemseo.algos.design_space import DesignSpace
+from numpy import ndarray
 from pandas import DataFrame
+from plotly.graph_objs import Figure
 
 from vimseo.tools.base_result import BaseResult
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from gemseo.algos.design_space import DesignSpace
-    from numpy import ndarray
-    from plotly.graph_objs import Figure
 
 CurveDataType = Mapping[str, list[Mapping[str, DataFrame]]]
 

@@ -25,8 +25,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from numpy import abs
-from numpy import max
+from numpy import abs as np_abs
+from numpy import max as np_max
 from pydantic import BaseModel
 
 from vimseo.direct_measures.direct_measure import BaseDirectMeasure
@@ -60,7 +60,7 @@ class ModulusE005E025(BaseCurveMeasure):
 class Modulus1050(BaseCurveMeasure):
     def compute(self, a: Curve) -> float:
         stress = a.y
-        max_stress = max(abs(stress))
+        max_stress = np_max(np_abs(stress))
         return local_slope_computation(
             a.x,
             stress,

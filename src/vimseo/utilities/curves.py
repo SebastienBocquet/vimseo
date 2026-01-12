@@ -142,9 +142,9 @@ class Curve:
         )
         if label != "":
             plot.labels = {self.__names[1]: label}
-        for property in properties:
-            if property in options:
-                setattr(plot, property, options[property])
+        for prop in properties:
+            if prop in options:
+                setattr(plot, prop, options[prop])
         return plot.execute(
             save=save,
             show=show,

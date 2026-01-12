@@ -22,14 +22,11 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Mapping
+
+from numpy import ndarray
 
 from vimseo.tools.base_result import BaseResult
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from numpy import ndarray
 
 
 class DirectMeasuresResult(BaseResult):

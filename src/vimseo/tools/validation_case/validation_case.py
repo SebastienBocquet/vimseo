@@ -39,6 +39,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_composite_tool import BaseCompositeTool
@@ -59,8 +60,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from plotly.graph_objs import Figure
-
-    from vimseo.core.base_integrated_model import IntegratedModel
 
 
 class DeterministicValidationCaseSettings(BaseCodeVerificationSettings):

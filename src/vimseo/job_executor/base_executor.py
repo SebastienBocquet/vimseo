@@ -68,7 +68,7 @@ class BaseJobExecutor(metaclass=GoogleDocstringInheritanceMeta):
     _convergence_log_length: int
     """The current number of lines of the convergence log."""
 
-    _job_options: None | BaseJobOptions
+    _job_options: BaseJobOptions | None
     """The full job options.
 
     Except the user job options, they are only known at model execution.

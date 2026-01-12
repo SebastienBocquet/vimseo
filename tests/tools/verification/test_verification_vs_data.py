@@ -26,7 +26,6 @@ import pytest
 from gemseo.datasets.io_dataset import IODataset
 from numpy import full
 from numpy.testing import assert_array_equal
-from pytest import approx
 
 from vimseo.api import create_model
 from vimseo.core.model_metadata import MetaDataNames
@@ -143,8 +142,8 @@ def test_verification_against_data(tmp_wd, reference_data):
         .ravel(),
         full((nb_samples), BIAS),
     )
-    assert result.integrated_metrics["SquaredErrorMetric"]["y1"] == approx(0.25)
-    assert result.integrated_metrics["AbsoluteErrorMetric"]["y1"] == approx(0.5)
+    assert result.integrated_metrics["SquaredErrorMetric"]["y1"] == pytest.approx(0.25)
+    assert result.integrated_metrics["AbsoluteErrorMetric"]["y1"] == pytest.approx(0.5)
 
 
 def test_verification_against_data_with_output_names_restriction(

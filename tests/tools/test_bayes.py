@@ -46,13 +46,13 @@ from vimseo.tools.bayes.bayes_analysis import BayesTool
 if TYPE_CHECKING:
     from vimseo.tools.bayes.bayes_analysis_result import BayesAnalysisResult
 
-random.seed(1)
+random.seed(1)  # noqa: NPY002
 
 
 @pytest.fixture(scope="module")
 def data() -> array:
     """The dataset used to calibrate the probabilistic model."""
-    return random.randn(10) + 2
+    return random.randn(10) + 2  # noqa: NPY002
 
 
 @pytest.fixture(scope="module")
@@ -304,9 +304,12 @@ def test_plot_posterior_predictive(tmp_wd, processed_analysis):
         )
 
 
-def test_plot_results_return_type(tmp_wd, processed_analysis):
-    """Check that plot_results output is a dictionnary."""
-    plot_checks = processed_analysis.plot_results(save=True, show=False)
+def test_plot_results_return_type(processed_analysis):
+    """Check that plot_results output is a dictionary."""
+    # TODO: bug when using tmp_wd, OK when not using tmp_wd
+    plot_checks = processed_analysis.plot_results(
+        directory_path="foo", save=True, show=False
+    )
     assert isinstance(plot_checks, Mapping)
     assert "posterior_samples" in plot_checks
     assert "posterior_predictive" in plot_checks

@@ -24,18 +24,21 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 from gemseo.algos.parameter_space import ParameterSpace
+from gemseo.datasets.dataset import Dataset
 from gemseo.datasets.io_dataset import IODataset
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from gemseo.utils.metrics.metric_factory import MetricFactory
 from numpy import array
 from numpy import atleast_1d
 from numpy import mean
+from numpy import ndarray
 from pandas import DataFrame
 from pandas import read_csv
 from pydantic import ConfigDict
@@ -44,6 +47,7 @@ from statsmodels.graphics.gofplots import qqplot_2samples
 from strenum import StrEnum
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
@@ -60,13 +64,9 @@ from vimseo.utilities.encoded_to_numerical_vectors import decode_stringified_vec
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Mapping
 
-    from gemseo.datasets.dataset import Dataset
-    from numpy import ndarray
     from plotly.graph_objs import Figure
 
-    from vimseo.core.base_integrated_model import IntegratedModel
 
 LOGGER = logging.getLogger(__name__)
 

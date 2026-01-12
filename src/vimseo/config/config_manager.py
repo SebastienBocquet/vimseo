@@ -28,10 +28,15 @@ from copy import copy
 from logging import getLogger
 from os import environ
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from gemseo.utils.string_tools import MultiLineString
 
 import vimseo
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 LOGGER = getLogger(__name__)
 
@@ -48,7 +53,7 @@ class ConfigManager:
     VIMS_DEFAULT_CONFIG.config is used (located at vims/)
     """
 
-    BASE_CONFIG_VAR_LIST = [
+    BASE_CONFIG_VAR_LIST: ClassVar[str] = [
         "VIMS_PROJECT_DIRECTORY",
         "N_CPUS",
         "JOB_EXECUTOR",
@@ -73,10 +78,12 @@ class ConfigManager:
     ]
     """The configuration variables."""
 
-    DEFAULT_ENV_FILE = Path(vimseo.__file__).parent / "VIMS_DEFAULT_CONFIG.config"
+    DEFAULT_ENV_FILE: ClassVar[Path] = (
+        Path(vimseo.__file__).parent / "VIMS_DEFAULT_CONFIG.config"
+    )
     """The default configuration file."""
 
-    _VAR_LIST_HELP = {
+    _VAR_LIST_HELP: ClassVar[Mapping[str, str]] = {
         "N_CPUS": "Not used at the moment",
         "JOB_EXECUTOR": "The job executor of the model run processor.",
         "VIMS_TEST_DIR": "Not used at the moment.",

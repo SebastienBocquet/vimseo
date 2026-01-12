@@ -26,15 +26,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import field
-from typing import TYPE_CHECKING
 from typing import Any
 
+from vimseo.core.model_description import ModelDescription
 from vimseo.tools.base_metadata import BaseMetadata
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from vimseo.core.model_description import ModelDescription
 
 
 @dataclass
@@ -49,10 +44,10 @@ class ToolResultMetadata(BaseMetadata):
 
     _OPTIONS_KEY = "settings"
 
-    settings: Mapping[str, Any] = field(default_factory=dict)
+    settings: dict[str, Any] = field(default_factory=dict)
     """The options of a tool."""
 
-    report: Mapping[str, str] = field(default_factory=dict)
+    report: dict[str, str] = field(default_factory=dict)
     """The report of the corresponding tool execution."""
 
     model: ModelDescription | None = None

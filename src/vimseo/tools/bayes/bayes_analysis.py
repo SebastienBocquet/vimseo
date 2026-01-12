@@ -76,8 +76,8 @@ if TYPE_CHECKING:
     from matplotlib.pyplot import Figure
     from openturns import Distribution
 
-random.seed(1)
-RandomGenerator.SetSeed(0)
+random.seed(1)  # noqa: NPY002
+RandomGenerator.SetSeed(0)  # noqa: NPY002
 LOGGER = logging.getLogger(__name__)
 
 
@@ -378,9 +378,9 @@ class BayesTool(BaseAnalysisTool):
             raise ValueError(msg)
 
         self._x0s = (
-            0.5 * ones(dim) + 1e-4 * random.randn(options["n_walkers"], dim)
+            0.5 * ones(dim) + 1e-4 * random.randn(options["n_walkers"], dim)  # noqa: NPY002
             if options["x0s"] is empty
-            else options["x0s"] * (1 + 1e-4 * random.randn(options["n_walkers"], dim))
+            else options["x0s"] * (1 + 1e-4 * random.randn(options["n_walkers"], dim))  # noqa: NPY002
         )
 
         self._scaler.fit(bounds)

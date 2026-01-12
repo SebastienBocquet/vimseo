@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import glob
 import logging
+import re
 import time
 from pathlib import Path
 
@@ -63,9 +64,14 @@ def load_results(parent_dir_path: str | Path):
     pattern = Path(parent_dir_path) / "**/*.pickle"
 
     result_paths = []
-    for file in glob.glob(str(pattern), recursive=True):
+    for file in glob.glob(str(pattern), recursive=True):  # noqa: PTH207
         file_path = Path(file)
         if file_path.is_file():
             result_paths.append(file_path)
 
     return result_paths
+
+
+def camel_case_to_snake_case(text: str):
+    pattern = re.compile(r"(?<!^)(?=[A-Z])")
+    return pattern.sub("_", text).lower()

@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from pytest import approx
 from scipy.interpolate import interp1d
 
 from vimseo.api import create_model
@@ -72,9 +71,9 @@ def test_cantilever(tmp_wd, input_data):
         * (3 * length - imposed_dplt_location)
         / (6 * young_modulus * quadratic_moment)
     )
-    assert max_dplt == approx(expected_max_dplt, rel=1e-3)
-    assert reaction_forces == approx(expected_reaction_forces, rel=1e-3)
-    assert location_max_dplt == approx(length, rel=1e-2)
+    assert max_dplt == pytest.approx(expected_max_dplt, rel=1e-3)
+    assert reaction_forces == pytest.approx(expected_reaction_forces, rel=1e-3)
+    assert location_max_dplt == pytest.approx(length, rel=1e-2)
 
 
 @pytest.mark.fast
@@ -144,10 +143,10 @@ def test_three_points(tmp_wd, input_data):
             * (1 - (1 - np.sqrt((4 / 3) * (1 - min(a, b) ** 2 / support_length**2))))
         ) + support_location[0]
 
-    assert max_dplt == approx(expected_max_dplt, rel=0.5)
-    assert reaction_forces == approx(expected_reaction_forces)
+    assert max_dplt == pytest.approx(expected_max_dplt, rel=0.5)
+    assert reaction_forces == pytest.approx(expected_reaction_forces)
     # TODO check why need such high tolerance.
-    assert location_max_dplt == approx(expected_loc_max_dplt, rel=5e-2)
+    assert location_max_dplt == pytest.approx(expected_loc_max_dplt, rel=5e-2)
 
 
 # TODO: could be relevant to specify all (or most of) the input parameters in a rather
@@ -206,7 +205,7 @@ def test_moment(tmp_wd, load_case, relative_dplt_location, max_moment_index):
         * model._pre_processor.get_output_data()["quadratic_moment"][0]
     )
 
-    assert w_external[0] == approx(w_internal[0] * 0.5, rel=1e-2)
+    assert w_external[0] == pytest.approx(w_internal[0] * 0.5, rel=1e-2)
 
 
 def fun_squared_moment(x, moment_grid, moment):
@@ -250,4 +249,4 @@ def test_displacement_profile(tmp_wd, load_case, height):
     y_prime = np.diff(out["dplt"]) / np.diff(x)
     y_second = np.diff(y_prime) / np.diff(x[:-1])
     y_second_expected = -model.run.m_func(x[1:-1]) / (young_modulus * quadratic_moment)
-    assert y_second == approx(y_second_expected, rel=1e-5)
+    assert y_second == pytest.approx(y_second_expected, rel=1e-5)

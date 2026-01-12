@@ -34,6 +34,7 @@ from gemseo.post.dataset.scatter_plot_matrix import ScatterMatrix
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from gemseo.utils.metrics.dataset_metric import DatasetMetric
 from gemseo.utils.metrics.metric_factory import MetricFactory
+from numpy import vstack
 from pydantic import Field
 
 from vimseo.config.config_manager import config
@@ -41,9 +42,7 @@ from vimseo.core.model_metadata import MetaDataNames
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.doe.custom_doe import CustomDOESettings
 from vimseo.tools.post_tools.verification_plots import ErrorMetricHistogram
-from vimseo.tools.verification.dashboard.utils import REFERENCE_PREFIX
-from vimseo.tools.verification.dashboard.utils import comparison_renaming
-from vimseo.tools.verification.dashboard.utils import prepare_overall_dataset
+from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
 from vimseo.tools.verification.verification_result import VerificationResult
 from vimseo.utilities.datasets import get_nb_input_variables
 
@@ -53,7 +52,74 @@ if TYPE_CHECKING:
 
     from plotly.graph_objs import Figure
 
-    from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
+REFERENCE_PREFIX = "Ref"
+
+
+def convergence_renaming(name):
+    """Rename an output variable of a convergence verification."""
+    return f"|{name}-extrapol|"
+
+
+def comparison_renaming(name, prefix=""):
+    """Rename an output variable of a code verification."""
+    return f"{prefix}[{name}]"
+
+
+def prepare_overall_dataset(
+    result, metric_names, output_names, renamer=None, add_output_data=True
+):
+    """Prepare the final dataset used in the dashboard.
+
+    Args:
+        result: A verification result.
+        metric_names: The names of the selected metrics.
+        output_names: The names of the selected output variables.
+        renamer: A function to rename output variable names to more expressive names and
+        also to ensure that the variable names of the final dataset are unique
+        (useful to further convert this dataset to mono-index dataframe).
+        add_output_data: Whether to add the output variables to the error metrics in
+        the final dataset.
+
+    Returns: A dataset containing the inpout variables, the selected metrics with
+    unique variable names, and possibly the raw output variables.
+    """
+    # Rename element-wise metrics to ensure variable names are unique.
+    group_names = [IODataset.INPUT_GROUP]
+    group_names.extend(metric_names)
+    overall_dataset = result.element_wise_metrics.get_view(
+        group_names=group_names
+    ).copy()
+    if renamer:
+        for metric_name in metric_names:
+            for name in overall_dataset.get_variable_names(group_name=metric_name):
+                new_name = renamer(name, metric_name)
+                overall_dataset.rename_variable(name, new_name, group_name=metric_name)
+
+    # Drop unused outputs from the metric group
+    for metric_name in metric_names:
+        for output_name in overall_dataset.get_variable_names(group_name=metric_name):
+            if output_name not in [renamer(name, metric_name) for name in output_names]:
+                overall_dataset.drop(output_name, axis=1, level=1, inplace=True)
+
+    if add_output_data:
+        variable_names = output_names
+        name_to_value = {
+            name: result.simulation_and_reference
+            .get_view(group_names=IODataset.OUTPUT_GROUP, variable_names=name)
+            .to_numpy()
+            .T
+            for name in variable_names
+        }
+        overall_dataset.add_group(
+            IODataset.OUTPUT_GROUP,
+            data=vstack([name_to_value[name] for name in variable_names]).T,
+            variable_names=variable_names,
+            variable_names_to_n_components={
+                name: name_to_value[name].shape[0] for name in variable_names
+            },
+        )
+
+    return overall_dataset
 
 
 def check_output_names(output_names, model) -> None:

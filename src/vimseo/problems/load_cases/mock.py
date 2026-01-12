@@ -37,7 +37,8 @@ class LC1(LoadCase):
 class LC2(LoadCase):
     """A second mock load case."""
 
-    plot_parameters = PlotParameters(curves=[("y1", "y1_2")])
+    def get_plot_parameters(self):
+        return PlotParameters(curves=[("y1", "y1_2")])
 
 
 @dataclass

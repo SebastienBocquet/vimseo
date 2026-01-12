@@ -75,6 +75,7 @@ from vimseo.utilities.plotting_utils import plot_curves
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Mapping
+    from collections.abc import Sequence
 
     from gemseo.caches.hdf5_cache import HDF5Cache
     from plotly.graph_objs import Figure
@@ -198,7 +199,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
     MATERIAL_FILE: ClassVar[Path | str] = ""
     """The path to the json file defining the material values."""
 
-    CURVES: ClassVar[Iterable[tuple[str]]] = []
+    CURVES: ClassVar[Sequence[tuple[str]]] = []
     """The output data to plot as curves. Define a tuple for each curve. It can be load
     case independent or dependent. Only the first two elements of the list of variables
     are considered.The first variable is the abscissa variable and the second value is
@@ -214,7 +215,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
     """A brief description of the model (purpose, range of application, hypothesis,
     limitations, similar models)."""
 
-    NUMERICAL_VARIABLE_NAMES = []
+    NUMERICAL_VARIABLE_NAMES: ClassVar[Sequence[str]] = []
     """The input variable names which are numerical parameters."""
 
     _MATERIAL_GRAMMAR_FILE: ClassVar[Path | str] = ""

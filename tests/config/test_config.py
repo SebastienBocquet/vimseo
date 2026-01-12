@@ -57,9 +57,7 @@ def test_config_wo_config_file(tmp_wd):
     default_config = config.get_config_as_dict()
 
     default_config_file = Path(vimseo.__path__[0]) / "VIMS_DEFAULT_CONFIG.config"
-    config_from_default_file = None
-    with open(default_config_file) as f:
-        config_from_default_file = json.loads(f.read())
+    config_from_default_file = json.loads(default_config_file.read_text())
 
     for k, v in config_from_default_file.items():
         assert default_config[k] == v

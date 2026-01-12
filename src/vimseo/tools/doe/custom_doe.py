@@ -32,12 +32,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from gemseo.algos.design_space import DesignSpace
+from gemseo.datasets.dataset import Dataset
 from gemseo.datasets.io_dataset import IODataset
 from gemseo.scenarios.doe_scenario import DOEScenario
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.base_settings import BaseSettings
@@ -47,10 +49,6 @@ from vimseo.tools.doe.doe_result import DOEResult
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from gemseo.datasets.dataset import Dataset
-
-    from vimseo.core.base_integrated_model import IntegratedModel
 
 
 class CustomDOESettings(BaseSettings):

@@ -72,7 +72,7 @@ class Material(BaseJsonIO):
         props = []
         for mat_rel in self.material_relations:
             for prop in mat_rel.properties:
-                props.append(prop)
+                props.append(prop)  # noqa: PERF402
         return props
 
     @property

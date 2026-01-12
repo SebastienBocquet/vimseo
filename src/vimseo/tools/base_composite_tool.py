@@ -24,16 +24,13 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import TYPE_CHECKING
 
 from pydantic import ConfigDict
+from pydantic import Field
 
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.base_tool import StreamlitToolConstructorOptions
 from vimseo.tools.base_tool import ToolConstructorOptions
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 LOGGER = logging.getLogger(__name__)
 
@@ -43,13 +40,15 @@ class BaseCompositeToolConstructorOptions(ToolConstructorOptions):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    subtools: Iterable[BaseTool] = []
+    subtools: list[BaseTool] = Field(
+        default=[], description="The tools used in this tool."
+    )
 
 
 class StreamlitBaseCompositeToolConstructorOptions(StreamlitToolConstructorOptions):
     """The options of the BaseCompositeTool constructor."""
 
-    subtools: list = []
+    subtools: list = []  # noqa: RUF012
 
 
 class BaseCompositeTool(BaseTool):

@@ -25,6 +25,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from vimseo.config.config_manager import config
 from vimseo.core.base_integrated_model import IntegratedModel
@@ -37,6 +38,8 @@ from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.material.material import Material
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from vimseo.core.components.post.post_processor import PostProcessor
     from vimseo.core.components.pre.pre_processor import PreProcessor
     from vimseo.core.components.run.run_processor import RunProcessor
@@ -79,7 +82,7 @@ class PreRunPostModel(IntegratedModel):
     POST_PROC_FAMILY = None
     """The prefix of the post-processor class name."""
 
-    SUBROUTINES_NAMES = []
+    SUBROUTINES_NAMES: ClassVar[Sequence[str]] = []
     """The names of the subroutines."""
 
     N_CPUS = 1

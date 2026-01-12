@@ -24,8 +24,10 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
+from gemseo.datasets.io_dataset import IODataset
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from numpy import array
 from numpy import mean
@@ -33,21 +35,18 @@ from numpy import vstack
 from pydantic import Field
 
 from vimseo.config.config_manager import config
-from vimseo.direct_measures.curve_measure import Curve
+from vimseo.direct_measures.curve_measure import DirectMeasureOnCurveSettings
 from vimseo.direct_measures.direct_measure_factory import DirectMeasureFactory
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.calibration.direct_measures_result import DirectMeasuresResult
+from vimseo.utilities.curves import Curve
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
     from pathlib import Path
 
-    from gemseo.datasets.io_dataset import IODataset
-
-    from vimseo.direct_measures.curve_measure import DirectMeasureOnCurveSettings
 
 LOGGER = logging.getLogger(__name__)
 

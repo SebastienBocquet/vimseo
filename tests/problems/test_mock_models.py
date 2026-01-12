@@ -65,8 +65,9 @@ def test_mock_models(tmp_wd, model_name, load_case):
     # with open(MOCK_OUTPUT_DATA_DIR / f"{model_name}_{load_case}.json", "w") as f:
     #     json.dump(output_data, f, indent=4, ensure_ascii=True, cls=EnhancedJSONEncoder)
 
-    with open(MOCK_OUTPUT_DATA_DIR / f"{model_name}_{load_case}.json") as f:
-        expected_output_data = json.loads(f.read())
-        tested_names = m.get_output_data_names(remove_metadata=True)
-        for name in tested_names:
-            assert_array_equal(array(expected_output_data[name]), output_data[name])
+    expected_output_data = json.loads(
+        (MOCK_OUTPUT_DATA_DIR / f"{model_name}_{load_case}.json").read_text()
+    )
+    tested_names = m.get_output_data_names(remove_metadata=True)
+    for name in tested_names:
+        assert_array_equal(array(expected_output_data[name]), output_data[name])

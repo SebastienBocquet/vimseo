@@ -270,11 +270,11 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         name = cls_name + "_options"
         if self._has_check_options:
             comp_dir = Path(Path(f_class).parent).resolve()
-            schema_file = join(comp_dir, f"{name}.json")
+            schema_file = join(comp_dir, f"{name}.json")  # noqa: PTH118
             if not Path(schema_file).exists():
                 msg = (
                     "Options grammar for {} tool json schema does not exist, "
-                    "expected: {}".format(cls_name, join(comp_dir, name + ".json"))
+                    "expected: {}".format(cls_name, join(comp_dir, name + ".json"))  # noqa: PTH118
                 )
                 raise ValueError(msg)
             self._opt_grammar.update_from_file(schema_file)
@@ -462,6 +462,6 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         if self._opt_grammar is not None:
             try:
                 self._opt_grammar.validate(options)
-            except InvalidDataError:
+            except InvalidDataError as err:
                 msg = f"Invalid options for tool {self.name}; got: {options}"
-                raise InvalidDataError(msg)
+                raise InvalidDataError(msg) from err

@@ -22,16 +22,13 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from pydantic import Field
 
 from vimseo.config.config_manager import config
 from vimseo.storage_management.base_storage_manager import PersistencyPolicy
 from vimseo.tools.base_settings import BaseSettings
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 DEFAULT_ARCHIVE_ROOT = "default_archive/"
 

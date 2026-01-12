@@ -23,6 +23,8 @@
 from __future__ import annotations
 
 from shutil import copy
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from numpy import atleast_1d
 
@@ -32,6 +34,11 @@ from vimseo.core.base_integrated_model import IntegratedModelSettings
 from vimseo.core.components.component_factory import ComponentFactory
 from vimseo.problems.mock.mock_fields.fields import MOCK_FIELDS_DIR
 
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from collections.abc import Sequence
+    from pathlib import Path
+
 
 class MockComponentField_LC1(BaseComponent):
     """Standalone component for MockModelField."""
@@ -39,7 +46,7 @@ class MockComponentField_LC1(BaseComponent):
     USE_JOB_DIRECTORY = True
     auto_detect_grammar_files = False
 
-    FILES_TO_COPY = ["Pyramid.vtk"]
+    FILES_TO_COPY: ClassVar[Sequence[Path | str]] = ["Pyramid.vtk"]
 
     def __init__(self, load_case_name: str):
         super().__init__(load_case_name)
@@ -62,7 +69,7 @@ class MockComponentField_LC1(BaseComponent):
 class MockModelFields(IntegratedModel):
     """Mock model handling Field files."""
 
-    FIELDS_FROM_FILE = {"pyramid": r"^Pyramid\.vtk$"}
+    FIELDS_FROM_FILE: ClassVar[Mapping[str, str]] = {"pyramid": r"^Pyramid\.vtk$"}
 
     def __init__(self, load_case_name: str, **options):
         options = IntegratedModelSettings(**options).model_dump()

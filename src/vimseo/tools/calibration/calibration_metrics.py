@@ -42,9 +42,9 @@ from numpy import linspace
 from numpy import max as np_max
 from numpy import mean
 from numpy import min as np_min
-from numpy import sum
-from numpy import trapezoid
+from numpy import sum as np_sum
 from numpy import union1d
+from scipy.integrate import trapezoid
 from scipy.interpolate import interp1d
 
 if TYPE_CHECKING:
@@ -245,7 +245,7 @@ class SBPISE(IntegratedMeasure):
             1.0,
             self._x_right_penalization_factor,
         ])
-        weights /= sum(weights)
+        weights /= np_sum(weights)
 
         metric = mean([
             weights[1]

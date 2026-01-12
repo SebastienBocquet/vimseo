@@ -112,12 +112,12 @@ class BaseStorageManager(metaclass=GoogleDocstringInheritanceMeta):
                 job_directory.mkdir(
                     parents=True, exist_ok=self._accept_overwrite_job_dir
                 )
-            except FileExistsError:
+            except FileExistsError as err:
                 msg = (
                     f"The job_directory considered for storing results "
                     f"{job_directory} already exists and cannot be overwritten."
                 )
-                raise FileExistsError(msg)
+                raise FileExistsError(msg) from err
 
         else:
             job_directory = DirectoryCreator(

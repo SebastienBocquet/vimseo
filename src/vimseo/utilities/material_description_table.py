@@ -77,13 +77,13 @@ def create_material_description_table(
                 attributes.distribution = prop.distribution.name
             name_to_attributes[prop.name] = attributes
 
-    dict = defaultdict(list)
+    attribute_name_to_value = defaultdict(list)
     for name, attributes in name_to_attributes.items():
-        dict["name"].append(name)
+        attribute_name_to_value["name"].append(name)
         for name, value in asdict(attributes).items():
-            dict[name].append(value)
+            attribute_name_to_value[name].append(value)
 
-    df = pd.DataFrame.from_dict(dict)
+    df = pd.DataFrame.from_dict(attribute_name_to_value)
     df.to_csv(PATH_TO_MATERIAL_DOC_SUBDIR / f"{material_name}_properties.csv", sep=SEP)
     return df
 

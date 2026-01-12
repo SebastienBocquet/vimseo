@@ -25,7 +25,7 @@
 import datetime
 import getpass
 import json
-import pathlib
+from pathlib import Path
 
 import numpy as np
 from numpy import array
@@ -40,24 +40,23 @@ def import_json_inputs(json_input_file):
 
     # TODO factorise this function wih load_job_arguments()
 
-    with pathlib.Path(json_input_file).open() as input_file:
-        inputs = json.loads(input_file.read())  # load input parameters in the txt file
-        for k, v in inputs.items():
-            if isinstance(v, unicode):
-                # unicode strings are casted into strings
-                inputs[k] = str(v)
-            if isinstance(v, (list, type(np.array([0.0])))):
-                # np.array with only one element is unpacked into a scalar
-                if len(v) == 1:
-                    inputs[k] = v[0]
-                    if isinstance(v[0], unicode):
-                        # unicode strings are casted into strings
-                        inputs[k] = str(v[0])
-                elif len(v) == 0:
-                    msg = "Error - empty input value for the following input key: "
-                    raise ValueError(msg, k)
+    inputs = json.loads(Path(json_input_file).read_text())
+    for k, v in inputs.items():
+        if isinstance(v, unicode):  # noqa: F821
+            # unicode strings are casted into strings
+            inputs[k] = str(v)
+        if isinstance(v, (list, type(np.array([0.0])))):
+            # np.array with only one element is unpacked into a scalar
+            if len(v) == 1:
+                inputs[k] = v[0]
+                if isinstance(v[0], unicode):  # noqa: F821
+                    # unicode strings are casted into strings
+                    inputs[k] = str(v[0])
+            elif len(v) == 0:
+                msg = "Error - empty input value for the following input key: "
+                raise ValueError(msg, k)
 
-        return inputs
+    return inputs
 
 
 def write_json_dict(output_file, dict_outputs):
@@ -67,14 +66,14 @@ def write_json_dict(output_file, dict_outputs):
         "job_arguments.json")
         dict_outputs: dictionnary of data to be dumped into the json file
     """
-    pathlib.Path(output_file).write_text(json.dumps(dict_outputs, indent=4))
+    Path(output_file).write_text(json.dumps(dict_outputs, indent=4))
 
 
 def write_job_outputs_csv_exhaustive(name_out_file, dict_scalars, dict_curves):
     """Write an exhaustive CSV output file based on scalars and curves outputs,
     formated for human reading."""
 
-    f = pathlib.Path(name_out_file).open("w")
+    f = Path(name_out_file).open("w")  # noqa: SIM115
     f.write(get_metadata_txt())
 
     # Writing the scalars in the text file
@@ -209,7 +208,7 @@ def write_job_arguments_to_file(argument_file, data):
         data: A dictionary containing the parameters necessary for the Abaqus script.
 
     """
-    with pathlib.Path(argument_file).open("w") as f:
+    with Path(argument_file).open("w") as f:
         json.dump(dict(data), f, cls=EnhancedJSONEncoderModelWrapper)
 
 
@@ -217,12 +216,11 @@ def load_job_arguments():
     """Load json file containing arguments for Abaqus.
     List are casted to Numpy arrays, and unicode strings are casted to strings."""
 
-    arguments = json.load(pathlib.Path(ARG_FILE).open())
-    # arguments = deepcopy(data)
+    arguments = json.loads(Path(ARG_FILE).read_text())
     for k, v in arguments.items():
         if isinstance(v, list):
             arguments[k] = array(v)
-        if isinstance(v, unicode):
+        if isinstance(v, unicode):  # noqa: F821
             arguments[k] = str(arguments[k])
     return arguments
 

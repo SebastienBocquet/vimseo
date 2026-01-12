@@ -29,6 +29,7 @@ from typing import Any
 
 from gemseo import BaseRegressor
 from gemseo import create_surrogate
+from gemseo.datasets.dataset import Dataset
 from gemseo.disciplines.surrogate import SurrogateDiscipline
 from gemseo.mlearning.core.quality.base_ml_algo_quality import BaseMLAlgoQuality
 from gemseo.mlearning.core.quality.factory import MLAlgoQualityFactory
@@ -38,6 +39,7 @@ from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
@@ -48,10 +50,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from pathlib import Path
 
-    from gemseo.datasets.dataset import Dataset
     from plotly.graph_objects import Figure
 
-    from vimseo.core.base_integrated_model import IntegratedModel
     from vimseo.tools.surrogate.surrogate_result import QualitiesType
 
 LOGGER = logging.getLogger(__name__)
@@ -91,31 +91,48 @@ class SurrogateSettings(BaseSettings):
         description=" Dictionary of options for the surrogate algorithm. "
         "If None, default options are used.",
     )
-    candidates: CandidateType = {
-        "RBFRegressor": {
-            "smooth": [0, 0.01, 0.1, 1, 10, 100],
-            "transformer": [dict(BaseRegressor.DEFAULT_TRANSFORMER)],
+    candidates: CandidateType = Field(
+        default={
+            "RBFRegressor": {
+                "smooth": [0, 0.01, 0.1, 1, 10, 100],
+                "transformer": [dict(BaseRegressor.DEFAULT_TRANSFORMER)],
+            },
+            "LinearRegressor": {"fit_intercept": [True, False]},
+            "PolynomialRegressor": {
+                "degree": [1, 2, 3],
+                "fit_intercept": [True, False],
+            },
+            "GaussianProcessRegressor": {
+                "transformer": [dict(BaseRegressor.DEFAULT_TRANSFORMER)]
+            },
         },
-        "LinearRegressor": {"fit_intercept": [True, False]},
-        "PolynomialRegressor": {"degree": [1, 2, 3], "fit_intercept": [True, False]},
-        "GaussianProcessRegressor": {
-            "transformer": [dict(BaseRegressor.DEFAULT_TRANSFORMER)]
+        description="The candidate surrogates.",
+    )
+    quality_measures: list[str] = Field(
+        default=["MSEMeasure"], description="The measure of quality to compute."
+    )
+    evaluation_methods: list[str] = Field(
+        default=[
+            KFOLDS,
+            LEARN,
+        ],
+        description="The evaluation methods to use.",
+    )
+    evaluation_options: dict[str, dict] = Field(
+        default={
+            KFOLDS: {"n_folds": 5},
+            LOO: {"samples": None},
+            LEARN: {"samples": None},
+            BOOTSTRAP: {"n_replicates": 100, "samples": None},
         },
-    }
-    quality_measures: list[str] = ["MSEMeasure"]
-    evaluation_methods: list[str] = [
-        KFOLDS,
-        LEARN,
-    ]
-    evaluation_options: dict[str, dict] = {
-        KFOLDS: {"n_folds": 5},
-        LOO: {"samples": None},
-        LEARN: {"samples": None},
-        BOOTSTRAP: {"n_replicates": 100, "samples": None},
-    }
-    quality_for_selection: list[str] = (
-        "MSEMeasure",
-        KFOLDS,
+        description="The options of the evaluation methods.",
+    )
+    quality_for_selection: list[str] = Field(
+        default=(
+            "MSEMeasure",
+            KFOLDS,
+        ),
+        description="The quality measures to use.",
     )
     output_names: list[str] = Field(
         default=[],

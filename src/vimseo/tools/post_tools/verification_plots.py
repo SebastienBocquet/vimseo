@@ -37,7 +37,7 @@ from plotly.graph_objs import Figure
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.post_tools.base_plot import Plotter
-from vimseo.tools.verification.dashboard.utils import get_formatted_value
+from vimseo.utilities.plotting_utils import get_formatted_value
 
 if TYPE_CHECKING:
     from vimseo.tools.verification.verification_result import SolutionVerificationResult

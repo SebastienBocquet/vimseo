@@ -31,7 +31,7 @@ from numpy import atleast_1d
 from vimseo.core.gemseo_discipline_wrapper import GemseoDisciplineWrapper
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Sequence
     from pathlib import Path
 
     from vimseo.material.material import Material
@@ -51,7 +51,7 @@ class BaseComponent(GemseoDisciplineWrapper):
     USE_JOB_DIRECTORY: ClassVar[bool] = False
     """Whether to create a job directory."""
 
-    _PERSISTENT_FILE_NAMES: Iterable[str] = []
+    _PERSISTENT_FILE_NAMES: ClassVar[Sequence[str]] = []
     """List of files produced in the scratch directory, to be copied to the archive
     directory."""
 

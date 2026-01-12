@@ -25,12 +25,16 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+from numpy import array_str
+from numpy import atleast_1d
 from plotly.graph_objs import Figure
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from vimseo.utilities.curves import Curve
+
+FLOAT_PRECISION = 3
 
 
 def plot_curves(
@@ -83,3 +87,18 @@ def plot_curves(
         label=labels[i + 1] if len(labels) > 0 else "",
     )
     return fig
+
+
+def get_formatted_value(value, precision: int = FLOAT_PRECISION):
+    """Rounds either a float or a NumPy array.
+
+    Args:
+        value: The data to round.
+        precision: The rounding precision.
+
+    Returns: The rounded data.
+    """
+    is_float = isinstance(value, float)
+    if is_float:
+        return str(round(value, precision))
+    return array_str(atleast_1d(value), precision=precision)

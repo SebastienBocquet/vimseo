@@ -48,8 +48,12 @@ class ReaderFileDataFrameSettings(BaseReaderFileSettings):
 
 
 class StreamlitReaderFileDataFrameSettings(ReaderFileDataFrameSettings):
-    variable_names_to_n_components: dict[str, int] = {}
-    variable_names_to_group_names: dict[str, str] = {}
+    variable_names_to_n_components: dict[str, int] = Field(
+        default={}, description="The number of components of the variables."
+    )
+    variable_names_to_group_names: dict[str, str] = Field(
+        default={}, description="The groups of the variables."
+    )
 
     def model_post_init(self, __context: Any) -> None:
         if self.variable_names_to_n_components == {}:

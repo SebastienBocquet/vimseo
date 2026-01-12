@@ -29,7 +29,6 @@ from gemseo.datasets.io_dataset import IODataset
 from gemseo.mlearning.regression.algos.linreg import LinearRegressor
 from numpy import array
 from numpy.testing import assert_allclose
-from pytest import approx
 
 from vimseo.api import create_model
 from vimseo.problems.beam_analytic.reference_dataset_builder import (
@@ -85,7 +84,7 @@ def mock_model_surrogate(mock_dataset):
     candidates = surrogate_tool.options["candidates"]
     for i, candidate in enumerate(candidates):
         if candidate[0] == "PolynomialRegressor":
-            del candidates[i]
+            del candidates[i]  # noqa: B909
     surrogate_tool.execute(
         model=model,
         dataset=mock_dataset,
@@ -169,7 +168,7 @@ def test_surrogate_mock_model(tmp_wd, mock_model_surrogate):
     results = mock_model_surrogate.result
 
     prediction = results.model.execute({"x1": array([0.5])})
-    assert prediction["y1"][0] == approx(6.0)
+    assert prediction["y1"][0] == pytest.approx(6.0)
 
     assert results.qualities["MSEMeasure"][LEARN][0] == pytest.approx(0)
     assert results.qualities["MSEMeasure"][LOO][0] == pytest.approx(0)
@@ -208,9 +207,9 @@ def test_surrogate_bending_test_analytical(
         dataset.to_dict_of_arrays(by_group=True)["from_surrogate"][output_name],
     )
 
-    assert surrogate_tool.result.qualities["MSEMeasure"][LEARN][0] == approx(0)
+    assert surrogate_tool.result.qualities["MSEMeasure"][LEARN][0] == pytest.approx(0)
     # This value is around 9. To be inverstigated if OK.
-    # assert surrogate_tool.result.qualities["MSEMeasure"][LOO][0] == approx(0)
+    # assert surrogate_tool.result.qualities["MSEMeasure"][LOO][0] == pytest.approx(0)
 
 
 def test_load_and_plot_mock_model(tmp_wd, mock_model_surrogate):
@@ -235,7 +234,7 @@ def test_show_results_after_selection(tmp_wd, mock_dataset):
     candidates = surrogate_tool.options["candidates"]
     for i, candidate in enumerate(candidates):
         if candidate[0] == "PolynomialRegressor":
-            del candidates[i]
+            del candidates[i]  # noqa: B909
 
     surrogate_tool.execute(
         model=model,

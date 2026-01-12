@@ -27,7 +27,7 @@ from gemseo.core.grammars.json_grammar import JSONGrammar
 
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.material.material import Material
-from vimseo.material.material_relation import MaterialProperty
+from vimseo.material.material_property import MaterialProperty
 from vimseo.material.material_relation import MaterialRelation
 from vimseo.material.metadata import MaterialMetadata
 from vimseo.material.test_references import MATERIAL_TEST_REFERENCES
@@ -51,7 +51,7 @@ from vimseo.utilities.distribution import DistributionParameters
 def test_material_relation(tmp_wd, metadata, distribution):
     """Check that a material relation can be exported to json file and loaded from a json
     file."""
-    property = MaterialProperty(
+    prop = MaterialProperty(
         name="young_modulus",
         value=1e5,
         lower_bound=9e4,
@@ -63,13 +63,13 @@ def test_material_relation(tmp_wd, metadata, distribution):
             tag="Ta6v_v1",
             name="Ta6v",
             metadata=metadata,
-            properties=[property],
+            properties=[prop],
         )
     else:
         mat_rel_1 = MaterialRelation(
             tag="Ta6v_v1",
             name="Ta6v",
-            properties=[property],
+            properties=[prop],
         )
     # Override datetime to be able to compare the two material relations.
     mat_rel_1.metadata.generic["datetime"] = ""
@@ -78,16 +78,6 @@ def test_material_relation(tmp_wd, metadata, distribution):
     mat_rel_loaded = MaterialRelation.from_json(file_name)
     mat_rel_loaded.metadata.generic["datetime"] = ""
     assert str(mat_rel_1) == str(mat_rel_loaded)
-
-
-# def test_json_schema():
-#     mat_rel_1 = MaterialRelation(
-#         tag="Ta6v_v1",
-#         name="Ta6v",
-#         data=[MaterialProperty(name="young_modulus", value=1e5)],
-#     )
-#     with open("mat_rel_1_grammar.json", "w") as f:
-#         f.write(mat_rel_1.to_json_schema())
 
 
 def test_material(tmp_wd):

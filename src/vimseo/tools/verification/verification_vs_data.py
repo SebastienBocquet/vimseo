@@ -30,6 +30,7 @@ from gemseo.datasets.io_dataset import IODataset
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.doe.custom_doe import CustomDOETool
@@ -40,7 +41,6 @@ from vimseo.tools.verification.base_verification import check_output_names
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from vimseo.core.base_integrated_model import IntegratedModel
     from vimseo.tools.verification.verification_result import VerificationResult
 
 

@@ -35,18 +35,18 @@ from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
 from vimseo.config.config_manager import config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.doe.doe import DOESettings
 from vimseo.tools.doe.doe import DOETool
 from vimseo.tools.verification.base_verification import BaseVerification
 from vimseo.tools.verification.base_verification import check_output_names
+from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from vimseo.core.base_integrated_model import IntegratedModel
-    from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
     from vimseo.tools.verification.verification_result import VerificationResult
 
 
