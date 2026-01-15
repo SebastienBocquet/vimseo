@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 
 from vimseo.core.components.external_software_component import ExternalSoftwareComponent
 from vimseo.job_executor.base_executor import BaseJobExecutor
-from vimseo.job_executor.user_job_options import BaseUserJobOptions
+from vimseo.job_executor.base_user_job_options import BaseUserJobOptions
 
 if TYPE_CHECKING:
     from vimseo.core.components.subroutines.subroutine_wrapper import SubroutineWrapper

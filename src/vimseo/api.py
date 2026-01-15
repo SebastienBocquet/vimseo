@@ -31,12 +31,14 @@ from __future__ import annotations
 
 import logging
 from logging import _nameToLevel
+from os import environ
 from typing import TYPE_CHECKING
 
 from gemseo import configure_logger
 from gemseo.utils.metrics.metric_factory import MetricFactory
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import ENV_PREFIX
+from vimseo.config.global_configuration import _configuration as configuration
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_factory import ModelFactory
 from vimseo.tools.post_tools.plot_factory import PlotFactory
@@ -51,9 +53,7 @@ LOGGER = logging.getLogger(__name__)
 
 def activate_logger(level: int | None = None):
     if not level:
-        from vimseo.config.config_manager import config
-
-        level = _nameToLevel[config.LOGGER_MODE.upper()]
+        level = _nameToLevel[configuration.logging.upper()]
     configure_logger(level=level)
 
 
@@ -157,43 +157,25 @@ def get_available_tools():
     return ToolsFactory().class_names
 
 
-def set_project_directory(project_directory) -> None:
-    """Define the project directory environment variables.
-
-    Args:
-        project_directory: path to project directory
-    """
-    set_config("VIMS_PROJECT_DIRECTORY", project_directory)
-
-
 def set_config(name, value) -> None:
-    """Set the value of a configuration variable (like NCPUS, ...)
+    """Set the value of a configuration variable.
 
     Args:
         name: The name of the variable to set.
         value: The value to set to this variable name.
     """
-    import os
-
-    from vimseo.config.config_manager import config
-
-    if name in config.get_available_config_variables():
-        os.environ[name] = value
-        config.__setattr__(name, value)
-    else:
-        LOGGER.warning("Variable " + name + " is not a configuration variable")
+    environ[f"{ENV_PREFIX}{name.upper()}"] = value
+    setattr(configuration, name, value)
 
 
 def show_config():
     """Returns: representation of the current configuration variables."""
-    from vimseo.config.config_manager import config
-
-    print(str(config))
+    LOGGER.info(configuration.model_dump())
 
 
 def get_config_help() -> str:
     """Return the help about configuration file."""
-    return config.get_help()
+    return configuration.model_fields
 
 
 activate_logger()

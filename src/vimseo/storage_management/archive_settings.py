@@ -26,7 +26,7 @@ from pathlib import Path
 
 from pydantic import Field
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.storage_management.base_storage_manager import PersistencyPolicy
 from vimseo.tools.base_settings import BaseSettings
 
@@ -38,7 +38,9 @@ class BaseArchiveSettings(BaseSettings):
 
     directory_archive_root: Path | str = Field(
         default=(
-            config.DB_URI_LOCAL if config.DB_URI_LOCAL != "" else DEFAULT_ARCHIVE_ROOT
+            config.database.local_uri
+            if config.database.local_uri != ""
+            else DEFAULT_ARCHIVE_ROOT
         ),
         description="Path to the archive root directory, "
         "wherein unique directories will be created for each job to store "

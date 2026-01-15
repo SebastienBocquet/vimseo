@@ -118,7 +118,7 @@ class PostProcessor(ExternalSoftwareComponent):
         strength can be provided as a reference value If max_strength is None, else the
         maximum strength is estimated from the stress_history. The maximum strength is
         computed as the maximum of the stress history for a tension configuration, or the
-        minimum for a compression configuration. The tension or compression configuration
+        minimum for a compression config. The tension or compression configuration
         is determined thanks to the sign of the stress in the middle of the history.
 
         Args:

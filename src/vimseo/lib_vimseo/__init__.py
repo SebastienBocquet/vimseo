@@ -12,9 +12,3 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-"""Place here sources which have specific constraints like old Python versions.
-The Python files of this module are excluded from pre-commit hook checks.
-
-Concerning the Fortran user subroutines, their path relative to the library directory
-must be provided in file ``subroutines.json``."""

@@ -22,45 +22,37 @@
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
-import json
 from os import environ
-from os import path
-from pathlib import Path
 
-import vimseo
-from vimseo.config.config_manager import ConfigManager
-
-DIRNAME = path.dirname(__file__)
+from vimseo.config.global_configuration import VimseoSettings
+from vimseo.config.global_configuration import _configuration as config
 
 
-def test_config():
-    environ["VIMS_PROJECT_DIRECTORY"] = DIRNAME
-
-    config = ConfigManager()
-
-    assert config.project_config_file.name == "VIMS_TEST_CONFIG.config"
-    # check base variables are loaded:
-    assert config.VIMS_PROJECT_DIRECTORY == DIRNAME
-    assert config.N_CPUS == "4"
-    # check default value is loaded:
-    assert config.LOGGER_MODE == "info"
-    # check that the variable added in config file is loaded:
-    assert config.TEST_VARIABLE == 10
+def test_config_from_env_var():
+    job_executor = config.solver["dummy"].job_executor
+    assert not job_executor
+    environ["VIMSEO_SOLVER__DUMMY__JOB_EXECUTOR"] = "BaseInteractiveExecutor"
+    config_ = VimseoSettings()
+    assert (
+        config_.model_dump()["solver"]["dummy"]["job_executor"]
+        == "BaseInteractiveExecutor"
+    )
 
 
-def test_config_wo_config_file(tmp_wd):
-    """The default configuration should be read."""
+def test_config_set_attr():
+    job_executor = config.solver["dummy"].job_executor
+    assert not job_executor
+    config.solver["dummy"].job_executor = "BaseInteractiveExecutor"
+    assert (
+        config.model_dump()["solver"]["dummy"]["job_executor"]
+        == "BaseInteractiveExecutor"
+    )
 
-    environ["VIMS_PROJECT_DIRECTORY"] = str(Path.cwd())
 
-    config = ConfigManager()
-    default_config = config.get_config_as_dict()
+def test_config_with_config_file(tmp_wd):
+    with (tmp_wd / ".env").open("w") as f:
+        f.write('VIMSEO_SOLVER__DUMMY2__JOB_EXECUTOR="BaseInteractiveExecutor"\n')
 
-    default_config_file = Path(vimseo.__path__[0]) / "VIMS_DEFAULT_CONFIG.config"
-    config_from_default_file = json.loads(default_config_file.read_text())
-
-    for k, v in config_from_default_file.items():
-        assert default_config[k] == v
-
-    assert config.project_config_file is None
-    assert environ.get("VIMS_PROJECT_DIRECTORY") == config.VIMS_PROJECT_DIRECTORY
+    config = VimseoSettings()
+    assert {"dummy2", "abaqus"} == set(config.solver.keys())
+    assert config.solver["dummy2"].job_executor == "BaseInteractiveExecutor"

@@ -27,7 +27,6 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
-from vimseo.config.config_manager import config
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.base_integrated_model import IntegratedModelSettings
 from vimseo.core.components.component_factory import ComponentFactory
@@ -144,8 +143,7 @@ class PreRunPostModel(IntegratedModel):
         self._component_with_jacobian = self.run
         self._set_differentiated_names(self.run)
 
-        n_cpus = int(config.N_CPUS) if config.N_CPUS != "" else self.N_CPUS
-        self.run.job_executor._user_job_options["n_cpus"] = n_cpus
+        self.run.job_executor._user_job_options["n_cpus"] = self.N_CPUS
 
     @property
     def run(self) -> RunProcessor:

@@ -41,7 +41,7 @@ import pytest
 from gemseo.core.base_factory import BaseFactory
 from packaging import version
 
-# from vimseo.config.config_manager import config
+# from vimseo.config.global_configuration import _configuration as config
 # from vimseo.api import set_config
 
 

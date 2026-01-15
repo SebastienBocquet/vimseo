@@ -26,7 +26,7 @@ import logging
 import sys
 
 from vimseo.api import set_config
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,32 +36,6 @@ def get_working_mock_command():
     if sys.platform.startswith("win"):
         return "powershell Start-Sleep -m 50"
     return "sleep 0.05"
-
-
-class WrapperMockCommands:
-    """A context to mock wrapper command lines by dummy commands that return no error on
-    Windows and Linux."""
-
-    def __init__(self):
-        self.__original_commands = {}
-
-    def __enter__(self):
-        self.__original_commands["CMD_ABAQUS_CAE"] = config.CMD_ABAQUS_CAE
-        self.__original_commands["CMD_ABAQUS_CAE_POST"] = config.CMD_ABAQUS_CAE_POST
-        self.__original_commands["CMD_ABAQUS_RUN"] = config.CMD_ABAQUS_RUN
-
-        LOGGER.info("Replacing wrapper commands by dummy working command.")
-        dummy_cmd = get_working_mock_command()
-
-        set_config("CMD_ABAQUS_CAE", dummy_cmd)
-        set_config("CMD_ABAQUS_CAE_POST", dummy_cmd)
-        set_config("CMD_ABAQUS_RUN", dummy_cmd)
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        LOGGER.info("Replacing back dummy commands by the original commands.")
-        for key, value in self.__original_commands.items():
-            set_config(key, value)
 
 
 class SetConfig:

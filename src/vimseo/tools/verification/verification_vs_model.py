@@ -34,7 +34,7 @@ from gemseo.datasets.dataset import Dataset
 from gemseo.datasets.io_dataset import IODataset
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
@@ -65,9 +65,9 @@ class CodeVerificationAgainstModel(BaseVerification):
 
     def __init__(
         self,
-        root_directory: str | Path = config.ROOT_DIRECTORY,
+        root_directory: str | Path = config.root_directory,
         directory_naming_method: DirectoryNamingMethod = DirectoryNamingMethod.NUMBERED,
-        working_directory: str | Path = config.WORKING_DIRECTORY,
+        working_directory: str | Path = config.working_directory,
     ):
         reference_doe = CustomDOETool(name="ReferenceCustomDOETool")
         super().__init__(

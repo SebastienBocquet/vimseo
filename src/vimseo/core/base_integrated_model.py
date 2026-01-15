@@ -57,7 +57,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 from strenum import StrEnum
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.gemseo_discipline_wrapper import GemseoDisciplineWrapper
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_description import ModelDescription
@@ -100,7 +100,7 @@ class IntegratedModelSettings(BaseArchiveSettings, DirectoryScratchOptions):
 
     cache_file_path: str | Path = ""
 
-    archive_manager: str = config.ARCHIVE_MANAGER
+    archive_manager: str = config.archive_manager
 
 
 class IntegratedModel(GemseoDisciplineWrapper):

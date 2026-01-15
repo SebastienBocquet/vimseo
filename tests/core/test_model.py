@@ -35,16 +35,13 @@ from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
 from vimseo.api import create_model
-from vimseo.config.config_manager import config
 from vimseo.core.model_metadata import DEFAULT_METADATA
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.pre_run_post_model import PreRunPostModel
-from vimseo.job_executor.user_job_options import BaseUserJobOptions
+from vimseo.job_executor.base_user_job_options import BaseUserJobOptions
 from vimseo.problems.mock.mock_main.mock_model import MockModelWithMaterial
 from vimseo.problems.mock.mock_main.mock_model import mock_model_lc1_overall_function
 from vimseo.problems.mock.mock_main.mock_model import mock_model_lc2_overall_function
-from vimseo.utilities.test_utils import SetConfig
-from vimseo.utilities.test_utils import WrapperMockCommands
 
 JOB_NAME = "DummyJobDir"
 
@@ -98,23 +95,21 @@ def test_check_data_flow(tmp_wd):
 def test_execute(tmp_wd, load_case):
     """Check that after model execution, the output value is coherent regarding the
     default inputs."""
-    with WrapperMockCommands():
-        model = create_model("MockModel", load_case)
-        model.EXTRA_INPUT_GRAMMAR_CHECK = True
-        out = model.execute()
-        assert (
-            model.default_input_data["x1"]
-            == model._pre_processor.default_input_data["x1"]
-        )
-        assert out["y1"] == array([
-            mock_model_lc1_overall_function(model.default_input_data["x1"])
+    model = create_model("MockModel", load_case)
+    model.EXTRA_INPUT_GRAMMAR_CHECK = True
+    out = model.execute()
+    assert (
+        model.default_input_data["x1"] == model._pre_processor.default_input_data["x1"]
+    )
+    assert out["y1"] == array([
+        mock_model_lc1_overall_function(model.default_input_data["x1"])
+    ])
+    if load_case == "LC2":
+        assert out["y1_2"] == array([
+            mock_model_lc2_overall_function(
+                model.default_input_data["x1"], model.default_input_data["x1_2"]
+            )[1]
         ])
-        if load_case == "LC2":
-            assert out["y1_2"] == array([
-                mock_model_lc2_overall_function(
-                    model.default_input_data["x1"], model.default_input_data["x1_2"]
-                )[1]
-            ])
 
 
 def test_metadata_added_to_outputs(tmp_wd):
@@ -288,7 +283,6 @@ def test_set_job_options(tmp_wd, model_name, load_case, user_job_options):
     """Check that the job options can be modified and correctly set into account."""
     model = create_model(model_name, load_case)
     model.EXTRA_INPUT_GRAMMAR_CHECK = True
-    assert config.N_CPUS == ""
     assert model.run.n_cpus == 1
     model.run.job_executor.set_options(user_job_options)
     assert model.run.job_executor.options["n_cpus"] == 4
@@ -296,15 +290,6 @@ def test_set_job_options(tmp_wd, model_name, load_case, user_job_options):
     model.execute()
     if model.run.job_executor._job_options:
         assert model.run.job_executor._job_options.n_cpus == 4
-
-
-def test_n_cpus_from_config(tmp_wd):
-    """Check that the number of CPUs can be set from the configuration."""
-    new_n_cpus = 8
-    with SetConfig("N_CPUS", str(new_n_cpus)):
-        model = create_model("MockModel", "LC1")
-        assert model.N_CPUS == 1
-        assert model.n_cpus == new_n_cpus
 
 
 def test_set_bounds(tmp_wd):

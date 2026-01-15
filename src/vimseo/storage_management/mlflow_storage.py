@@ -41,6 +41,7 @@ from mlflow import delete_run
 from numpy import atleast_1d
 from numpy import ndarray
 
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.storage_management.directory_storage import BaseArchiveManager
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
@@ -73,38 +74,38 @@ class MlflowArchive(BaseArchiveManager):
         load_case_name="",
         persistent_file_names=(),
     ):
-        from vimseo.config.config_manager import config
 
         super().__init__(persistency, job_name, persistent_file_names)
         self._root_directory = root_directory
         self._model_name = model_name
         self._load_case_name = load_case_name
 
-        if config.DB_MODE == "Team":
+        if config.database.mode == "Team":
             self._uri = config.DB_URI_TEAM
-            os.environ["MLFLOW_TRACKING_USERNAME"] = config.DB_USERNAME
-            os.environ["MLFLOW_TRACKING_PASSWORD"] = config.DB_PASSWORD
-            if config.SSL_CERTIFICATE_FILE != "":
-                os.environ["REQUESTS_CA_BUNDLE"] = config.SSL_CERTIFICATE_FILE
+            os.environ["MLFLOW_TRACKING_USERNAME"] = config.database.username
+            os.environ["MLFLOW_TRACKING_PASSWORD"] = config.database.password
+            if config.database.ssl_certificate_file != "":
+                os.environ["REQUESTS_CA_BUNDLE"] = config.database.ssl_certificate_file
 
-            if config.USE_INSECURE_TLS == "True":
-                os.environ["MLFLOW_TRACKING_USE_INSECURE_TLS"] = "true"
+            if config.database.use_insecure_tls == "True":
+                os.environ["MLFLOW_TRACKING_DATABASE_USE_INSECURE_TLS"] = "true"
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-        elif config.DB_MODE == "Local":
+        elif config.database.mode == "Local":
+            # TODO use root_directory instead of config.database.local_uri
             self._uri = (
-                config.DB_URI_LOCAL
-                if config.DB_URI_LOCAL != ""
+                config.database.local_uri
+                if config.database.local_uri != ""
                 else f"file:///{Path(root_directory).absolute()!s}"
             )
         else:
-            msg = f"Wrong value for config.DB_MODE: {config.DB_MODE}"
+            msg = f"Wrong value for config.database_mode: {config.database.mode}"
             raise ValueError(msg)
 
         mlflow.set_tracking_uri(self._uri)
         self._experiment_name = (
-            config.EXPERIMENT_NAME
-            if config.EXPERIMENT_NAME != ""
+            config.database.experiment_name
+            if config.database.experiment_name != ""
             else f"{self._model_name}_{self._load_case_name}"
         )
         self._mlflow_client = mlflow.tracking.MlflowClient()

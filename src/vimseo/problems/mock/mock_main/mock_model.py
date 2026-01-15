@@ -32,8 +32,6 @@ from vimseo.core.pre_run_post_model import PreRunPostModel
 from vimseo.material_lib import MATERIAL_LIB_DIR
 
 X1_DEFAULT_VALUE = 0.1
-MOCK_PRE_ABAQUS_SCRIPT = "mock_pre_script.py"
-MOCK_POST_ABAQUS_SCRIPT = "mock_post_script.py"
 
 
 def mock_model_lc1_overall_function(x1):

@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.storage_management.base_archive_storage import BaseArchiveManager
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoderArchive
 
@@ -61,8 +61,8 @@ class DirectoryArchive(BaseArchiveManager):
         super().__init__(persistency, job_name, persistent_file_names)
         self._root_directory = root_directory
         self._experiment_name = (
-            config.EXPERIMENT_NAME
-            if config.EXPERIMENT_NAME != ""
+            config.database.experiment_name
+            if config.database.experiment_name != ""
             else f"./{model_name}/{load_case_name}/"
         )
         self._job_directory = ""

@@ -34,7 +34,7 @@ from numpy import mean
 from numpy import vstack
 from pydantic import Field
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.direct_measures.curve_measure import DirectMeasureOnCurveSettings
 from vimseo.direct_measures.direct_measure_factory import DirectMeasureFactory
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
@@ -87,9 +87,9 @@ class DirectMeasures(BaseAnalysisTool):
 
     def __init__(
         self,
-        root_directory: str | Path = config.ROOT_DIRECTORY,
+        root_directory: str | Path = config.root_directory,
         directory_naming_method: DirectoryNamingMethod = DirectoryNamingMethod.NUMBERED,
-        working_directory: str | Path = config.WORKING_DIRECTORY,
+        working_directory: str | Path = config.working_directory,
     ):
         super().__init__(
             root_directory=root_directory,

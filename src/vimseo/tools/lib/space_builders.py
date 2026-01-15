@@ -42,7 +42,7 @@ from numpy import inf
 from numpy import sign
 from sympy.parsing.sympy_parser import parse_expr
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.space.random_variable_interface import OPTIONS_PER_DISTRIBUTION
 from vimseo.tools.space.random_variable_interface import add_random_variable_interface
@@ -89,9 +89,9 @@ class SpaceBuilder(BaseTool):
 
     def __init__(
         self,
-        root_directory: str | Path = config.ROOT_DIRECTORY,
+        root_directory: str | Path = config.root_directory,
         directory_naming_method: DirectoryNamingMethod = DirectoryNamingMethod.NUMBERED,
-        working_directory: str | Path = config.WORKING_DIRECTORY,
+        working_directory: str | Path = config.working_directory,
         **options,
     ):
         super().__init__(

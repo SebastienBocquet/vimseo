@@ -38,7 +38,7 @@ from gemseo.scenarios.doe_scenario import DOEScenario
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_settings import BaseInputs
@@ -88,9 +88,9 @@ class CustomDOETool(BaseAnalysisTool):
 
     def __init__(
         self,
-        root_directory: str | Path = config.ROOT_DIRECTORY,
+        root_directory: str | Path = config.root_directory,
         directory_naming_method: DirectoryNamingMethod = DirectoryNamingMethod.NUMBERED,
-        working_directory: str | Path = config.WORKING_DIRECTORY,
+        working_directory: str | Path = config.working_directory,
         **options,
     ):
         super().__init__(

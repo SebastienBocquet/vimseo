@@ -24,21 +24,21 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.storage_management.archive_settings import DEFAULT_ARCHIVE_ROOT
 
 
 def main() -> None:
-    if config.DB_MODE == "Local":
+    if config.database_mode == "Local":
         command = [
             "mlflow",
             "ui",
             "--backend-store-uri",
-            f"file:\\\\{Path(config.DB_URI_LOCAL if config.DB_URI_LOCAL != '' else DEFAULT_ARCHIVE_ROOT).absolute().resolve()}",
+            f"file:\\\\{Path(config.database.local_uri if config.database.local_uri != '' else DEFAULT_ARCHIVE_ROOT).absolute().resolve()}",
         ]
         print(f"Run command: {' '.join(command)}")
     else:
-        print(f"Browse {config.DB_URI_TEAM} to open database interface.")
+        print(f"Browse {config.database.uri_team} to open database interface.")
 
 
 if __name__ == "__main__":

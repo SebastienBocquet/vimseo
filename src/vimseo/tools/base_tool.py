@@ -41,7 +41,7 @@ from gemseo.core.grammars.json_grammar import JSONGrammar
 from gemseo.utils.directory_creator import DirectoryCreator
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 
-from vimseo.config.config_manager import config
+from vimseo.config.global_configuration import _configuration as config
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.metadata import ToolResultMetadata
@@ -60,15 +60,15 @@ LOGGER = logging.getLogger(__name__)
 
 class ToolConstructorOptions(BaseSettings):
     name: str = ""
-    root_directory: str | Path = config.ROOT_DIRECTORY
+    root_directory: str | Path = config.root_directory
     directory_naming_method: DirectoryNamingMethod = DirectoryNamingMethod.NUMBERED
-    working_directory: str | Path = config.WORKING_DIRECTORY
+    working_directory: str | Path = config.working_directory
 
 
 class StreamlitToolConstructorOptions(ToolConstructorOptions):
-    root_directory: str = config.ROOT_DIRECTORY
+    root_directory: str = config.root_directory
     directory_naming_method: str = DirectoryNamingMethod.UUID
-    working_directory: str = config.WORKING_DIRECTORY
+    working_directory: str = config.working_directory
 
 
 class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
@@ -133,9 +133,9 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
 
     def __init__(
         self,
-        root_directory: str | Path = config.ROOT_DIRECTORY,
+        root_directory: str | Path = config.root_directory,
         directory_naming_method: DirectoryNamingMethod = DirectoryNamingMethod.NUMBERED,
-        working_directory: str | Path = config.WORKING_DIRECTORY,
+        working_directory: str | Path = config.working_directory,
         name: str = "",
     ):
         """
