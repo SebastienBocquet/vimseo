@@ -54,5 +54,5 @@ def test_config_with_config_file(tmp_wd):
         f.write('VIMSEO_SOLVER__DUMMY2__JOB_EXECUTOR="BaseInteractiveExecutor"\n')
 
     config = VimseoSettings()
-    assert {"dummy2", "abaqus"} == set(config.solver.keys())
+    assert {"dummy", "dummy2"} == set(config.solver.keys())
     assert config.solver["dummy2"].job_executor == "BaseInteractiveExecutor"
