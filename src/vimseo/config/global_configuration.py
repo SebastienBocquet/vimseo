@@ -104,12 +104,15 @@ try:
     import vimseo_abaqus as plugin_pkg
     from vimseo_abaqus.config.global_configuration import VimseoAbaqusSettings
 
+    plugin_name = "vimseo_abaqus"
     plugin_settings = VimseoAbaqusSettings
     plugin_filename = "vimseo_abaqus.json"
     local_path = Path.cwd() / plugin_filename
     pkg_path = Path(plugin_pkg.__path__[0]) / plugin_filename
     path = local_path if local_path.exists() else pkg_path
-    LOGGER.info(f"Loaded configuration file is {path}")
+    LOGGER.info(f"Extend config for plugin {plugin_name}.")
+    LOGGER.info(f"Config file looked for in current dir: {local_path}.")
+    LOGGER.info(f"Loaded configuration file is {path}.")
 
     class JsonConfigSettingsSource(PydanticBaseSettingsSource):
         """
