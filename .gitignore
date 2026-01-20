@@ -1,26 +1,21 @@
 .tox
 /.pytest_cache/
 /htmlcov
-/doc
 /sandbox
 /build
 /dist
 
-/src/extensions/build
-/src/extensions/build_extensions_vimseo.egg-info
-/src/extensions/build_extensions.egg-info
 /src/vimseo.egg-info
 
 *.pyc
-.project
-.pydevproject
-.settings
-.idea
-.vim*
-.vscode
-.ipynb_checkpoints
-tags
-*.html
+/.project
+/.pydevproject
+/.settings
+/.idea
+/.vim*
+/.vscode
+/.ipynb_checkpoints
+/tags
 
 /docs/generated/
 /docs/runnable_examples/**/*.png
@@ -29,7 +24,6 @@ tags
 /docs/runnable_examples/**/*.hdf
 /docs/images/*.pptx
 /model_runs
-/docvims
 /site
 
 coverage.xml

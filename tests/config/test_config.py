@@ -13,13 +13,6 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Copyright (c) 2019 IRT-AESE.
-# All rights reserved.
-#
-# Contributors:
-#    INITIAL AUTHORS - API and implementation and/or documentation
-#        :author: XXXXXXXXXXX
-#    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
 from os import environ
@@ -29,6 +22,7 @@ from vimseo.config.global_configuration import _configuration as config
 
 
 def test_config_from_env_var():
+    """Check that configuration can be set from environment variables."""
     job_executor = config.solver["dummy"].job_executor
     assert not job_executor
     environ["VIMSEO_SOLVER__DUMMY__JOB_EXECUTOR"] = "BaseInteractiveExecutor"
@@ -40,6 +34,7 @@ def test_config_from_env_var():
 
 
 def test_config_set_attr():
+    """Check that configuration can be set from attribute assignment."""
     job_executor = config.solver["dummy"].job_executor
     assert not job_executor
     config.solver["dummy"].job_executor = "BaseInteractiveExecutor"
@@ -50,9 +45,10 @@ def test_config_set_attr():
 
 
 def test_config_with_config_file(tmp_wd):
+    """Check that configuration can be set from a .env file."""
     with (tmp_wd / ".env").open("w") as f:
         f.write('VIMSEO_SOLVER__DUMMY2__JOB_EXECUTOR="BaseInteractiveExecutor"\n')
 
     config = VimseoSettings()
-    assert {"dummy2", "abaqus"} == set(config.solver.keys())
+    assert {"dummy", "dummy2"} == set(config.solver.keys())
     assert config.solver["dummy2"].job_executor == "BaseInteractiveExecutor"

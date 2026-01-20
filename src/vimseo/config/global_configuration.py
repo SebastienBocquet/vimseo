@@ -18,47 +18,29 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
-from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from pydantic_settings import PydanticBaseSettingsSource
 from pydantic_settings import SettingsConfigDict
 
+from vimseo.config.config_components import DatabaseConfiguration
+from vimseo.config.config_components import Solver
 from vimseo.job_executor.job_executor_factory import JobExecutorFactory
 
 # from vimseo.storage_management import ArchiveManager
+
+LOGGER = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from pydantic.fields import FieldInfo
 
 ENV_PREFIX = "VIMSEO_"
-
-
-class DatabaseConfiguration(BaseModel):
-    mode: str = Field(default="Local")
-    local_uri: str = Field(
-        default="",
-    )
-    team_uri: str = Field(default="https://mlflow.irt-aese.local/")
-    username: str = Field(default="")
-    password: str = Field(default="")
-    experiment_name: str = Field(default="")
-    use_insecure_tls: bool = Field(default=False)
-    ssl_certificate_file: str = Field(default="")
-
-
-class Solver(BaseModel):
-    job_executor: str | None = Field(
-        default=None, description="The job executor to use."
-    )
-    command_run: str = Field(default="")
-    command_pre: str = Field(default="")
-    command_post: str = Field(default="")
 
 
 class VimseoSettings(
@@ -122,10 +104,15 @@ try:
     import vimseo_abaqus as plugin_pkg
     from vimseo_abaqus.config.global_configuration import VimseoAbaqusSettings
 
+    plugin_name = "vimseo_abaqus"
     plugin_settings = VimseoAbaqusSettings
     plugin_filename = "vimseo_abaqus.json"
     local_path = Path.cwd() / plugin_filename
     pkg_path = Path(plugin_pkg.__path__[0]) / plugin_filename
+    path = local_path if local_path.exists() else pkg_path
+    LOGGER.info(f"Extend config for plugin {plugin_name}.")
+    LOGGER.info(f"Config file looked for in current dir: {local_path}.")
+    LOGGER.info(f"Loaded configuration file is {path}.")
 
     class JsonConfigSettingsSource(PydanticBaseSettingsSource):
         """
@@ -140,9 +127,7 @@ try:
             self, field: FieldInfo, field_name: str
         ) -> tuple[Any, str, bool]:
             encoding = self.config.get("env_file_encoding")
-            file_content_json = json.loads(
-                local_path if local_path.exists() else pkg_path.read_text(encoding)
-            )
+            file_content_json = json.loads(path.read_text(encoding))
             field_value = file_content_json.get(field_name)
             return field_value, field_name, False
 

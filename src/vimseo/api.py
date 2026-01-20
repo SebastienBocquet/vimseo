@@ -13,13 +13,6 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Copyright (c) 2019 IRT-AESE.
-# All rights reserved.
-#
-# Contributors:
-#    INITIAL AUTHORS - API and implementation and/or documentation
-#        :author: XXXXXXXXXXX
-#    OTHER AUTHORS   - MACROSCOPIC CHANGES
 # Copyright (c) 2020 IRT-AESE.
 # All rights reserved.
 #
@@ -31,13 +24,11 @@ from __future__ import annotations
 
 import logging
 from logging import _nameToLevel
-from os import environ
 from typing import TYPE_CHECKING
 
 from gemseo import configure_logger
 from gemseo.utils.metrics.metric_factory import MetricFactory
 
-from vimseo.config.global_configuration import ENV_PREFIX
 from vimseo.config.global_configuration import _configuration as configuration
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_factory import ModelFactory
@@ -153,19 +144,6 @@ def get_available_tools():
     class_names = ToolsFactory().class_names
     class_names.remove("BaseTool")
     return class_names
-
-    return ToolsFactory().class_names
-
-
-def set_config(name, value) -> None:
-    """Set the value of a configuration variable.
-
-    Args:
-        name: The name of the variable to set.
-        value: The value to set to this variable name.
-    """
-    environ[f"{ENV_PREFIX}{name.upper()}"] = value
-    setattr(configuration, name, value)
 
 
 def show_config():

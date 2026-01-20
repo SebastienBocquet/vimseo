@@ -12,21 +12,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-# Copyright (c) 2019 IRT-AESE.
-# All rights reserved.
-#
-# Contributors:
-#    INITIAL AUTHORS - initial API and implementation and/or
-#    initial documentation
-#        :author: Stephanie MIOT, Florent Grotto
-#    OTHER AUTHORS   - MACROSCOPIC CHANGES
-
+"""Utility functions for solver interaction."""
 import datetime
 import getpass
 import json
-from pathlib import Path
-
 import numpy as np
 from numpy import array
 from numpy import ndarray
@@ -40,23 +29,24 @@ def import_json_inputs(json_input_file):
 
     # TODO factorise this function wih load_job_arguments()
 
-    inputs = json.loads(Path(json_input_file).read_text())
-    for k, v in inputs.items():
-        if isinstance(v, unicode):  # noqa: F821
-            # unicode strings are casted into strings
-            inputs[k] = str(v)
-        if isinstance(v, (list, type(np.array([0.0])))):
-            # np.array with only one element is unpacked into a scalar
-            if len(v) == 1:
-                inputs[k] = v[0]
-                if isinstance(v[0], unicode):  # noqa: F821
-                    # unicode strings are casted into strings
-                    inputs[k] = str(v[0])
-            elif len(v) == 0:
-                msg = "Error - empty input value for the following input key: "
-                raise ValueError(msg, k)
+    with open(json_input_file, 'r') as input_file:
+        inputs = json.loads(input_file.read())
+        for k, v in inputs.items():
+            if isinstance(v, unicode):  # noqa: F821
+                # unicode strings are casted into strings
+                inputs[k] = str(v)
+            if isinstance(v, (list, type(np.array([0.0])))):
+                # np.array with only one element is unpacked into a scalar
+                if len(v) == 1:
+                    inputs[k] = v[0]
+                    if isinstance(v[0], unicode):  # noqa: F821
+                        # unicode strings are casted into strings
+                        inputs[k] = str(v[0])
+                elif len(v) == 0:
+                    msg = "Error - empty input value for the following input key: "
+                    raise ValueError(msg, k)
 
-    return inputs
+        return inputs
 
 
 def write_json_dict(output_file, dict_outputs):
@@ -66,7 +56,8 @@ def write_json_dict(output_file, dict_outputs):
         "job_arguments.json")
         dict_outputs: dictionnary of data to be dumped into the json file
     """
-    Path(output_file).write_text(json.dumps(dict_outputs, indent=4))
+    with open(output_file, 'w') as f:
+        f.write(json.dumps(dict_outputs, indent=4))
 
 
 def write_job_outputs_csv_exhaustive(name_out_file, dict_scalars, dict_curves):
@@ -79,7 +70,7 @@ def write_job_outputs_csv_exhaustive(name_out_file, dict_scalars, dict_curves):
     # Writing the scalars in the text file
     f.write("\n########################################################\n")
     for key, value in dict_scalars.items():
-        value_format = f"{value:.3f}" if isinstance(value, float) else value
+        value_format = "{0:.3f}".format(value) if isinstance(value, float) else value
         f.write(key + " = " + str(value_format) + "\n")
 
     # Writing the curves in the text file
@@ -91,7 +82,7 @@ def write_job_outputs_csv_exhaustive(name_out_file, dict_scalars, dict_curves):
     for i in range(max_len):
         for key in dict_curves:
             if i < len(dict_curves[key]):
-                formated_text = f"{dict_curves[key][i]:.6f}"
+                formated_text = "{0:.6f}".format(dict_curves[key][i])
                 f.write(formated_text)
 
             f.write(";")
@@ -208,7 +199,7 @@ def write_job_arguments_to_file(argument_file, data):
         data: A dictionary containing the parameters necessary for the Abaqus script.
 
     """
-    with Path(argument_file).open("w") as f:
+    with open(argument_file, "w") as f:
         json.dump(dict(data), f, cls=EnhancedJSONEncoderModelWrapper)
 
 
@@ -216,7 +207,7 @@ def load_job_arguments():
     """Load json file containing arguments for Abaqus.
     List are casted to Numpy arrays, and unicode strings are casted to strings."""
 
-    arguments = json.loads(Path(ARG_FILE).read_text())
+    arguments = json.load(open(ARG_FILE))
     for k, v in arguments.items():
         if isinstance(v, list):
             arguments[k] = array(v)

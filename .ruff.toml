@@ -179,11 +179,6 @@ convention = "google"
 ]
 # ignore docstring that have not yet be converted to the google style
 "src/*.py" = ["D"]
-# ignore errors in Abaqus python files
-"src/vims/lib/*.py" = ["F","D","E","T","N"]
-# ignore errors in unused code
-"src/vims/job_executor/job_scheduler/write_slurm_cmd.py" = ["F","D","E","T","N"]
-"src/vims/job_executor/job_scheduler/write_slurm_env.py" = ["F","D","E","T","N"]
 
 [format]
 docstring-code-format = true

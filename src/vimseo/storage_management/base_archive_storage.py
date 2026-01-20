@@ -13,13 +13,6 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Copyright (c) 2019 IRT-AESE.
-# All rights reserved.
-#
-# Contributors:
-#    INITIAL AUTHORS - API and implementation and/or documentation
-#        :author: XXXXXXXXXXX
-#    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
 from abc import abstractmethod
