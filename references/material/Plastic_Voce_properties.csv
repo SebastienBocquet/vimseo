@@ -1,0 +1,6 @@
+;name;description;unit;category;material_relation;default_value;distribution
+0;E;The Young modulus.;none;Undefined;plastic_voce;70000.0;Normal
+1;nu;The Poisson's ratio.;none;Undefined;plastic_voce;0.3;Normal
+2;sigma_y_0;A numerical parameter of Voce's law.;none;Undefined;plastic_voce;250.0;Uniform
+3;sigma_y_u;A numerical parameter of Voce's law.;none;Undefined;plastic_voce;350.0;Uniform
+4;delta;A numerical parameter of Voce's law.;none;Undefined;plastic_voce;100.1;Undefined
