@@ -17,45 +17,38 @@
 
 from __future__ import annotations
 
-import json
 import logging
+import re
 from pathlib import Path
-from typing import TYPE_CHECKING
-from typing import Any
 
+import yaml
 from pydantic import Field
-from pydantic import field_validator
-from pydantic_settings import BaseSettings
-from pydantic_settings import PydanticBaseSettingsSource
-from pydantic_settings import SettingsConfigDict
 
+from vimseo.config.base_configuration import BaseConfiguration
+from vimseo.config.base_configuration_factory import BaseConfigurationFactory
 from vimseo.config.config_components import DatabaseConfiguration
 from vimseo.config.config_components import Solver
-from vimseo.job_executor.job_executor_factory import JobExecutorFactory
-
-# from vimseo.storage_management import ArchiveManager
 
 LOGGER = logging.getLogger(__name__)
 
-if TYPE_CHECKING:
-    from pydantic.fields import FieldInfo
 
 ENV_PREFIX = "VIMSEO_"
 
 
 class VimseoSettings(
-    BaseSettings,
+    BaseConfiguration,
     validate_assignment=True,
     env_nested_delimiter="__",
     env_prefix=ENV_PREFIX,
     env_file=".env",
     extra="forbid",
+    nested_model_default_partial_update=True,
 ):  # noqa: N801
     """Global configuration."""
 
     logging: str = Field(default="info")
 
-    solver: dict[str, Solver] = Field(
+    solvers: dict[str, Solver] = Field(
         default={"dummy": Solver()}, description="The solver command."
     )
 
@@ -79,100 +72,48 @@ class VimseoSettings(
         default=DatabaseConfiguration(), description=""
     )
 
-    @field_validator("solver")
-    @classmethod
-    def __validate_solver(cls, v: dict[str, Solver]) -> dict[str, Solver]:
-        for solver in v.values():
-            if (
-                solver.job_executor
-                and solver.job_executor not in JobExecutorFactory().class_names
-            ):
-                msg = (
-                    f"{solver.job_executor} does not exist. Available job executors "
-                    f"{JobExecutorFactory().class_names}."
-                )
-                raise ValueError(msg)
-        return v
-
 
 # Detect plugins to agregate the config from plugins with the vimseo config
 # Temporary done with try.except of plugin imports,
 # until done better with entry points:
-try:
-    # Plugin config:
+def to_snake_case(camel_case: str) -> str:
+    """Convert a CamelCase name to snake_case name."""
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
-    import vimseo_abaqus as plugin_pkg
-    from vimseo_abaqus.config.global_configuration import VimseoAbaqusSettings
 
-    plugin_name = "vimseo_abaqus"
-    plugin_settings = VimseoAbaqusSettings
-    plugin_filename = "vimseo_abaqus.json"
-    local_path = Path.cwd() / plugin_filename
-    pkg_path = Path(plugin_pkg.__path__[0]) / plugin_filename
-    path = local_path if local_path.exists() else pkg_path
-    LOGGER.info(f"Extend config for plugin {plugin_name}.")
-    LOGGER.info(f"Config file looked for in current dir: {local_path}.")
-    LOGGER.info(f"Loaded configuration file is {path}.")
+# Plugin config:
 
-    class JsonConfigSettingsSource(PydanticBaseSettingsSource):
-        """
-        A simple settings source class that loads variables from a JSON file
-        at the project's root.
 
-        Here we happen to choose to use the `env_file_encoding` from Config
-        when reading `config.json`
-        """
+plugin_names = BaseConfigurationFactory().class_names
+plugin_names.remove("BaseConfiguration")
+plugin_names.remove("VimseoSettings")
+print("Detected plugins:", plugin_names)
 
-        def get_field_value(
-            self, field: FieldInfo, field_name: str
-        ) -> tuple[Any, str, bool]:
-            encoding = self.config.get("env_file_encoding")
-            file_content_json = json.loads(path.read_text(encoding))
-            field_value = file_content_json.get(field_name)
-            return field_value, field_name, False
+plugin_settings = {}
+plugin_config_classes = [VimseoSettings]
 
-        def prepare_field_value(
-            self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool
-        ) -> Any:
-            return value
+for name in plugin_names:
+    plugin_config_classes.append(BaseConfigurationFactory().get_class(name))
+    local_path = Path.cwd() / f"{name}.yml"
+    print(f"Extend config for plugin {to_snake_case(name).split('_settings')[0]}.")
+    print(f"Config file looked for is: {local_path}.")
+    if local_path.is_file():
+        print(f"Config file for plugin {name} found.")
+        with Path(local_path).open(encoding="utf-8") as f:
+            try:
+                plugin_settings.update(yaml.safe_load(f))
+            except yaml.YAMLError as exc:
+                print(exc)
+    else:
+        print(
+            f"No user config file found for plugin {name}: default settings are loaded."
+        )
 
-        def __call__(self) -> dict[str, Any]:
-            d: dict[str, Any] = {}
-
-            for field_name, field in self.settings_cls.model_fields.items():
-                field_value, field_key, value_is_complex = self.get_field_value(
-                    field, field_name
-                )
-                field_value = self.prepare_field_value(
-                    field_name, field, field_value, value_is_complex
-                )
-                if field_value is not None:
-                    d[field_key] = field_value
-
-            return d
-
-    class Settings(plugin_settings, VimseoSettings):
-        model_config = SettingsConfigDict(env_file_encoding="utf-8")
-
-        @classmethod
-        def settings_customise_sources(
-            cls,
-            settings_cls: type[BaseSettings],
-            init_settings: PydanticBaseSettingsSource,
-            env_settings: PydanticBaseSettingsSource,
-            dotenv_settings: PydanticBaseSettingsSource,
-            file_secret_settings: PydanticBaseSettingsSource,
-        ) -> tuple[PydanticBaseSettingsSource, ...]:
-            return (
-                init_settings,
-                JsonConfigSettingsSource(settings_cls),
-                env_settings,
-                dotenv_settings,
-                file_secret_settings,
-            )
-
-    _configuration = Settings()
-except ImportError:
+if len(plugin_config_classes) > 0:
+    _configuration = type("AllSettings", tuple(plugin_config_classes[::-1]), {})(
+        **plugin_settings
+    )
+else:
     _configuration = VimseoSettings()
 
 """The global VIMSEO configuration.

@@ -31,8 +31,8 @@ from mlflow import delete_run
 from numpy import atleast_1d
 from pandas import DataFrame
 from pandas import concat
-from vims import EXAMPLE_RUNS_DIR_NAME
 
+from vimseo import EXAMPLE_RUNS_DIR_NAME
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.base_integrated_model import IntegratedModelSettings
@@ -98,7 +98,7 @@ model.execute({"x1": atleast_1d(2.0), "x2": atleast_1d(-2.0)})
 
 # %%
 # It often occurs that a cache becomes unusable due to:
-#  - a change of VIMS version, altering the input, output or metadata of a model,
+#  - a change of VIMSEO version, altering the input, output or metadata of a model,
 #  - a mix of successful and failed simulations (by fail, we mean that models may be fault tolerant and
 #    outputs NaNs in the output data in case of errors). In general, we want to filter out failed runs.
 #  - a large number of results, and for part of them, we have no traceability about and we do not trust the
@@ -153,7 +153,7 @@ model.execute({"height": atleast_1d(60.0)})
 # The archive results can be visualized through the MLflow User Interface.
 # The ``uri`` of the MLflow database must be specified to the UI:
 #  - For exemple, Under Windows:
-#    ``mlflow ui --backend-store-uri file:\\\\\\C:\\Users\\sebastien.bocquet\\PycharmProjects\\vims\\tests\\storage_management\\my_experiment``
+#    ``mlflow ui --backend-store-uri file:\\\\\\C:\\Users\\sebastien.bocquet\\PycharmProjects\\vimseo\\tests\\storage_management\\my_experiment``
 #  - Or under Linux:
 #    ``mlflow ui --backend-store-uri file:////home/sebastien.bocquet/PycharmProjects/vims_only/doc_src/_examples/02-integrated_models/mlflow_archive``
 # The uri can be retrieved with ``model._storage_manager.uri``.

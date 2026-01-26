@@ -60,7 +60,7 @@ The three following modelling approaches have been developped:
   - The OpfmUnitCell model. It does not require a finite-element solver and it
     does not account for the geometry or the stacking sequence.
     This model runs the material law within a convergence loop that is developed in
-    a specific ``run-processor`` (see TODO insert link to vims doc).
+    a specific ``run-processor`` (see TODO insert link to vimseo doc).
     It considers a pure loading mode only.
     Its computational time is less than one min on a single CPU, except for the PureShear load case.
     It is useful for calibration, sensitivity analysis and

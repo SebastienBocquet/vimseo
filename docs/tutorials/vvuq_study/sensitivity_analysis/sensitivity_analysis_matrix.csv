@@ -1,4 +1,4 @@
-Params influents attendus (étude Airbus VITAL 06/2022;;;;;;
+Params influents attendus (ï¿½tude Airbus VITAL 06/2022;;;;;;
 ;;;;;;
 ;OpfmAbaqusCube;OpfmAbaqusCube;OpfmAbaqusPlate;OpfmAbaqusPlate;;
 ;PST;PSC;OHT;OHC;;
@@ -9,7 +9,7 @@ Params influents attendus (étude Airbus VITAL 06/2022;;;;;;
 ;;;;;;
 ;;;;;;
 Etude Q4 2024;;;;;;
-matériau OPFM non sensible (vims-composites);;;;;;
+matï¿½riau OPFM non sensiblevimseoms-composites);;;;;;
 ;;;;;;
 parameter space:;;;;;;
 distribution triangulaires, cov=0.05. if default value = 0, then consider +/- 0.05 * max_bound. Truncated by model bounds.;;;;;;

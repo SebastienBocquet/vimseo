@@ -57,7 +57,7 @@ Actors
 
 .. uml::
 
-    "VIMS developer" as Dev
+    "VIMSEO developer" as Dev
     Dev --> (Add or modify generic model features ana analysis capabilities, possibly through plug-ins)
 
 .. uml::

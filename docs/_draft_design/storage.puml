@@ -2,7 +2,7 @@
 'https://plantuml.com/class-diagram
 
 
-package vims.tool {
+package vimseo.tool {
 
 abstract class BaseStorageManager {
     # root_directory

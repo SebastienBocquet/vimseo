@@ -26,12 +26,11 @@ import logging
 
 from gemseo.core.discipline import Discipline
 from numpy import array
-from vims import EXAMPLE_RUNS_DIR_NAME
 
+from vimseo import EXAMPLE_RUNS_DIR_NAME
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.base_integrated_model import IntegratedModelSettings
-from vimseo.job_executor.user_job_options import InteractiveAbaqusUserJobOptions
 
 activate_logger(level=logging.INFO)
 
@@ -145,39 +144,10 @@ figures = model.plot_results(show=True)
 
 figures["dplt_vs_dplt_grid"]
 
-
 # %%
 # For a model running an external solver, the options of the job
 # can be modified.
-# For models based on Abaqus, the job options are:
-InteractiveAbaqusUserJobOptions()
-
-# %%
-# To illustrate, we instantiate an Abaqus-based:
-model_name = "BendingTestFem"
-load_case = "Cantilever"
-model = create_model(
-    model_name,
-    load_case,
-    model_options=IntegratedModelSettings(
-        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/basic_usage",
-        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/basic_usage",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/basic_usage/{model_name}_{load_case}_cache.hdf",
-    ),
-)
-model.cache = None
-
-# %%
-# And change its number of CPUs. Since the options are passed through a pydantic model,
-# they are automatically validated:
-model.run.job_executor.set_options(InteractiveAbaqusUserJobOptions(n_cpus=2))
-model.run.n_cpus
-
-# %%
-# The execution is then done on two CPUs:
-model.execute()
-
-# %%
-# We can check that the command used to run the solver
-# has effectively specified two CPUs:
-model.run.job_executor.command_line
+# The basic job options are defined in the pydantic model ``BaseUserJobOptions()``
+# and passed to the model's job executor. To set the number of CPUs to 2,
+# the following command can be used:
+# ``model.run.job_executor.set_options(BaseUserJobOptions(n_cpus=2))``.

@@ -30,6 +30,8 @@ random.seed(0)  # noqa: NPY002
 
 activate_logger()
 
+N_MCMC = 100
+
 # %%
 # 1) Set-up of the stochastic model
 # ==================================
@@ -110,7 +112,7 @@ analysis_n.execute(
     likelihood_dist=Models.NORMAL,
     prior_dist=prior_normal,
     data=data_modulus,
-    n_mcmc=500,
+    n_mcmc=N_MCMC,
 )
 analysis_n.save_results()
 analysis_n.result
@@ -121,7 +123,7 @@ analysis_w.execute(
     likelihood_dist=Models.WEIBULL_MIN,
     prior_dist=prior_weibull,
     data=data_modulus,
-    n_mcmc=500,
+    n_mcmc=N_MCMC,
 )
 analysis_w.save_results()
 analysis_w.result
@@ -132,7 +134,7 @@ analysis_l.execute(
     likelihood_dist=Models.LOG_NORMAL,
     prior_dist=prior_lognormal,
     data=data_modulus,
-    n_mcmc=500,
+    n_mcmc=N_MCMC,
 )
 analysis_l.save_results()
 analysis_l.result
@@ -268,7 +270,7 @@ analysis_w_b.execute(
     likelihood_dist=Models.WEIBULL_MIN,
     prior_dist=prior_weibull_b,
     data=data_modulus,
-    n_mcmc=500,
+    n_mcmc=N_MCMC,
     frozen_variables=dict_frozen,
 )
 analysis_w_b.save_results()
@@ -279,7 +281,7 @@ analysis_l_b.execute(
     likelihood_dist=Models.LOG_NORMAL,
     prior_dist=prior_lognormal_b,
     data=data_modulus,
-    n_mcmc=500,
+    n_mcmc=N_MCMC,
     frozen_variables=dict_frozen,
 )
 analysis_l_b.save_results()

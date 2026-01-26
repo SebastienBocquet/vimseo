@@ -71,10 +71,10 @@ Source = "https://github.com/SebastienBocquet/vimseo"
 Issues = "https://github.com/SebastienBocquet/vimseo/issues"
 
 [project.scripts]
-cache_viewer = "vims.utilities.cache_viewer:main"
-cache_delete_entry = "vims.utilities.cache_manipulator:main"
-workflow_executor = "vims.workflow.workflow_executor:main"
-db_ui = "vims.storage_management.mlflow_ui_entry_point:main"
+cache_viewer = "vimseo.utilities.cache_viewer:main"
+cache_delete_entry = "vimseo.utilities.cache_manipulator:main"
+workflow_executor = "vimseo.workflow.workflow_executor:main"
+db_ui = "vimseo.storage_management.mlflow_ui_entry_point:main"
 
 [project.entry-points]
 gemseo_plugins = { vimseo = "vimseo" }

@@ -10,7 +10,7 @@
 # Decision-making support
 
 ## Introduction
-This chapter elaborates on how **VIMS** can be used to consolidate credibility indicators to support simulation-based
+This chapter elaborates on how **VIMSEO** can be used to consolidate credibility indicators to support simulation-based
 decision-making.
 
 

@@ -40,7 +40,7 @@ to the credibility and the decision-making process. Note that some components ma
 exist and can be re-used off-the-shelf (UQ methodologies, FE software).
 
 The present work focuses on an efficient software implementation of the VV&UQ process to
-support the above challenges. VIMS (Virtual testing Integration platform for decision-Making
+support the above challenges. VIMSEO (Virtual testing Integration platform for decision-Making
 Support) is a Python library (still under construction) developed from the translation of
 VV&UQ processes into software requirements. Some of them are listed hereafter:
 
@@ -56,7 +56,7 @@ VV&UQ processes into software requirements. Some of them are listed hereafter:
   also a key feature since it allows to seamlessly change models and analysis
   methodologies, and also use the verified models in other frameworks like MultiDisciplinary Optimisation (MDO) processes, without re-implementing the model.
 
-While generic, the VIMS platform is extended for applications to composite structures [3] in a
+While generic, the VIMSEO platform is extended for applications to composite structures [3] in a
 plug-in integrating Composite Damage Models (OPFM [@laurin2007opfm] and PG [@maimi2007pg]) at coupons and element
 levels. Several parametric FE models are integrated under a consistent model template,
 compatible with the MDO platform GEMSEO [@gallard2018gemseo]. Each FE model integrated in the platform is

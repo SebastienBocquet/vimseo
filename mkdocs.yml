@@ -1,7 +1,8 @@
 site_name: vimseo
-site_url: https://SebastienBocquet.github.io/vimseo
+site_url: "" #https://SebastienBocquet.github.io/vimseo
 repo_url: https://github.com/SebastienBocquet/vimseo
 repo_name: vimseo
+use_directory_urls: False
 
 theme:
   name: material
@@ -24,7 +25,7 @@ theme:
     repo: fontawesome/brands/gitlab
 
 plugins:
-- search
+#- search
 - markdown-exec
 - gen-files:
     scripts:
@@ -78,9 +79,6 @@ plugins:
     # Gitlab pages expects the docs in this directory.
     deploy_prefix: public
 - table-reader
-- exclude:
-    glob:
-      - reference/vims/tools/main_dashboard/pages/*
 - autorefs
 
 nav:
@@ -105,7 +103,7 @@ nav:
   - Run a study: how_to/run_a_study.md
   - Integrate new models: how_to/abaqus_model_integration.md
   - Define a Space of Parameters: how_to/parameter_space/index.md
-- API: reference/vims/
+- API: reference/vimseo/
 - Reference guides:
    - Available Models: generated/runnable_examples/01_models
    - Materials: references/materials.md

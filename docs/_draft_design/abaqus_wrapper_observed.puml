@@ -5,7 +5,7 @@
 
 abstract class gemseo.MDODiscipline
 
-package vims {
+package vimseo {
 
 abstract class Component {
     _workdir
@@ -86,7 +86,7 @@ class run.RunCraft {
 
 }
 
-RunAnalytic <|-- vims.run.RunBeam
+RunAnalytic <|-- vimseo.run.RunBeam
 
 
 
@@ -171,7 +171,7 @@ sub.SubroutineWrapper <|-- AbaqusSubroutineWrapperStandalone
 
 /'
 note top #pink
-<color:red> modele VIMS spécifique à une subroutine
+<color:red> modele VIMSEO spécifique à une subroutine
     => pas de généricité
         => materiau pas integrogeable
 end note
@@ -267,7 +267,7 @@ IntegratedModel -[dashed]- Database_exp
 
 
 
-package vims.problems {
+package vimseo.problems {
 class BendingTest.PostBendingTest_Cantilever
 PostAbaqusWrapper <|-- PostBendingTest_Cantilever
 class EOMS.PostEomsVUMAT_PST0
@@ -298,7 +298,7 @@ class BendingTest.ElasticBeamBernoulli #pink {
     execute()
     <color:red> (class to re-create ?)
 }
-vims.sub.Subroutine <|-- ElasticBeamBernoulli #pink
+vimseo.sub.Subroutine <|-- ElasticBeamBernoulli #pink
 
 }
 

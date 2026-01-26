@@ -40,7 +40,7 @@ def test_specific_settings(tmp_wd):
 
     Subclass MultiStart_Settings`` extends ``BaseOptimizerSettings``,
     thus the ``serialize_as_any`` option from Pydantic is mandatory,
-    which is defined in [vims][tools][base_settings][BaseSettings].
+    which is defined in [vimseo][tools][base_settings][BaseSettings].
     """
     space_tool_result = SpaceToolFileIO().read(
         CALIBRATION_INPUT_DATA / "experimental_space_beam_cantilever.json"

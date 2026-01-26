@@ -26,8 +26,8 @@ from matplotlib.image import imread
 from matplotlib.pyplot import imshow
 from numpy import asarray
 from numpy import atleast_1d
-from vims import EXAMPLE_RUNS_DIR_NAME
 
+from vimseo import EXAMPLE_RUNS_DIR_NAME
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.base_integrated_model import IntegratedModelSettings

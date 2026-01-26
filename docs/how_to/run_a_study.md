@@ -12,7 +12,7 @@
 ## Case of multiple layups
 
 When running a study involving simulations of several layups, one
-current limitation is that VIMS cannot process the
+current limitation is that VIMSEO cannot process the
 cache file if these layups have different lengths.
 The simulations are correctly stored in the cache but trying
 to convert the cache to a dataset or calling the executable `cache_viewer`
@@ -24,8 +24,8 @@ the layup, which segregates the caches by layups. Thus, at model
 instanciation, specify the `cache_file_path` like this:
 
 ```
-from vims.api import create_model
-from vims.utilities.database import encode
+from vimseo.api import create_model
+from vimseo.utilities.database import encode
 
 model_name = "OpfmCube"
 load_case = "PST"
@@ -41,8 +41,8 @@ individual simulations per layup. As a result, you may create the mode
 like this:
 
 ```
-from vims.api import create_model
-from vims.utilities.database import encode
+from vimseo.api import create_model
+from vimseo.utilities.database import encode
 
 model_name = "OpfmCube"
 load_case = "PST"
@@ -56,7 +56,7 @@ model = create_model(
 And create the tool like this:
 
 ```
-from vims.tools.sensitivity.sensitivity import SensitivityTool
+from vimseo.tools.sensitivity.sensitivity import SensitivityTool
 
 tool = SensitivityTool(root_directory=f"layup{layup}_{model_name}_{load_case}")
 ```
@@ -68,21 +68,21 @@ tool = SensitivityTool(root_directory=f"layup{layup}_{model_name}_{load_case}")
 !!! note
 
     The generic project `a_project` used as example in the documentation
-    should be replaced by `vims`, and `a_plugin` by the considered
-    VIMS plugin (e.g. `vims_composites`).
+    should be replaced by `vimseo`, and `a_plugin` by the considered
+    VIMSEO plugin (e.g. `vims_composites`).
 
-VIMS is first installed on CALMIP.
+VIMSEO is first installed on CALMIP.
 
 !!! note
 
     The below procedure explains a user-mode installation, which means that
-    VIMS sources are frozen in the environment.
+    VIMSEO sources are frozen in the environment.
     Modification of the sources do not modify the environment unless you
-    re-install. For developers, you can also install VIMS in
+    re-install. For developers, you can also install VIMSEO in
     [developer-mode](http://docuserguides.ipf7135.irt-aese.local/user_guide/developer)
 
 First load a Python environment (provided by conda on CALMIP), with a Python version
-compatible with VIMS:
+compatible with VIMSEO:
 
 ```
 module load python/3.11.3
@@ -93,7 +93,7 @@ The easiest way is to install with pip:
 and
 [install](http://docuserguides.ipf7135.irt-aese.local/user_guide/installation/#install-with-pip).
 
-If you work in a VIMS plugin, you also need to
+If you work in a VIMSEO plugin, you also need to
 [install](http://docuserguides.ipf7135.irt-aese.local/user_guide/installation/#install-a-plugin)
 it.
 
@@ -107,7 +107,7 @@ it.
 !!! note
 
     Running `module load python/3.11.3` is only necessary at the generation
-    of VIMS environment. Then, a `python` is available in
+    of VIMSEO environment. Then, a `python` is available in
     this environment, so activating it is sufficient to have `python`. Once
     the environment is installed, to run simulations, we recommend the
     following procedure:
@@ -115,9 +115,9 @@ it.
     - deactivate the `conda` base env which is automatically activated:
       `conda deactivate`
     - do not run `module load python/3.11.3` to avoid conflicts with
-      VIMS environment
+      VIMSEO environment
     - [activate](http://docuserguides.ipf7135.irt-aese.local/user_guide/installation.html#activate-the-environment)
-      VIMS environment
+      VIMSEO environment
 
 Then, load the Abaqus module, necessary to execute Abaqus CAE in
 interactive mode (used in the model pre and post processors):
@@ -172,12 +172,12 @@ Slurm job scheduler available on CALMIP, and in principle should not be
 modified. You can still override this default command by specifying a
 non-empty command in the configuration variable `CMD_ABAQUS_RUN`.
 
-You can test that VIMS can submit a job by executing
+You can test that VIMSEO can submit a job by executing
 the below script (to be copy-pasted in a `.py` file):
 
 ```
-from vims.api import create_model
-from vims.api import create_model, activate_logger, LOGGER_LEVELS
+from vimseo.api import create_model
+from vimseo.api import create_model, activate_logger, LOGGER_LEVELS
 
 activate_logger(level=LOGGER_LEVELS["info"])
 
@@ -189,7 +189,7 @@ model.execute()
 print(model.get_output_data())
 ```
 
-Another key point is to avoid that your VIMS Python
+Another key point is to avoid that your VIMSEO Python
 process being killed when your connexion to the cluster closes. There
 are two possibilities:
 
@@ -212,7 +212,7 @@ are two possibilities:
 
 ### Handling failed simulation {#handling_failed_simulations}
 
-VIMS Abaqus wrapper allows to be tolerant to some
+VIMSEO Abaqus wrapper allows to be tolerant to some
 errors occurring during a model execution. The tolerance to error can be
 controlled with argument `check_subprocess` at model creation:
 
@@ -239,7 +239,7 @@ controlled with argument `check_subprocess` at model creation:
 
 To help the user manage the cache (which can be seen here as a database
 of model executions), two executables are accessible from a terminal
-where the environment in which VIMS is installed is
+where the environment in which VIMSEO is installed is
 activated:
 
 - `cache_viewer`. You may enter `cache_viewer -h` to get some
@@ -336,7 +336,7 @@ Then, copy the below code snippet in a `.bat` file (for example
 ```
 @echo off
 setlocal
-set ABAQUS_DOCKER_IMAGE_NAME=registry-vims.pf.irt-saintexupery.com/abaqus:2022-int
+set ABAQUS_DOCKER_IMAGE_NAME=registry-vimseo.pf.irt-saintexupery.com/abaqus:2022-int
 set CURRENT_DIR=%cd%
 docker run --rm -v "%CURRENT_DIR%":"/workdir" --workdir "/workdir" %ABAQUS_DOCKER_IMAGE_NAME% abq2022 %*
 REM setx PATH "%PATH%;C:\Scripts"
@@ -346,7 +346,7 @@ endlocal
 
 #### First interactive test
 
-Before running VIMS Abaqus models, an interactive test in a terminal can
+Before running VIMSEO Abaqus models, an interactive test in a terminal can
 be done (git CMD or Powershell):
 
 - Add the above `.bat` file to the `PATH` (in Windows menu, select
@@ -358,8 +358,8 @@ be done (git CMD or Powershell):
   docker run --rm -v "%CURRENT_DIR%":"/workdir" --workdir "/workdir" -it %ABAQUS_DOCKER_IMAGE_NAME% abq2022 %*
   ```
 
-Then move to an existing VIMS job directory where an Abaqus was run, and
-run the Abaqus command line as specified by VIMS Abaqus wrapper. For
+Then move to an existing VIMSEO job directory where an Abaqus was run, and
+run the Abaqus command line as specified by VIMSEO Abaqus wrapper. For
 instance, to run the pre-processing and run-processing for a model with
 subroutines:
 
@@ -368,9 +368,9 @@ abq_2022_docker cae noGUI={{abaqus_script}}
 abq_2022_docker interactive job={{job_name}} cpus={{n_cpus}} user=index_subroutines.f
 ```
 
-#### VIMS model execution
+#### VIMSEO model execution
 
-To run a VIMS Abaqus model on Windows, use the following VIMS configuration:
+To run a VIMSEO Abaqus model on Windows, use the following VIMSEO configuration:
 
 ```
 "CMD_ABAQUS_CAE": "C:/Users/Public/docker_abaqus/abq_2022_docker.bat cae noGUI={{abaqus_script}}",

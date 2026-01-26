@@ -14,12 +14,12 @@ components:
 
 ![Components_of_a_model](../images/model_components.png){ align=center }
 
-In VIMS, models derived from
-`vims.core.base_integrated_model.PreRunPostModel`{.interpreted-text role="class"} are linking
-components deriving from a generic class `vims.core.base_component.BaseComponent`{.interpreted-text role="class"}.
+In VIMSEO, models derived from
+`vimseo.core.base_integrated_model.PreRunPostModel`{.interpreted-text role="class"} are linking
+components deriving from a generic class `vimseo.core.base_component.BaseComponent`{.interpreted-text role="class"}.
 Three kinds of components are already specialised to play
 the role of model pre-processor, run and post-processor, respectively
-classes `vims.core.components.pre.PreProcessor`{.interpreted-text role="class"},
+classes `vimseo.core.components.pre.PreProcessor`{.interpreted-text role="class"},
 `~.ModelRun`{.interpreted-text role="class"} and
 `~.PostProcessor`{.interpreted-text role="class"}.
 

@@ -23,7 +23,7 @@ def test_workflow_from_json(tmp_wd):
     """Check that a workflow can be instantiated from a json file."""
     # TODO Sebastien review faulty test : should you add error_code and cpu_time to
     #  the workflow described in
-    #  vims/src/vims/workflow/sebastien.bocquet_2024-10-07_T08-31-01_Workflow.json
+    #  vimseo/src/vimseo/workflow/sebastien.bocquet_2024-10-07_T08-31-01_Workflow.json
 
     workflow = Workflow.from_json_path(
         WORKFLOW_LIB_DIR / "space__model__sensitivity_workflow.json"

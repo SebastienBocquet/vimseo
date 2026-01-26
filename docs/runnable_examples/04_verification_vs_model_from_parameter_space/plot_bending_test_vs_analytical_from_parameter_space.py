@@ -18,13 +18,11 @@ from __future__ import annotations
 import logging
 
 from gemseo.utils.directory_creator import DirectoryNamingMethod
-from numpy import atleast_1d
-from vims import EXAMPLE_RUNS_DIR_NAME
 
+from vimseo import EXAMPLE_RUNS_DIR_NAME
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.base_integrated_model import IntegratedModelSettings
-from vimseo.storage_management.base_storage_manager import PersistencyPolicy
 from vimseo.tools.space.space_tool import SpaceTool
 from vimseo.tools.verification.verification_vs_model_from_parameter_space import (
     CodeVerificationAgainstModelFromParameterSpace,
@@ -45,14 +43,12 @@ space_tool.execute(
     space_builder_name="FromMinAndMax",
     minimum_values={
         "length": 200.0,
-        "width": 5.0,
         "height": 5.0,
         "imposed_dplt": 0.0,
         "relative_dplt_location": 0.1,
     },
     maximum_values={
         "length": 1000.0,
-        "width": 50.0,
         "height": 50.0,
         "imposed_dplt": 20.0,
         "relative_dplt_location": 1.0,
@@ -63,7 +59,7 @@ print(space_tool.parameter_space)
 
 # %%
 # Then let's create the model to verify:
-model_name = "BendingTestFem"
+model_name = "BendingTestAnalytical"
 load_case = "Cantilever"
 model = create_model(
     model_name,
@@ -71,10 +67,9 @@ model = create_model(
     model_options=IntegratedModelSettings(
         directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/verification_vs_model",
         directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/verification_vs_model",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/verification_vs_model/{model_name}_{load_case}_cache.hdf",
     ),
 )
-model.default_input_data["element_size"] = atleast_1d(4.32)
+model.cache = None
 
 # %%
 # And the reference model:
@@ -82,8 +77,8 @@ model_2 = create_model(
     "BendingTestAnalytical",
     load_case,
     model_options=IntegratedModelSettings(
-        directory_archive_persistency=PersistencyPolicy.DELETE_ALWAYS,
-        directory_scratch_persistency=PersistencyPolicy.DELETE_ALWAYS,
+        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/verification_vs_model_2nd_model",
+        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/verification_vs_model_2nd_model",
     ),
 )
 model_2.cache = None

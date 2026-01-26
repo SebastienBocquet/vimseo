@@ -2,7 +2,7 @@
 [run]
 branch = True
 source_pkgs =
-    vims
+    vimseo
 omit = test_*
 
 [report]

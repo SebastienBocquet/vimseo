@@ -40,7 +40,7 @@ def c_load_vectors_normed(load: Load):
     strain_component = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     stress_component = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    # VIMS vector ordering = Abaqus implicit convention
+    # VIMSEO vector ordering = Abaqus implicit convention
     map_load_dir_2_vector_index = {
         LoadDirectionLiteral.LL: 0,
         LoadDirectionLiteral.TT: 1,
@@ -74,7 +74,7 @@ def c_stress_vector_normed(load: Load):
 
 
 def c_index_vector(load: Load):
-    # VIMS vector ordering = Abaqus implicit convention
+    # VIMSEO vector ordering = Abaqus implicit convention
     return DIR_MAP[load.direction]
 
 

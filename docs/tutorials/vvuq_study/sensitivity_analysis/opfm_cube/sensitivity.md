@@ -20,7 +20,7 @@
 ## Results for OpfmCube
 
 The results for the OpfmCube model are presented based on the sensitivity viewer dashboard,
-which can be obtained by typing ``dashboard_sensitivity`` in a console where VIMS is installed:
+which can be obtained by typing ``dashboard_sensitivity`` in a console where VIMSEO is installed:
 
 ## OpfmCube PST
 

@@ -18,8 +18,8 @@ import logging
 
 from gemseo_calibration.calibrator import CalibrationMetricSettings
 from numpy import atleast_1d
-from vims import EXAMPLE_RUNS_DIR_NAME
 
+from vimseo import EXAMPLE_RUNS_DIR_NAME
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.base_integrated_model import IntegratedModelSettings

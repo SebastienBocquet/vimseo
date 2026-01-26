@@ -26,7 +26,7 @@ Vvuq blabla, crédibilité des modèles.
 Besoin framework, plateforme, collaboration
 Besoin Description commune d'un workflow, qui est la déclinaison d'un scenario vvuq en m&t.
 
-Proposition de vims, pour offrir cette capacité de définition de workflow et capitaliser les capacités de modélisation (a la fois modèle lourd et surrogate) et d'analyse mathématiques (incertitude, uq).
+Proposition de vimseo, pour offrir cette capacité de définition de workflow et capitaliser les capacités de modélisation (a la fois modèle lourd et surrogate) et d'analyse mathématiques (incertitude, uq).
 
 Déroulement d'un scénario type, mettant en œuvre des approches innovantes sur la calibration, estimation de quantité, validation.
 Description en parallèle des composants impliqués dans l'étape de workflow, et des méthodes et modèles en jeu, et des résultats obtenus.

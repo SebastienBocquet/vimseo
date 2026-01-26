@@ -21,8 +21,9 @@ import logging
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import field_validator
 
-# from vimseo.storage_management import ArchiveManager
+from vimseo.job_executor.job_executor_factory import JobExecutorFactory
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,3 +51,14 @@ class Solver(BaseModel):
     command_run: str = Field(default="")
     command_pre: str = Field(default="")
     command_post: str = Field(default="")
+
+    @field_validator("job_executor")
+    @classmethod
+    def __validate_job_executor(cls, v: str | None) -> str | None:
+        if v and v not in JobExecutorFactory().class_names:
+            msg = (
+                f"{v} does not exist. Available job executors "
+                f"{JobExecutorFactory().class_names}."
+            )
+            raise ValueError(msg)
+        return v

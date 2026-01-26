@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
-EXCLUDED_MODELS = ["AbaqusErrorHandling", "CraftRveUnitLoad"]
+EXCLUDED_MODELS = []
 
 
 def generate_model_examples(
@@ -46,7 +46,7 @@ def generate_model_examples(
     Based on a template, generate one example in the documentation per model and load
     case, to provide an overview of each.
     """
-    vims_root = Path(pkgutil.get_loader("vims").get_filename()).parent
+    vims_root = Path(pkgutil.get_loader("vimseo").get_filename()).parent
     pkg_root = Path(pkgutil.get_loader(pkg_name).get_filename()).parent
 
     model_names = [
@@ -84,5 +84,5 @@ def generate_model_examples(
 if __name__ == "__main__":
     # To be executed from here.
     generate_model_examples(
-        "vims", "../../docs/how_to/01_model_gallery", EXCLUDED_MODELS
+        "vimseo", "../../docs/how_to/01_model_gallery", EXCLUDED_MODELS
     )

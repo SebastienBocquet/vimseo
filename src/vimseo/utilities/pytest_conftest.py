@@ -16,7 +16,7 @@
 """Pytest helpers.
 
 This file has been copied from GEMSEO develop (02/11/2022). It was not available in
-GEMSEO 3.2.1. If vims becomes compatible with more recent GEMSEO, you can import the
+GEMSEO 3.2.1. If vimseo becomes compatible with more recent GEMSEO, you can import the
 gemseo.utils.pytest_conftest and delete this file.
 """
 

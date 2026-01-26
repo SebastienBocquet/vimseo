@@ -9,7 +9,7 @@
 
 ## Abaqus wrapper {#abaqus_wrapper}
 
-VIMS proposes a wrapper dedicated to Abaqus models. It
+VIMSEO proposes a wrapper dedicated to Abaqus models. It
 is built on the following mechanisms:
 
 The pre-processor:
@@ -17,7 +17,7 @@ The pre-processor:
   - writes a file called `job_arguments.json` in the job directory
     containing the input data for the pre-processing script.
   - executes a script file with Abaqus CAE. The script file must be
-    contained in the VIMS package, typically under
+    contained in the VIMSEO package, typically under
     the `lib_vims` directory. (or plugin package in case of a plugin).
     The path to the script file is defined by: - The name of the
     package (class attribute `_PACKAGE_NAME`) - the path to the
@@ -43,7 +43,7 @@ The post-processor:
     !!! note
 
         Monitoring variables (see class attribute MONITORING_VARIABLES of
-        `vims.core.base_integratde_model.BaseIntegratedModel`{.interpreted-text role="class"}) are
+        `vimseo.core.base_integratde_model.BaseIntegratedModel`{.interpreted-text role="class"}) are
         automatically added to the output grammar of the post-processor
         and model. It is the responsability of the post-processor to set
         the value of `ERROR_CODE` in the output data.

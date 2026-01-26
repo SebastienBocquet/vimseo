@@ -19,11 +19,11 @@
 
 ## Set up a parameter space
 
-A space of uncertain parameters is an input to several tools in VIMS:
+A space of uncertain parameters is an input to several tools in VIMSEO:
 for instance a sensitivity analysis, a DOE, a model to model code verification.
 Setting up a parameter space with a large number of variables requires to
 specify a large number of options.
-In VIMS, the tool in charge of generating a parameter space
+In VIMSEO, the tool in charge of generating a parameter space
 is the so called ``SpaceTool``.
 The variables are in general treated by groups.
 For example, the first group has a normal distribution
@@ -50,9 +50,9 @@ with respect to the model bounds is very useful.
 Indeed, the distributions can be truncated by the bounds and, for example,
 a triangular distribution may have a shape very different from the expected one.
 
-As a result, VIMS has a dedicated dashboard to set up a parameter space.
+As a result, VIMSEO has a dedicated dashboard to set up a parameter space.
 The dashboard can be displayed by typing ``dashboard_space`` in a console
-where VIMS is installed.
+where VIMSEO is installed.
 The following inputs can be used to initialize the parameter space:
   - a model
   - a ``SpaceTool`` result
@@ -65,7 +65,7 @@ considered to build the parameter space.
 
 ![](input_data.PNG)
 
-For VIMS beam models, the default material defines probability distributions
+For VIMSEO beam models, the default material defines probability distributions
 for the
 
 ![](beam_default_material.PNG)

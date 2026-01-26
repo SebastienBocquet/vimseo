@@ -17,29 +17,32 @@ from __future__ import annotations
 
 from os import environ
 
+import pytest
+from pydantic import ValidationError
+
 from vimseo.config.global_configuration import VimseoSettings
 from vimseo.config.global_configuration import _configuration as config
 
 
 def test_config_from_env_var():
     """Check that configuration can be set from environment variables."""
-    job_executor = config.solver["dummy"].job_executor
+    job_executor = config.solvers["dummy"].job_executor
     assert not job_executor
-    environ["VIMSEO_SOLVER__DUMMY__JOB_EXECUTOR"] = "BaseInteractiveExecutor"
+    environ["VIMSEO_SOLVERS__DUMMY__JOB_EXECUTOR"] = "BaseInteractiveExecutor"
     config_ = VimseoSettings()
     assert (
-        config_.model_dump()["solver"]["dummy"]["job_executor"]
+        config_.model_dump()["solvers"]["dummy"]["job_executor"]
         == "BaseInteractiveExecutor"
     )
 
 
 def test_config_set_attr():
     """Check that configuration can be set from attribute assignment."""
-    job_executor = config.solver["dummy"].job_executor
+    job_executor = config.solvers["dummy"].job_executor
     assert not job_executor
-    config.solver["dummy"].job_executor = "BaseInteractiveExecutor"
+    config.solvers["dummy"].job_executor = "BaseInteractiveExecutor"
     assert (
-        config.model_dump()["solver"]["dummy"]["job_executor"]
+        config.model_dump()["solvers"]["dummy"]["job_executor"]
         == "BaseInteractiveExecutor"
     )
 
@@ -47,8 +50,18 @@ def test_config_set_attr():
 def test_config_with_config_file(tmp_wd):
     """Check that configuration can be set from a .env file."""
     with (tmp_wd / ".env").open("w") as f:
-        f.write('VIMSEO_SOLVER__DUMMY2__JOB_EXECUTOR="BaseInteractiveExecutor"\n')
+        f.write('VIMSEO_SOLVERS__DUMMY2__JOB_EXECUTOR="BaseInteractiveExecutor"\n')
 
     config = VimseoSettings()
-    assert {"dummy", "dummy2"} == set(config.solver.keys())
-    assert config.solver["dummy2"].job_executor == "BaseInteractiveExecutor"
+    assert {"dummy", "dummy2"} == set(config.solvers.keys())
+    assert config.solvers["dummy2"].job_executor == "BaseInteractiveExecutor"
+
+
+def test_config_bad_job_executor(tmp_wd):
+    """Check that configuration raises error for bad job executor."""
+    with (tmp_wd / ".env").open("w") as f:
+        f.write('VIMSEO_SOLVERS__DUMMY2__JOB_EXECUTOR="BadExecutor"\n')
+
+    with pytest.raises(ValidationError) as excinfo:
+        VimseoSettings()
+    assert "Value error, BadExecutor does not exist." in str(excinfo.value)

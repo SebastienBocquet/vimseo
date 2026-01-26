@@ -83,7 +83,7 @@ due to type A and B errors
 !!! note
 
     It does not mean that the model itself is stochastic.
-    All models considered in VIMS have a deterministic form
+    All models considered in VIMSEO have a deterministic form
     (same inputs give same outputs).
     This document considers deterministic model form.
 
@@ -302,7 +302,7 @@ geometry-adaptive automatic mesh generation is performed, and that this
 mesh generation strategy is part of the travelling model.
 The underlying hypothesis is that the mesh quality is uniform over the validation and application
 spaces.
-This approach is the one adopted for the models integrated in the ``vims-composites`` plug-in.
+This approach is the one adopted for the models integrated in the ``vimseo-composites`` plug-in.
 
 It seems attractive to use the fact that the travelling model
 input and output spaces remain the same during the whole validation activity
@@ -586,7 +586,7 @@ strong model substantiation.
 
 !!! note
 
-    VIMS ``StochasticValidation`` takes into account the input uncertainties,
+    VIMSEO ``StochasticValidation`` takes into account the input uncertainties,
     so uncertainty intervals computed from
     model outputs from the ``StochasticValidation`` contain the sum of the
     model-intrinsic uncertainties and the uncertainties relative to the strong model layer
@@ -596,7 +596,7 @@ Assuming that the total experimental uncertainty is estimated,
 one interesting analysis that can be done at each nominal validation point conditions
 is to propagate only the model-intrinsic uncertainties (so the uncertainty of the
 travelling model parameters).
-In the frame of ``vims-composites``, it could be done through an RVE
+In the frame of ``vimseo-composites``, it could be done through an RVE
 (Representative Volume Element) model.
 It would allow to compare the total and model-intrinsic uncertainties.
 As previously mentioned, if the simulated uncertainty mostly come
@@ -794,7 +794,7 @@ scores could be associated to points 1. and 2.
 This task remains very prospective.
 
 
-## Possible evolutions of VIMS regarding the Real Space methodology
+## Possible evolutions of VIMSEO regarding the Real Space methodology
 
 Gather and properly store all possible information about the experimental facility,
 and specific tests apparatus for each validation data.
@@ -880,7 +880,7 @@ placing at centre stage uncertainty quantification.
 
 This framework can be implemented in practice.
 The computation of the uncertainty intervals can be done with existing
-VIMS tools. It requires to define ad-hoc workflows involving
+VIMSEO tools. It requires to define ad-hoc workflows involving
 solution verification and additional uncertainty propagation
 within the validation. Once this workflow is computed,
 the uncertainty interval comparisons can be seen as implementing a

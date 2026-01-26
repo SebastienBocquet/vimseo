@@ -19,9 +19,8 @@ import logging
 
 from gemseo.datasets.io_dataset import IODataset
 from gemseo.utils.directory_creator import DirectoryNamingMethod
-from numpy import atleast_1d
-from vims import EXAMPLE_RUNS_DIR_NAME
 
+from vimseo import EXAMPLE_RUNS_DIR_NAME
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.base_integrated_model import IntegratedModelSettings
@@ -33,7 +32,7 @@ activate_logger(level=logging.INFO)
 
 # %%
 # Then we create the model to verify:
-model_name = "BendingTestFem"
+model_name = "BendingTestAnalytical"
 load_case = "Cantilever"
 model = create_model(
     model_name,
@@ -44,7 +43,6 @@ model = create_model(
         cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/verification_vs_data/{model_name}_{load_case}_cache.hdf",
     ),
 )
-model.default_input_data["element_size"] = atleast_1d(4.32)
 
 # %%
 # We also need a reference dataset.

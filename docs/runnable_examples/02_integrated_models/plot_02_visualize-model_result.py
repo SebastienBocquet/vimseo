@@ -30,8 +30,8 @@ from gemseo.post.dataset.scatter_plot_matrix import ScatterMatrix
 from numpy import atleast_1d
 from pandas import DataFrame
 from pandas import concat
-from vims import EXAMPLE_RUNS_DIR_NAME
 
+from vimseo import EXAMPLE_RUNS_DIR_NAME
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.base_integrated_model import IntegratedModelSettings

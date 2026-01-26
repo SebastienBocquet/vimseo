@@ -31,7 +31,7 @@ import mkdocs_gen_files
 
 nav = mkdocs_gen_files.Nav()
 
-PATH_TO_SRC = "src/vims"
+PATH_TO_SRC = "src/vimseo"
 for path in sorted(Path(PATH_TO_SRC).rglob("*.py")):
     module_path = path.relative_to("src").with_suffix("")
     doc_path = path.relative_to("src").with_suffix(".md")

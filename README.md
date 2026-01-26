@@ -8,20 +8,20 @@
 -->
 
 <div align="center">
-<a href="https://forge-is.pf.irt-saintexupery.com/vims/vims/">
+<a href="https://forge-is.pf.irt-saintexupery.com/vimseo/vimseo/">
 <img width="1800" alt="" src="/docs/images/analysis_workflow_and_credibility.png" />
 </a>
 
 <div align="center">
 <h3>
     <a href="http://docvims.ipf7135.irt-aese.local/">documentation</a> |
-    <a href="https://forge-is.pf.irt-saintexupery.com/vims/vims/-/tree/mkdocs/docs/runnable_examples">examples</a>
+    <a href="https://forge-is.pf.irt-saintexupery.com/vimseo/vimseo/-/tree/mkdocs/docs/runnable_examples">examples</a>
 </h3>
 </div>
 </div>
 
 <div align="center">
-    <strong>VIMS is a framework for the demonstration of simulation credibility, enabling Qualification/Certification by Analysis supported by tests</strong><br>
+    <strong>VIMSEO is a framework for the demonstration of simulation credibility, enabling Qualification/Certification by Analysis supported by tests</strong><br>
     Integrate your models and build analysis workflows to assess credibility of simulations to support critical decision-making.
 </div>
 
@@ -30,7 +30,7 @@
 [![PyPI](https://img.shields.io/pypi/v/vimseo)](https://pypi.org/project/vimseo/)
 [![Codecov branch](https://img.shields.io/codecov/c/gitlab/gemseo:dev/vimseo/develop)](https://app.codecov.io/gl/gemseo:dev/vimseo)
 
-## Why VIMS?
+## Why VIMSEO?
 
 Making decisions based on simulations is a key enabler for reducing product development lead-time and costs. However,
 _Simulation-driven product development_ or [_Qualification/Certification by analysis_](https://ntrs.nasa.gov/api/citations/20210015404/downloads/NASA-CR-20210015404%20updated.pdf)
@@ -46,7 +46,7 @@ of suitable organisation, methodologies, and infrastructure. Experts from indust
 decision makers should share knowledge, capabilities, information and evidences to build simulations credibility. They
 need an operational and extensible VV&UQ framework.
 
-This is where **VIMS** comes into play.
+This is where **VIMSEO** comes into play.
 
 ## Installation
 
@@ -54,24 +54,24 @@ Install the latest version with `pip install vimseo`.
 
 See [pip](https://pip.pypa.io/en/stable/getting-started/) for more information.
 
-## What is VIMS?
+## What is VIMSEO?
 
 > A **Virtual Testing Framework** to provide the foundational architecture and toolbox needed to integrate modelling
 > and simulation capabilities, set up traceable analysis workflows and provide tailored visualisation to support
 > decision-making.
 
-**VIMS** is a software library that supports the implementation of a Verification, Validation and Uncertainty
+**VIMSEO** is a software library that supports the implementation of a Verification, Validation and Uncertainty
 Quantification (VV&UQ) process for the credibility assessment of Modelling and Simulation (M&S) capabilities.
 By providing a framework for the integration of M&S capabilities, a toolbox for performing VV&UQ analyses, a workflow
 engine to define and execute custom analysis processes, as well as dashboards to visualise and share results with
-stakeholders, **VIMS** is the perfect companion to set up simulation-driven decision-making.
+stakeholders, **VIMSEO** is the perfect companion to set up simulation-driven decision-making.
 
-**VIMS** provides the following building blocks:
+**VIMSEO** provides the following building blocks:
 
 - A wrapper for model integration. It is based on the Multi Disciplinary Optimisation (MDO) library
-[GEMSEO](https://gemseo.readthedocs.io/en/stable/index.html). Since **VIMS** models derive
+[GEMSEO](https://gemseo.readthedocs.io/en/stable/index.html). Since **VIMSEO** models derive
 from GEMSEO Disciplines, they can be readily use in MDO scenarios.
-**VIMS** model wrapper is particularly relevant for models based on Finite-Element Analysis (FEA)
+**VIMSEO** model wrapper is particularly relevant for models based on Finite-Element Analysis (FEA)
 and in general any model using mesh discretisation. A wrapper specific to models based on
 *Abaqus* FEA software is available.
 
@@ -96,7 +96,7 @@ Using this framework ensures a consistent way of building and capitalising M&S a
 methodologies. It avoids (re)developing generic capabilities, in particular traceability and storage of
 simulation and analysis data which directly contributes to increasing the credibility of simulations.
 
-**VIMS** helps the model developers and analysis experts integrate VV&UQ-ready capabilities, enabling them to set up and
+**VIMSEO** helps the model developers and analysis experts integrate VV&UQ-ready capabilities, enabling them to set up and
 run tailored VV&UQ processes to assess their credibility.
 
 ## Use Cases
@@ -117,7 +117,7 @@ based on a set of reference data capturing input uncertainties
 
 ### Model exploration
 
-**VIMS** integrates (among others) a model that represents a straight beam subjected
+**VIMSEO** integrates (among others) a model that represents a straight beam subjected
 to different bending load cases and boundary conditions. It is based on Bernoulli hypothesis
 and a linear isotropic material.
 
@@ -133,11 +133,11 @@ is sampled on 20 points with a Latin Hypercube.
 ```
 from __future__ import annotations
 
-from vims.api import create_model
-from vims.core.base_integrated_model import IntegratedModelSettings
-from vims.tools.doe.doe import DOEInputs
-from vims.tools.doe.doe import DOESettings
-from vims.tools.doe.doe import DOETool
+from vimseo.api import create_model
+from vimseo.core.base_integrated_model import IntegratedModelSettings
+from vimseo.tools.doe.doe import DOEInputs
+from vimseo.tools.doe.doe import DOESettings
+from vimseo.tools.doe.doe import DOETool
 
 model_name = "BendingTestAnalytical"
 load_case = "Cantilever"
@@ -251,13 +251,13 @@ information on the calibrated quantities and versatile calibration metrics takin
   It allows to define vector parameter space with a fine control of their parametric distribution.
 - **Dashboards:** to define parameter space and workflows, and query and explore analysis results.
 
-## Using **VIMS**
+## Using **VIMSEO**
 
 - **[References](http://docvims.ipf7135.irt-aese.local/generated/runnable_examples/01_models/)
-and [API](http://docvims.ipf7135.irt-aese.local/reference/vims/)**: get the description and definition of concepts and API.
+and [API](http://docvims.ipf7135.irt-aese.local/reference/vimseo/)**: get the description and definition of concepts and API.
 - **[How-to](http://docvims.ipf7135.irt-aese.local/generated/runnable_examples/02_integrated_models/)**: solve practical problems by exploring runnable examples and how-to.
 
-## Learning **VIMS**
+## Learning **VIMSEO**
 
 - **[Tutorials](http://docvims.ipf7135.irt-aese.local/tutorials/vvuq_study/code_verification/)
 and [Explanations](http://docvims.ipf7135.irt-aese.local/explanations/asme2025/abstract/)**:

@@ -8,11 +8,11 @@
 -->
 
 The developers thank all the open source libraries making
-**vims** possible.
+**vimseo** possible.
 
 # External Dependencies
 
-**vims** depends on software with compatible
+**vimseo** depends on software with compatible
 licenses that are listed below.
 
 [GEMSEO](http://gemseo.org/)
@@ -25,7 +25,7 @@ licenses that are listed below.
 
 # External application
 
-Some external applications are used by **vims**,
+Some external applications are used by **vimseo**,
 but not linked with the application,
 for documentation generation,
 training or example purposes.

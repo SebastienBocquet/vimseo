@@ -15,8 +15,7 @@ Overview of the MockModelPersistent for load case LC1
 
 from __future__ import annotations
 
-from vims import EXAMPLE_RUNS_DIR_NAME
-
+from vimseo import EXAMPLE_RUNS_DIR_NAME
 from vimseo.api import create_model
 from vimseo.core.base_integrated_model import IntegratedModelSettings
 

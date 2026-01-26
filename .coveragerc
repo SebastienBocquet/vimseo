@@ -2,8 +2,8 @@
 plugins = covdefaults
 source = vimseo
 omit =
-  */vims/lib_vims/*
-  */vims/utilities/sandbox/*
+  */vimseo/lib_vimseo/*
+  */vimseo/utilities/sandbox/*
 
 [report]
 # Override covdefaults.

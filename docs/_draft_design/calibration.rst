@@ -51,7 +51,7 @@ Calibration architecture
 ..
 .. .. uml::
 ..
-..   package "VIMS core" {
+..   package "VIMSEO core" {
 ..     [Material model integration]
 ..     [Analysis pipeline integration]
 ..     [Application requirement integration]

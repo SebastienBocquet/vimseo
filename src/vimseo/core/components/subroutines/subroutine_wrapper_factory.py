@@ -25,7 +25,7 @@ class SubroutineWrapperFactory(BaseFactory):
     class."""
 
     _CLASS = SubroutineWrapper
-    _PACKAGE_NAMES = ("vims.core", "vims.wrapper", "vims.problems")
+    _PACKAGE_NAMES = ("vimseo.core", "vimseo.wrapper", "vimseo.problems")
 
     def create(
         self,

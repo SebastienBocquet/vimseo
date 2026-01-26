@@ -11,7 +11,7 @@ abstract class gemseo.MDODiscipline
 
 '==================================================
 
-package vims {
+package vimseo {
 
 
 class core.components.DataProcessorComponent {

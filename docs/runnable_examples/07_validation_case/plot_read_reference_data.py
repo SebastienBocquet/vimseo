@@ -25,7 +25,7 @@ activate_logger()
 
 # %%
 # Loading experimental data is necessary for model validation or calibration.
-# In general, the raw experimental data is not directly compatible with VIMS tools.
+# In general, the raw experimental data is not directly compatible with VIMSEO tools.
 # In addition, at least two types of experimental data can be considered:
 #   - a collection of validation points defined by its nominal values.
 #   - a collection of validation points with repeats: the experiment
@@ -33,7 +33,7 @@ activate_logger()
 #     some variability in the material properties and some uncertainties in the
 #     experimental set-up. Some input and output variables are measured for each repeat.
 #
-# The conversion from raw to VIMS-compatible data should consider the following
+# The conversion from raw to VIMSEO-compatible data should consider the following
 # requirements:
 #   - conversion of data with repeats to nominal values, by considering the mean
 #     value of the measured data for each validation point.
@@ -58,7 +58,7 @@ read_csv(raw_file, delimiter=SEP)
 # computed as the mean value of all the repeats for each validation point.
 # In case the raw data names do not match the model variable names,
 # a renaming can be done with ``name_remapping``.
-# Finally, most VIMS tools use a GEMSEO Dataset as input.
+# Finally, most VIMSEO tools use a GEMSEO Dataset as input.
 # GEMSEO Datasets are multi-index column Pandas DataFrame, allowing to properly
 # handle data by groups and by component (useful to handle vectors).
 # Here, the nominal values are returned as a GEMSEO Dataset.

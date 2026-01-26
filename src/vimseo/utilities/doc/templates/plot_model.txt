@@ -6,10 +6,10 @@
 """
 from __future__ import annotations
 
-from vims import EXAMPLE_RUNS_DIR_NAME
-from vims.api import create_model
-from vims.core.base_integrated_model import BaseModelOptions
-from vims.core.base_integrated_model import PersistencyPolicy
+from vimseo import EXAMPLE_RUNS_DIR_NAME
+from vimseo.api import create_model
+from vimseo.core.base_integrated_model import BaseModelOptions
+from vimseo.core.base_integrated_model import PersistencyPolicy
 
 # %%
 # First, let's instantiate the model for a given load case:

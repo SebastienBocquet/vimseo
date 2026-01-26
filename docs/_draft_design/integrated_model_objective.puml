@@ -9,7 +9,7 @@ class MDOChain
 
 }
 
-package vims {
+package vimseo {
 
 
 abstract class BaseIntegratedModel {

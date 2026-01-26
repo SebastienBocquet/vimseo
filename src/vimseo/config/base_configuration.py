@@ -12,26 +12,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-from docstring_inheritance import GoogleDocstringInheritanceMeta
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from pydantic_settings import BaseSettings
 
 
-@dataclass
-class LibraryFile(metaclass=GoogleDocstringInheritanceMeta):
-    """A file contained in the library (e.g. lib_vims)."""
-
-    package_name: Path | str = "vimseo"
-    """The name of the package containing the library.
-
-    The library naming convention is "lib_{package_name}".
-    """
-
-    file_path: Path | str = ""
-    """The path to the file relative to the library."""
+class BaseConfiguration(
+    BaseSettings,
+):  # noqa: N801
+    """Base configuration class for Vimseo."""

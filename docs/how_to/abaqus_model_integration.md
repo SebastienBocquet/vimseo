@@ -18,20 +18,20 @@ Consider a user that has developed an Abaqus model, containing:
 - a post-processing CAE python script that reads the ODB file and
   processes some final output data.
 
-Then the integration of such a model in VIMS can be
+Then the integration of such a model in VIMSEO can be
 done as following. Note that the same procedure applies for plugins,
-typically `vims-composites`
+typically `vimseo-composites`
 
 ### Abaqus CAE scripts
 
-Create a new directory in `vims.lib_vims.new_model`. Add an empty
+Create a new directory in `vimseo.lib_vims.new_model`. Add an empty
 `__init__.py` file in this directory. Copy your Abaqus scripts in this
 directory, and rename the files into: - script_preproc_new_model.py -
 script_postproc_new_model.py
 
 #### Pre-processing
 
-VIMS Abaqus wrapper will write a `json` file containing
+VIMSEO Abaqus wrapper will write a `json` file containing
 the values of `i1` and `i2` to be used in your pre-processing script.
 Thus, at the beginning of your pre-processing script, you may paste the
 following lines:
@@ -58,7 +58,7 @@ Then `i1` can be used as an input variable in your original script.
 In principle, your post-processing script already loads Abaqus ODB data
 and processes it to extract useful Quantities of Interest. Then, these
 values should be given to the post-processor of Abaqus
-VIMS wrapper. A utility is dedicated to this task, and
+VIMSEO wrapper. A utility is dedicated to this task, and
 can be used by pasting the following lines at the end of your script:
 
 ```
@@ -71,9 +71,9 @@ dico_vims_output['o2'] = ...
 utils.write_json_dict(utils.OUT_FILE, dico_vims_output)
 ```
 
-### VIMS Python part
+### VIMSEO Python part
 
-First, new classes must be added in VIMS. The easiest
+First, new classes must be added in VIMSEO. The easiest
 way is to start by duplicating an existing model. The EOMS UMAT model is
 interesting because it is a simple model with a subroutine.
 
@@ -83,23 +83,23 @@ consider that the load case is associated to a specific domain, which
 allows to avoid clashes in load case names. We assume the domain is
 called `NewDomain`.
 
-Create a new directory in `vims/problems`, for instance
-`vims/problems/new_model` Add empty files: - \_\_init\_\_.py -
+Create a new directory in `vimseo/problems`, for instance
+`vimseo/problems/new_model` Add empty files: - \_\_init\_\_.py -
 pre_new_model.py - post_new_model.py - new_model.py in this directory.
 
-Also create an empty file `new_domain.py` in `vims/problems/load_cases`.
+Also create an empty file `new_domain.py` in `vimseo/problems/load_cases`.
 
 Then:
 
 - paste the following code in
-  `vims/problems/load_cases/new_domain.py`:
+  `vimseo/problems/load_cases/new_domain.py`:
 
   ```
   from __future__ import annotations
 
   from dataclasses import dataclass
 
-  from vims.core.load_case import LoadCase
+  from vimseo.core.load_case import LoadCase
 
 
   @dataclass
@@ -112,8 +112,8 @@ Then:
   ```
   from __future__ import annotations
   from numpy import array
-  from vims.wrapper.abaqus.pre_abaqus_wrapper import PreAbaqusWrapper
-  from vims.wrapper.abaqus.utilities import LibraryFile
+  from vimseo.wrapper.abaqus.pre_abaqus_wrapper import PreAbaqusWrapper
+  from vimseo.wrapper.abaqus.utilities import LibraryFile
 
 
   class PreNewModel_LC1(PreAbaqusWrapper):
@@ -138,8 +138,8 @@ Then:
   ```
   from __future__ import annotations
 
-  from vims.wrapper.abaqus.post_abaqus_wrapper import PostAbaqusWrapper
-  from vims.wrapper.abaqus.utilities import LibraryFile
+  from vimseo.wrapper.abaqus.post_abaqus_wrapper import PostAbaqusWrapper
+  from vimseo.wrapper.abaqus.utilities import LibraryFile
 
 
   class PostNewModel_LC1(PostAbaqusWrapper):
