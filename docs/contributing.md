@@ -9,7 +9,7 @@
 
 # Contributing
 
-Since 2021, GEMSEO is open source, under the [LGPL v3 license](https://www.gnu.org/licenses/lgpl-3.0.en.html). The project is hosted on [github](https://github.com/SebastienBocquet/vimseo).
+Since January 2026, VIMSEO is open source, under the [LGPL v3 license](https://www.gnu.org/licenses/lgpl-3.0.en.html). The project is hosted on [github](https://github.com/SebastienBocquet/vimseo/).
 
 ## Contributions
 
@@ -22,19 +22,15 @@ Anyone can contribute to the development of GEMSEO. The types of contributions a
 - suggesting a new feature,
 - etc.
 
-In order to elicit contributions, we invite you to read the [Roadmap](roadmap.md).
+[//]: # In order to elicit contributions, we invite you to read the [Roadmap](roadmap.md).
 
 ## Contact
 
-You can contact the GEMSEO team at <contact@gemseo.org> for any question related to GEMSEO.
-
-## Community Forums
-
-The GEMSEO community forums are available at <https://gemseo.discourse.group>. A place where users can connect, ask questions, and share ideas about GEMSEO.
+You can contact the VIMSEO team at <sebastien.bocquet@irt-saintexupery.com> for any question related to VIMSEO.
 
 ## Developer Certificate of Origin
 
-Any contribution must be accompanied with a [Developer Certificate of Origin (DCO)](https://developercertificate.org/), certifying that the contribution is compatible with GEMSEO software licence.
+Any contribution must be accompanied with a [Developer Certificate of Origin (DCO)](https://developercertificate.org/), certifying that the contribution is compatible with VIMSEO software licence.
 
 By signing your git commit, you agree with the Developer Certificate of Origin. To do so, please add the `-s` option to you ***git commit*** command. This will add the following content at the end of your commit message:
 
@@ -42,16 +38,6 @@ By signing your git commit, you agree with the Developer Certificate of Origin. 
 Signed-off-by: Name <email address>
 ```
 
-## Governance
-
-!!! warning
-    A governance document will soon describe the decision making process and governance structure of GEMSEO.
-
-## Code of conduct
-
-!!! warning
-    A code of conduct will soon be in place.
-
 ## Development
 
-For the technical aspects, we invite you to read: [Developer information](https://github.com/SebastienBocquet/vimseo/developing.md).
+For the technical aspects, we invite you to read: [Developer information](https://sebastienbocquet.github.io/vimseo/developing.md).

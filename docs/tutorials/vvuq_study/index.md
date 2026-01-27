@@ -7,17 +7,12 @@
  Commons, PO Box 1866, Mountain View, CA 94042, USA.
 -->
 
-<!--
- Copyright (c) 2015 IRT-AESE.
- All rights reserved.
-
- Contributors:
-    INITIAL AUTHORS - API and implementation and/or documentation
-        :author: XXXXXXXXXXX
-    OTHER AUTHORS   - MACROSCOPIC CHANGES
--->
-
 # Typical VV&UQ study
+
+In this tutorial you will learn about key steps in any VV&UQ workflow:
+- code verification
+- solution (convergence) verification
+- sensitivity analysis
 
 [Code verification](code_verification/index.md){ .md-button }
 [Solution verification](solution_verification/index.md){ .md-button }

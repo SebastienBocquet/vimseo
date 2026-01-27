@@ -8,14 +8,14 @@
 -->
 
 <div align="center">
-<a href="https://forge-is.pf.irt-saintexupery.com/vimseo/vimseo/">
+<a href="https://github.com/SebastienBocquet/vimseo/">
 <img width="1800" alt="" src="/docs/images/analysis_workflow_and_credibility.png" />
 </a>
 
 <div align="center">
 <h3>
-    <a href="http://docvims.ipf7135.irt-aese.local/">documentation</a> |
-    <a href="https://forge-is.pf.irt-saintexupery.com/vimseo/vimseo/-/tree/mkdocs/docs/runnable_examples">examples</a>
+    <a href="https://sebastienbocquet.github.io/vimseo/">documentation</a> |
+    <a href="https://sebastienbocquet.github.io/vimseo/generated/runnable_examples/02_integrated_models">examples</a>
 </h3>
 </div>
 </div>
@@ -281,14 +281,14 @@ build robust model credibility indicators and reliable use of the models downstr
 
 We welcome contributions! Please refer to the contribution guidelines.
 
-Please use the [github issue tracker](https://github.com/SebastienBocquet/vimseo/issues)
+Please use the [github issue tracker](https://github.com/SebastienBocquet/vimseo/issues/)
 to submit bugs or questions.
 
-[//]: # (Join our [Discord]&#40;https://s.voltagent.dev/discord&#41; server for questions and discussions.)
+[//]: # (Join our [Discord]&#40;https://; server for questions and discussions.)
 
 ## Contributing
 
-Refer to our contribution guide here: [Contributing](https://SebastienBocquet.github.io/vimseo/contributing/)
+Refer to our contribution guide here: [Contributing](https://sebastienbocquet.github.io/vimseo/contributing/)
 
 ## Contributors
 

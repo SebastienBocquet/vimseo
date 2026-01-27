@@ -1,8 +1,7 @@
 site_name: vimseo
-site_url: "" #https://SebastienBocquet.github.io/vimseo
+site_url: https://SebastienBocquet.github.io/vimseo
 repo_url: https://github.com/SebastienBocquet/vimseo
 repo_name: vimseo
-use_directory_urls: False
 
 theme:
   name: material
@@ -25,7 +24,7 @@ theme:
     repo: fontawesome/brands/gitlab
 
 plugins:
-#- search
+- search
 - markdown-exec
 - gen-files:
     scripts:
