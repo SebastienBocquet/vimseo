@@ -1061,11 +1061,19 @@
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
+         <loc>https://SebastienBocquet.github.io/vimseo/reference/vimseo/utilities/failed_imports/</loc>
+         <lastmod>2026-01-28</lastmod>
+    </url>
+    <url>
          <loc>https://SebastienBocquet.github.io/vimseo/reference/vimseo/utilities/fields/</loc>
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
          <loc>https://SebastienBocquet.github.io/vimseo/reference/vimseo/utilities/file_utils/</loc>
+         <lastmod>2026-01-28</lastmod>
+    </url>
+    <url>
+         <loc>https://SebastienBocquet.github.io/vimseo/reference/vimseo/utilities/generate_material_description_table/</loc>
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
@@ -1082,10 +1090,6 @@
     </url>
     <url>
          <loc>https://SebastienBocquet.github.io/vimseo/reference/vimseo/utilities/loading_component_unitcell/</loc>
-         <lastmod>2026-01-28</lastmod>
-    </url>
-    <url>
-         <loc>https://SebastienBocquet.github.io/vimseo/reference/vimseo/utilities/material_description_table/</loc>
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
@@ -1121,7 +1125,7 @@
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
-         <loc>https://SebastienBocquet.github.io/vimseo/reference/vimseo/utilities/doc/model_gallery/</loc>
+         <loc>https://SebastienBocquet.github.io/vimseo/reference/vimseo/utilities/doc/generate_model_gallery/</loc>
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
@@ -1181,19 +1185,11 @@
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
-         <loc>https://SebastienBocquet.github.io/vimseo/references/material/</loc>
+         <loc>https://SebastienBocquet.github.io/vimseo/references/materials/</loc>
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
-         <loc>https://SebastienBocquet.github.io/vimseo/references/material/eoms/</loc>
-         <lastmod>2026-01-28</lastmod>
-    </url>
-    <url>
-         <loc>https://SebastienBocquet.github.io/vimseo/references/material/plastic_voce/</loc>
-         <lastmod>2026-01-28</lastmod>
-    </url>
-    <url>
-         <loc>https://SebastienBocquet.github.io/vimseo/references/material/ta6v/</loc>
+         <loc>https://SebastienBocquet.github.io/vimseo/references/materials/ta6v/</loc>
          <lastmod>2026-01-28</lastmod>
     </url>
     <url>
