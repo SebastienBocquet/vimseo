@@ -114,6 +114,7 @@ nav:
    - Acronyms: references/acronyms.md
 - Tutorials:
     - VVUQ study:
+        - Introduction: tutorials/vvuq_study/introduction.md
         - Code Verification: tutorials/vvuq_study/code_verification/index.md
         - Solution Verification: tutorials/vvuq_study/solution_verification/index.md
         - Sensitivity Analysis: tutorials/vvuq_study/sensitivity_analysis/index.md

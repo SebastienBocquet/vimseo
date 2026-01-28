@@ -272,7 +272,7 @@ Use a workflow orchestration library, offering a GUI to setup the workflow graph
 Ensure lineage between reference data and simulation results, for example using MLflow Dataset traceability features.
 
 Facilitates model integration, which is a time-consuming task, by allowing
-to run the model under integration stage step b step, with proper error management.
+to run the model under integration stage step by step, with proper error management.
 
 Ensure a coherence between the tools (verification, validation, calibration) in order to
 build robust model credibility indicators and reliable use of the models downstream.

@@ -7,13 +7,9 @@
  Commons, PO Box 1866, Mountain View, CA 94042, USA.
 -->
 
-# Typical VV&UQ study
+# Some key steps of a VV&UQ study
 
 In this tutorial you will learn about key steps in any VV&UQ workflow:
 - code verification
 - solution (convergence) verification
 - sensitivity analysis
-
-[Code verification](code_verification/index.md){ .md-button }
-[Solution verification](solution_verification/index.md){ .md-button }
-[Sensitivity analysis](sensitivity_analysis/index.md){ .md-button }
