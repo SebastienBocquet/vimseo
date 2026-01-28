@@ -13,4 +13,4 @@ All rights reserved.
 -->
 # Materials
 
-[Material](material/index.md){ .md-button }
+[Material](materials/index.md){ .md-button }

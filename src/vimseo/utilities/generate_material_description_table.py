@@ -28,7 +28,7 @@ from vimseo.material.material import Material
 from vimseo.material_lib import MATERIAL_LIB_DIR
 from vimseo.utilities.datasets import SEP
 
-PATH_TO_MATERIAL_DOC_SUBDIR = Path("../../../docs/references/material")
+PATH_TO_MATERIAL_DOC_SUBDIR = Path("docs/references/materials")
 
 
 @dataclass
@@ -48,7 +48,9 @@ def create_material_description_table(
 
     The table are saved as csv files in the material section of the documentation.
     """
-    grammar = JSONGrammar("Ta6v", material_lib_dir / f"{material_name}_grammar.json")
+    grammar = JSONGrammar(
+        material_name, material_lib_dir / f"{material_name}_grammar.json"
+    )
     material = Material.from_json(material_lib_dir / f"{material_name}.json")
 
     name_to_attributes = {}
@@ -77,11 +79,14 @@ def create_material_description_table(
             attribute_name_to_value[name].append(value)
 
     df = pd.DataFrame.from_dict(attribute_name_to_value)
-    df.to_csv(PATH_TO_MATERIAL_DOC_SUBDIR / f"{material_name}_properties.csv", sep=SEP)
+    df.to_csv(
+        Path.cwd() / PATH_TO_MATERIAL_DOC_SUBDIR / f"{material_name}_properties.csv",
+        sep=SEP,
+    )
     return df
 
 
 if __name__ == "__main__":
-    for name in ["Ta6v", "Eoms", "Plastic_Voce"]:
+    for name in ["Ta6v"]:
         df = create_material_description_table(MATERIAL_LIB_DIR, name)
         print(df)

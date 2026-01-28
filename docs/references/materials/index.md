@@ -15,7 +15,5 @@ All rights reserved.
 
 
 [Ta6v](ta6v.md){ .md-button }
-[Eoms](eoms.md){ .md-button }
-[Plastic Voce](plastic_voce.md){ .md-button }
 
 Link to [model gallery][model_gallery]

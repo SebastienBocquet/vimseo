@@ -63,7 +63,7 @@ See [pip](https://pip.pypa.io/en/stable/getting-started/) for more information.
 **VIMSEO** is a software library that supports the implementation of a Verification, Validation and Uncertainty
 Quantification (VV&UQ) process for the credibility assessment of Modelling and Simulation (M&S) capabilities.
 By providing a framework for the integration of M&S capabilities, a toolbox for performing VV&UQ analyses, a workflow
-engine to define and execute custom analysis processes, as well as dashboards to visualise and share results with
+engine to define and execute custom analysis processes, as well as a database to share and visualise results with
 stakeholders, **VIMSEO** is the perfect companion to set up simulation-driven decision-making.
 
 **VIMSEO** provides the following building blocks:
@@ -188,7 +188,7 @@ due to a lack of sampling.
 
 ### Sensitivity analysis
 
-In this second quick start, the user's entry points are dashboards.
+In this second quick start, the user's entry points is a dashboard.
 The ``dashboard_workflow`` allows to define a workflow of model analysis:
 
 ```
@@ -223,13 +223,6 @@ Workflow results: {'model1': BendingTestAnalytical
 
 The result of the analysis defined in each workflow step is stored on disk,
 in a directory having the name of the analysis.
-The sensitivity analysis can be explored with the dedicated ``dashboard_sensitivity`` dashboard:
-
-```
-dashboard_sensitivity
-```
-
-![Sensitivity result explorer](/docs/images/sensitivity_dashboard.png){ width="500" }
 
 
 ## Key Features
@@ -249,7 +242,7 @@ information on the calibrated quantities and versatile calibration metrics takin
 - **Handling of scalar and vector quantities**: probability distributions on vector quantities
   can be finely defined, with dedicated marginals by component and copula.
   It allows to define vector parameter space with a fine control of their parametric distribution.
-- **Dashboards:** to define parameter space and workflows, and query and explore analysis results.
+- **Dashboards:** to define workflows and visualise results in the database.
 
 ## Using **VIMSEO**
 

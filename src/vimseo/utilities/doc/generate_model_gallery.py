@@ -84,5 +84,5 @@ def generate_model_examples(
 if __name__ == "__main__":
     # To be executed from here.
     generate_model_examples(
-        "vimseo", "../../docs/how_to/01_model_gallery", EXCLUDED_MODELS
+        "vimseo", Path.cwd() / "docs/runnable_examples/01_models", EXCLUDED_MODELS
     )
