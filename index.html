@@ -12173,7 +12173,7 @@ decision-making.</p>
 <p><strong>VIMSEO</strong> is a software library that supports the implementation of a Verification, Validation and Uncertainty
 Quantification (VV&amp;UQ) process for the credibility assessment of Modelling and Simulation (M&amp;S) capabilities.
 By providing a framework for the integration of M&amp;S capabilities, a toolbox for performing VV&amp;UQ analyses, a workflow
-engine to define and execute custom analysis processes, as well as dashboards to visualise and share results with
+engine to define and execute custom analysis processes, as well as a database to share and visualise results with
 stakeholders, <strong>VIMSEO</strong> is the perfect companion to set up simulation-driven decision-making.</p>
 <p><strong>VIMSEO</strong> provides the following building blocks:</p>
 <ul>
@@ -12287,7 +12287,7 @@ Poisson's ratio is not taken int account.
 The complex isolines on the right and left borders are artefacts
 due to a lack of sampling.</p>
 <h3 id="sensitivity-analysis">Sensitivity analysis<a class="headerlink" href="#sensitivity-analysis" title="Permanent link">&para;</a></h3>
-<p>In this second quick start, the user's entry points are dashboards.
+<p>In this second quick start, the user's entry points is a dashboard.
 The <code>dashboard_workflow</code> allows to define a workflow of model analysis:</p>
 <div class="highlight"><pre><span></span><code>dashboard_workflow
 </code></pre></div>
@@ -12312,11 +12312,7 @@ Workflow results: {&#39;model1&#39;: BendingTestAnalytical
 &#39;indices1&#39;: MorrisAnalysis.SensitivityIndices(mu={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([220.64039355]), &#39;width&#39;: array([-112.47100512]), &#39;height&#39;: array([-424.28003754])}]}, mu_star={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([643.73448155]), &#39;width&#39;: array([112.47100512]), &#39;height&#39;: array([424.28003754])}]}, sigma={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([678.48213518]), &#39;width&#39;: array([23.12801862]), &#39;height&#39;: array([132.24363825])}]}, relative_sigma={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([1.05397824]), &#39;width&#39;: array([0.20563539]), &#39;height&#39;: array([0.31168951])}]}, min={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([335.89282962]), &#39;width&#39;: array([92.30668277]), &#39;height&#39;: array([287.39919242])}]}, max={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([1040.80989219]), &#39;width&#39;: array([148.73381196]), &#39;height&#39;: array([631.69372198])}]})}
 </code></pre></div>
 <p>The result of the analysis defined in each workflow step is stored on disk,
-in a directory having the name of the analysis.
-The sensitivity analysis can be explored with the dedicated <code>dashboard_sensitivity</code> dashboard:</p>
-<div class="highlight"><pre><span></span><code>dashboard_sensitivity
-</code></pre></div>
-<p><img alt="Sensitivity result explorer" src="images/sensitivity_dashboard.png" width="500" /></p>
+in a directory having the name of the analysis.</p>
 <h2 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Model wrapping</strong>: with specific approach for mesh-based models: a flexible pre-run-post approach
@@ -12334,7 +12330,7 @@ information on the calibrated quantities and versatile calibration metrics takin
 <li><strong>Handling of scalar and vector quantities</strong>: probability distributions on vector quantities
   can be finely defined, with dedicated marginals by component and copula.
   It allows to define vector parameter space with a fine control of their parametric distribution.</li>
-<li><strong>Dashboards:</strong> to define parameter space and workflows, and query and explore analysis results.</li>
+<li><strong>Dashboards:</strong> to define workflows and visualise results in the database.</li>
 </ul>
 <h2 id="using-vimseo">Using <strong>VIMSEO</strong><a class="headerlink" href="#using-vimseo" title="Permanent link">&para;</a></h2>
 <ul>
