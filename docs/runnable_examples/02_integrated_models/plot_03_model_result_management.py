@@ -82,9 +82,9 @@ model = create_model(
     load_case,
     IntegratedModelSettings(
         directory_scratch_persistency=PersistencyPolicy.DELETE_NEVER,
-        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/visualize_model_result",
-        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/visualize_model_result",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/visualize_model_result/{model_name}_{load_case}_cache.hdf",
+        directory_archive_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/archive/visualize_model_result",
+        directory_scratch_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/visualize_model_result",
+        cache_file_path=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/caches/visualize_model_result/{model_name}_{load_case}_cache.hdf",
     ),
 )
 model.archive_manager._accept_overwrite_job_dir = True
@@ -120,9 +120,9 @@ model = create_model(
     model_name,
     load_case,
     model_options=IntegratedModelSettings(
-        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/mlflow_archive/visualize_model_result",
-        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/visualize_model_result",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/visualize_model_result/{model_name}_{load_case}_cache.hdf",
+        directory_archive_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/mlflow_archive/visualize_model_result",
+        directory_scratch_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/visualize_model_result",
+        cache_file_path=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/caches/visualize_model_result/{model_name}_{load_case}_cache.hdf",
         archive_manager="MlflowArchive",
     ),
 )

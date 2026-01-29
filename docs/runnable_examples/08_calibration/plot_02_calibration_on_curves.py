@@ -80,9 +80,9 @@ model = create_model(
     model_name,
     load_case,
     model_options=IntegratedModelSettings(
-        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/calibration_curves",
-        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/calibration_curves",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/calibration_curves/{model_name}_{load_case}_cache.hdf",
+        directory_archive_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/archive/calibration_curves",
+        directory_scratch_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/calibration_curves",
+        cache_file_path=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/caches/calibration_curves/{model_name}_{load_case}_cache.hdf",
     ),
 )
 

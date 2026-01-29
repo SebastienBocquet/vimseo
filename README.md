@@ -246,14 +246,14 @@ information on the calibrated quantities and versatile calibration metrics takin
 
 ## Using **VIMSEO**
 
-- **[References](http://docvims.ipf7135.irt-aese.local/generated/runnable_examples/01_models/)
-and [API](http://docvims.ipf7135.irt-aese.local/reference/vimseo/)**: get the description and definition of concepts and API.
-- **[How-to](http://docvims.ipf7135.irt-aese.local/generated/runnable_examples/02_integrated_models/)**: solve practical problems by exploring runnable examples and how-to.
+- **[References](https://sebastienbocquet.github.io/vimseo/generated/runnable_examples/01_models/)
+and [API](https://sebastienbocquet.github.io/vimseo/reference/vimseo/)**: get the description and definition of concepts and API.
+- **[How-to](https://sebastienbocquet.github.io/vimseo/generated/runnable_examples/02_integrated_models/)**: solve practical problems by exploring runnable examples and how-to.
 
 ## Learning **VIMSEO**
 
-- **[Tutorials](http://docvims.ipf7135.irt-aese.local/tutorials/vvuq_study/code_verification/)
-and [Explanations](http://docvims.ipf7135.irt-aese.local/explanations/asme2025/abstract/)**:
+- **[Tutorials](https://sebastienbocquet.github.io/vimseo/tutorials/vvuq_study/code_verification/)
+and [Explanations](https://sebastienbocquet.github.io/vimseo/explanations/asme2025/abstract/)**:
 learn through discussions and tutorials about key topics.
 
 ## Roadmap

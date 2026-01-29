@@ -39,9 +39,9 @@ model = create_model(
     model_name,
     load_case,
     model_options=IntegratedModelSettings(
-        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/validation_case",
-        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/validation_case",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/validation_case/{model_name}_{load_case}.hdf",
+        directory_archive_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/archive/validation_case",
+        directory_scratch_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/validation_case",
+        cache_file_path=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/caches/validation_case/{model_name}_{load_case}.hdf",
     ),
 )
 

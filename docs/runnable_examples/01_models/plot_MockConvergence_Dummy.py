@@ -29,9 +29,9 @@ model = create_model(
     load_case,
     check_subprocess=True,
     model_options=IntegratedModelSettings(
-        directory_archive_root=f"../{EXAMPLE_RUNS_DIR_NAME}/archive/model_gallery",
-        directory_scratch_root=f"../{EXAMPLE_RUNS_DIR_NAME}/scratch/model_gallery",
-        cache_file_path=f"../{EXAMPLE_RUNS_DIR_NAME}/caches/model_gallery/{model_name}_{load_case}_cache.hdf",
+        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/model_gallery",
+        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/model_gallery",
+        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/model_gallery/{model_name}_{load_case}_cache.hdf",
     ),
 )
 

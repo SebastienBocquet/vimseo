@@ -102,18 +102,18 @@ model_cantilever = create_model(
     model_name,
     "Cantilever",
     model_options=IntegratedModelSettings(
-        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/calibration_coupled",
-        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/calibration_coupled",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/calibration_coupled/{model_name}_Cantilever_cache.hdf",
+        directory_archive_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/archive/calibration_coupled",
+        directory_scratch_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/calibration_coupled",
+        cache_file_path=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/caches/calibration_coupled/{model_name}_Cantilever_cache.hdf",
     ),
 )
 model_three_points = create_model(
     model_name,
     "ThreePoints",
     model_options=IntegratedModelSettings(
-        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/calibration_coupled",
-        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/calibration_coupled",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/calibration_coupled/{model_name}_ThreePoints_cache.hdf",
+        directory_archive_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/archive/calibration_coupled",
+        directory_scratch_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/calibration_coupled",
+        cache_file_path=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/caches/calibration_coupled/{model_name}_ThreePoints_cache.hdf",
     ),
 )
 

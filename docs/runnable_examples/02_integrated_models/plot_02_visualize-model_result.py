@@ -49,9 +49,9 @@ model = create_model(
     model_name,
     load_case,
     model_options=IntegratedModelSettings(
-        directory_archive_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/archive/visualize_model_result",
-        directory_scratch_root=f"../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/visualize_model_result",
-        cache_file_path=f"../../../{EXAMPLE_RUNS_DIR_NAME}/caches/visualize_model_result/{model_name}_{load_case}_cache.hdf",
+        directory_archive_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/archive/visualize_model_result",
+        directory_scratch_root=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/scratch/visualize_model_result",
+        cache_file_path=f"../../../../../{EXAMPLE_RUNS_DIR_NAME}/caches/visualize_model_result/{model_name}_{load_case}_cache.hdf",
     ),
 )
 model.cache = None
