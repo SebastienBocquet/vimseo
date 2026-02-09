@@ -69,8 +69,8 @@ doc = [
 
 [project.urls]
 Homepage = "https://gemseo.org"
-Source = "https://github.com/SebastienBocquet/vimseo"
-Issues = "https://github.com/SebastienBocquet/vimseo/issues"
+Source = "https://github.com/vimseo/vimseo"
+Issues = "https://github.com/vimseo/vimseo/issues"
 
 [project.entry-points]
 gemseo_plugins = { vimseo = "vimseo" }
