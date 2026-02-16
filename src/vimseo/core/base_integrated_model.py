@@ -234,11 +234,14 @@ class IntegratedModel(GemseoDisciplineWrapper):
             self._cache_file_path = f"{self.name}_{self.__load_case.name}_cache.hdf"
 
         super().__init__(name=self.__class__.__name__)
-        self.set_cache(
-            cache_type=Discipline.CacheType.HDF5,
-            hdf_file_path=self._cache_file_path,
-            hdf_node_path="node",
-        )
+        if self.default_cache_type == CacheType.HDF5:
+            self.set_cache(
+                cache_type=Discipline.CacheType.HDF5,
+                hdf_file_path=self._cache_file_path,
+                hdf_node_path="node",
+            )
+        else:
+            self.set_cache(cache_type=self.default_cache_type)
 
         self._job_name = options["job_name"]
 
