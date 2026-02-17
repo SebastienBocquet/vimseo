@@ -29,3 +29,4 @@ class BaseJobSettings(BaseUserJobSettings):
     """
 
     executable: str = ""
+    job_name: str = ""
