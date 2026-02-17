@@ -189,6 +189,21 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
                 f"An error has occurred in {self.__class__.__name__}, "
                 f"in check subprocess completion."
             )
+        import glob
+        files = glob.glob(f"{self.job_directory}/*.pyfrs")
+        for i, file in enumerate(files):
+            suffix = file.split("-")[-1]
+            suffix = suffix.split(".pyfrs")[0]
+            pyfrm_file = "couette-flow.pyfrm"
+            vtu_file = f"solution_couette-flow_{suffix}.vtu"
+            print(f"Conversion de {file} en format VTU dans {vtu_file}")
+            subprocess.run(
+                f"pyfr export volume {pyfrm_file} {file} {vtu_file}".split(),
+                cwd=self._job_directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            print("Conversion terminée.")
 
         output_data = {}
 
@@ -204,7 +219,7 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         self,
     ) -> int:
         """Check job completion by reading the last pseudo-time."""
-        result_file_path = self.job_directory / "euler-vortex-40.0.pyfrs"
+        result_file_path = self.job_directory / "couette-flow-040.pyfrs"
         wait_for_file(result_file_path)
         return 0
 
