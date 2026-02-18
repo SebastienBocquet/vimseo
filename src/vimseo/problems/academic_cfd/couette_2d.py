@@ -91,7 +91,7 @@ soln-pts = gauss-legendre
 nsteps = 50
 
 [soln-plugin-writer]
-dt-out = 0.1
+dt-out = 0.4
 basedir = .
 basename = couette-flow-{n:03d}
 
@@ -123,12 +123,7 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
     def __init__(self, **options):
         super().__init__(**options)
         self.output_grammar.update_from_data({
-            "pressure": atleast_1d(0.0),
-            "time": atleast_1d(0.0),
             MetaDataNames.error_code.name: atleast_1d(0),
-        })
-        self.output_grammar.update_from_data({
-            f"x1": atleast_1d(0.0)
         })
 
         self._job_executor = JobExecutorFactory().create(
