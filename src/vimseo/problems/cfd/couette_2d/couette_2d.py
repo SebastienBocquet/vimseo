@@ -165,7 +165,9 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         self,
     ) -> int:
         """Check job completion by reading the last pseudo-time."""
-        result_file_path = self.job_directory / "couette-flow-040.pyfrs"
+        result_file_path = self.job_directory / "couette-flow-010.pyfrs"
+        # TODO add a try except to catch the case where the file is not found, 
+        # and return an error code in this case
         wait_for_file(result_file_path)
         return 0
 
