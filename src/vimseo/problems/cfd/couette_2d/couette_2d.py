@@ -102,19 +102,9 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         template = Path(COUETTE_2D_DIR / "couette_2d.ini.j2").read_text()
         input_str = BaseJobExecutor._render_template(
             template,
-            {"input_values": [value[0] for value in input_data.values()]},
+            {key: value[0] for key, value in input_data.items()},
         )
         Path(self.job_directory / "couette-flow.ini").write_text(input_str)
-
-        subprocess.run(
-            [
-                "wget",
-                "couette-flow.msh",
-                "https://github.com/PyFR/PyFR-Test-Cases/raw/main/2d-couette-flow/couette-flow.msh",
-            ],
-            cwd=self._job_directory,
-            capture_output=True,
-        )
 
         subprocess.run(
             ["pyfr", "import", "couette-flow.msh", "couette-flow.pyfrm"],
