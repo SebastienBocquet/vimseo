@@ -240,8 +240,6 @@ class IntegratedModel(GemseoDisciplineWrapper):
                 hdf_file_path=self._cache_file_path,
                 hdf_node_path="node",
             )
-        else:
-            self.set_cache(cache_type=self.default_cache_type)
 
         self._job_name = options["job_name"]
 

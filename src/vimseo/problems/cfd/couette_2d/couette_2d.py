@@ -11,16 +11,17 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
-import subprocess
-
-from numpy import atleast_1d
-from numpy import atleast_2d
+from gemseo.core.grammars.pydantic_grammar import PydanticGrammar
+from gemseo.utils.pydantic_ndarray import NDArrayPydantic
+from numpy import atleast_1d, zeros
 from numpy import loadtxt
-from vimseo.config.global_configuration import _configuration as config
+from pydantic import BaseModel
+
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.base_integrated_model import IntegratedModelSettings
 from vimseo.core.components.component_factory import ComponentFactory
@@ -28,90 +29,43 @@ from vimseo.core.components.external_software_component import ExternalSoftwareC
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.job_executor.base_executor import BaseJobExecutor
 from vimseo.job_executor.job_executor_factory import JobExecutorFactory
-from vimseo.material.material import Material
+from vimseo.problems.cfd.couette_2d import COUETTE_2D_DIR
+from vimseo.problems.cfd.couette_2d.generate_mesh import generate_couette_mesh
 from vimseo.utilities.curves import Curve
 from vimseo.utilities.file_utils import wait_for_file
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
     from collections.abc import Mapping
-    from collections.abc import Sequence
 
 LOGGER = logging.getLogger(__name__)
 
 DEFAULT_INPUT_DATA = {
-    "E": atleast_1d(70000.0),
-    "nu": atleast_1d(0.3),
-    "sigma_y_0": atleast_1d(250.0),
-    "sigma_y_u": atleast_1d(350.0),
-    "delta": atleast_1d(100.1),
+    "mu": atleast_1d(0.417),
+    "prandtl": atleast_1d(0.72),
+    "cp": atleast_1d(1005.0),
+    "dt": atleast_1d(4e-5),
+    "dx": atleast_1d(0.25),
+    "u_w": atleast_1d(70.0),
 }
 
 
-couette_ini = """
-[backend]
-precision = double
+class Couette2DInputGrammar(BaseModel):
+    """The input grammar for the Couette 2D model."""
 
-[constants]
-gamma = 1.4
-mu = 0.417
-Pr = 0.72
+    mu: NDArrayPydantic[float]
+    prandtl: NDArrayPydantic[float]
+    cp: NDArrayPydantic[float]
+    dt: NDArrayPydantic[float]
+    dx: NDArrayPydantic[float]
+    u_w: NDArrayPydantic[float]
 
-cp = 1005.0
-Uw = 70
-Pc = 100000.0
-Tw = 300.0
 
-[solver]
-system = navier-stokes
-order = 2
+class Couette2DOutputGrammar(BaseModel):
+    """The output grammar for the Couette 2D model."""
 
-[solver-time-integrator]
-scheme = rk4
-controller = none
-tstart = 0.0
-tend = 4
-dt = 0.00004
+    u_profile: NDArrayPydantic[float]
+    error_code: NDArrayPydantic[int]
 
-[solver-interfaces]
-riemann-solver = rusanov
-ldg-beta = 0.5
-ldg-tau = 0.1
-
-[solver-interfaces-line]
-flux-pts = gauss-legendre
-
-[solver-elements-tri]
-soln-pts = williams-shunn
-
-[solver-elements-quad]
-soln-pts = gauss-legendre
-
-[soln-plugin-nancheck]
-nsteps = 50
-
-[soln-plugin-writer]
-dt-out = 0.4
-basedir = .
-basename = couette-flow-{n:03d}
-
-[soln-bcs-bcwallupper]
-type = no-slp-isot-wall
-cpTw = cp*Tw
-u = Uw
-
-[soln-bcs-bcwalllower]
-type = no-slp-isot-wall
-cpTw = cp*Tw
-
-[soln-ics]
-rho = 4*(Pc*sqrt(Pr*(Pr*Uw*Uw+8*cp*Tw))*log((sqrt(Pr*(Pr*Uw*Uw+8*cp*Tw))+Pr*Uw)/(sqrt(Pr*(Pr*Uw*Uw+8*cp*Tw))-Pr*Uw))*gamma)/(Pr*Uw*(Pr*Uw*Uw+8*cp*Tw)*(gamma-1))
-u = Uw
-v = 0.0
-p = Pc
-"""
-
-Path("couette-flow.ini").write_text(couette_ini)
 
 class Couette2DRun_Dummy(ExternalSoftwareComponent):
     USE_JOB_DIRECTORY = True
@@ -122,13 +76,15 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
 
     def __init__(self, **options):
         super().__init__(**options)
-        self.output_grammar.update_from_data({
-            MetaDataNames.error_code.name: atleast_1d(0),
-        })
+
+        self.input_grammar = PydanticGrammar("grammar", model=Couette2DInputGrammar)
+        self.output_grammar = PydanticGrammar("grammar", model=Couette2DOutputGrammar)
+
+        self.default_input_data = DEFAULT_INPUT_DATA
 
         self._job_executor = JobExecutorFactory().create(
-            "BaseInteractiveExecutor", 
-            "pyfr run -b cuda couette-flow.pyfrm couette-flow.ini"
+            "BaseInteractiveExecutor",
+            "pyfr run -b {{ backend }} couette-flow.pyfrm couette-flow.ini",
         )
 
     def _run(self, input_data):
@@ -138,29 +94,33 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             msg = f"{self.job_directory} should be empty."
             raise ValueError(msg)
 
-        # Prepare Input.txt file
-        content = Path("couette-flow.ini").read_text()
-        # template = Path(PAOLO_MODEL_DIR / "input.txt").read_text()
-        # input_str = BaseJobExecutor._render_template(
-        #     template,
-        #     {"input_values": [value[0] for value in input_data.values()]},
-        # )
-        Path(self.job_directory / "couette-flow.ini").write_text(content)
+        generate_couette_mesh(
+            mesh_size=input_data["dx"][0],
+            output=str(self.job_directory / "couette-flow.msh"),
+        )
+
+        template = Path(COUETTE_2D_DIR / "couette_2d.ini.j2").read_text()
+        input_str = BaseJobExecutor._render_template(
+            template,
+            {"input_values": [value[0] for value in input_data.values()]},
+        )
+        Path(self.job_directory / "couette-flow.ini").write_text(input_str)
 
         subprocess.run(
-            "wget couette-flow.msh https://github.com/PyFR/PyFR-Test-Cases/raw/main/2d-couette-flow/couette-flow.msh".split(),
+            [
+                "wget",
+                "couette-flow.msh",
+                "https://github.com/PyFR/PyFR-Test-Cases/raw/main/2d-couette-flow/couette-flow.msh",
+            ],
             cwd=self._job_directory,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
         )
 
         subprocess.run(
-            "pyfr import couette-flow.msh couette-flow.pyfrm".split(),
+            ["pyfr", "import", "couette-flow.msh", "couette-flow.pyfrm"],
             cwd=self._job_directory,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
         )
-
 
         self._job_executor._set_job_options(
             self.job_directory,
@@ -185,8 +145,9 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
                 f"in check subprocess completion."
             )
         import glob
+
         files = glob.glob(f"{self.job_directory}/*.pyfrs")
-        for i, file in enumerate(files):
+        for file in files:
             suffix = file.split("-")[-1]
             suffix = suffix.split(".pyfrs")[0]
             pyfrm_file = "couette-flow.pyfrm"
@@ -195,13 +156,13 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             subprocess.run(
                 f"pyfr export volume {pyfrm_file} {file} {vtu_file}".split(),
                 cwd=self._job_directory,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
             )
             print("Conversion terminée.")
 
         output_data = {}
 
+        output_data["u_profile"] = zeros((10))
         output_data[MetaDataNames.error_code] = atleast_1d(error_run)
 
         return output_data
@@ -226,7 +187,7 @@ class Couette2DModel(IntegratedModel):
     default_grammar_type = "SimpleGrammar"
 
     FIELDS_FROM_FILE: ClassVar[Mapping[str, str]] = {
-        "solution": r"^euler-vortex-+\d\.pyfrs$"
+        "solution": r"^couette-flow_+\d\.pyfrs$"
     }
 
     def __init__(self, load_case_name: str, **options):
