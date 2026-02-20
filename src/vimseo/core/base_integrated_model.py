@@ -286,7 +286,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for name in DEFAULT_METADATA:
             self.output_grammar.required_names.add(name)
         for field_name in self.FIELDS_FROM_FILE:
-            self.output_grammar.update_from_data({field_name: ["names"]})
+            self.output_grammar.update_from_data({field_name: array(["names"])})
             self.output_grammar.required_names.add(field_name)
 
         # Set status to DONE, to avoid being locked in FAILED mode.
@@ -462,6 +462,13 @@ class IntegratedModel(GemseoDisciplineWrapper):
                     if match(field_re, f.name):
                         field_file_names[name].append(f.name)
 
+        if set(field_file_names.keys()) != set(self.FIELDS_FROM_FILE.keys()):
+            missing_fields = set(self.FIELDS_FROM_FILE.keys()) - set(field_file_names.keys())
+            LOGGER.warning(
+                f"The following fields have not been found in the scratch job directory: "
+                f"{missing_fields}."
+            )
+
         self._archive_manager.add_persistent_file_names([
             file_name
             for file_names in field_file_names.values()
@@ -553,7 +560,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
         Returns:
         """
-        directory_path = Path.cwd() if directory_path == "" else Path(directory_path)
+        directory_path = self.archive_manager.job_directory if directory_path == "" else Path(directory_path)
         if not directory_path.exists():
             directory_path.mkdir(parents=True)
 
