@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import glob
 import logging
-from os import error
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Sequence
@@ -70,6 +69,7 @@ class Couette2DOutputGrammar(BaseModel):
 
 
 class Couette2DRun_Dummy(ExternalSoftwareComponent):
+
     USE_JOB_DIRECTORY = True
 
     _PERSISTENT_FILE_NAMES: ClassVar[Sequence[str]] = [f"couette-flow-{int(t):03d}_{field}.png" for field in ["Velocity", "Density"] for t in linspace(0, 9, num=10)]
@@ -84,7 +84,7 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         self.input_grammar = PydanticGrammar("grammar", model=Couette2DInputGrammar)
         self.output_grammar = PydanticGrammar("grammar", model=Couette2DOutputGrammar)
 
-        self.output_grammar.update_from_data({"error_code":atleast_1d(0)})
+        self.output_grammar.update_from_data({"error_code": atleast_1d(0)})
         self.output_grammar.required_names.add("error_code")
 
         line_data = {}
@@ -100,7 +100,6 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         for name in line_data:
             self.output_grammar.required_names.add(name)
 
-
         self.default_input_data = DEFAULT_INPUT_DATA
 
         self._job_executor = JobExecutorFactory().create(
@@ -110,10 +109,10 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
 
     def _run(self, input_data):
 
-        # is_empty = not any(self.job_directory.iterdir())
-        # if not is_empty:
-        #     msg = f"{self.job_directory} should be empty."
-        #     raise ValueError(msg)
+        is_empty = not any(self.job_directory.iterdir())
+        if not is_empty:
+            msg = f"{self.job_directory} should be empty."
+            raise ValueError(msg)
 
         generate_couette_mesh(
             mesh_size=input_data["dx"][0],
@@ -127,19 +126,18 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         )
         Path(self.job_directory / "couette-flow.ini").write_text(input_str)
 
-        # subprocess.run(
-        #     ["pyfr", "import", "couette-flow.msh", "couette-flow.pyfrm"],
-        #     cwd=self._job_directory,
-        #     capture_output=True,
-        # )
+        subprocess.run(
+            ["pyfr", "import", "couette-flow.msh", "couette-flow.pyfrm"],
+            cwd=self._job_directory,
+            capture_output=True,
+        )
 
         self._job_executor._set_job_options(
             self.job_directory,
         )
-        # error_run = self._job_executor.execute(
-        #     check_subprocess=self._check_subprocess,
-        # )
-        error_run=0
+        error_run = self._job_executor.execute(
+            check_subprocess=self._check_subprocess,
+        )
         if error_run:
             LOGGER.warning(
                 f"An error has occurred in {self.__class__.__name__}, "
@@ -147,16 +145,15 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             )
 
         error_run = 0
-        # error_run = self._check_subprocess_completion(
-        #     error_run, self._check_subprocess, self._job_executor.command_line.split()
-        # )
+        error_run = self._check_subprocess_completion(
+            error_run, self._check_subprocess, self._job_executor.command_line.split()
+        )
 
         if error_run:
             LOGGER.warning(
                 f"An error has occurred in {self.__class__.__name__}, "
                 f"in check subprocess completion."
             )
-        import glob
 
         output_data = {}
 
@@ -174,16 +171,20 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             suffix = file.split("-")[-1]
             suffix = suffix.split(".pyfrs")[0]
             pyfrm_file = "couette-flow.pyfrm"
-            vtu_file = file
-            suffix = suffix.replace(".vtu", "")
-            # vtu_file = file.replace(".pyfrs", ".vtu")
-            # print(f"Conversion de {file} en format VTU dans {vtu_file}")
-            # subprocess.run(
-            #     f"pyfr export volume {pyfrm_file} {file} {vtu_file}".split(),
-            #     cwd=self._job_directory,
-            #     capture_output=True,
-            # )
-            # print("Conversion terminée.")
+
+            # # temp
+            # vtu_file = file
+            # suffix = suffix.replace(".vtu", "")
+            # # ----
+
+            vtu_file = file.replace(".pyfrs", ".vtu")
+            print(f"Conversion de {file} en format VTU dans {vtu_file}")
+            subprocess.run(
+                f"pyfr export volume {pyfrm_file} {file} {vtu_file}".split(),
+                cwd=self._job_directory,
+                capture_output=True,
+            )
+            print("Conversion terminée.")
 
             line = extract_line_y(
                 vtu_file=vtu_file,
@@ -202,10 +203,9 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
                     # On suppose que Velocity est un champ vectoriel, et on prend sa composante x
                     for i in range(2):
                         output_data[f"line_{mapped_field}_{i}_{suffix}"] = line[field][:, i]
-                        output_data[f"image_{mapped_field}_{i}_{suffix}"] = array(["a_str"])
                 else:
                     output_data[f"line_{mapped_field}_{suffix}"] = line[field]
-                    output_data[f"image_{mapped_field}_{suffix}"] = array(["a_str"])
+                output_data[f"image_{mapped_field}_{suffix}"] = array([f"couette-flow-{suffix}_{field}.png"])
 
             vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Velocity", clim=(0, 70))
             vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Density", clim=(0, 1.2))
@@ -219,8 +219,6 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
     ) -> int:
         """Check job completion by reading the last pseudo-time."""
         result_file_path = self.job_directory / "couette-flow-010.pyfrs"
-        # TODO add a try except to catch the case where the file is not found, 
-        # and return an error code in this case
         try:
             wait_for_file(result_file_path)
             return 0
@@ -237,7 +235,6 @@ class Couette2DModel(IntegratedModel):
     FIELDS_FROM_FILE: ClassVar[Mapping[str, str]] = {
         "solution": r"^couette-flow-+\d+\.vtu$"
     }
-
 
     CURVES = [
         ("line_y", f"line_density_009"),

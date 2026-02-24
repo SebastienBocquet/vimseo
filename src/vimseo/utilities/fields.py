@@ -126,6 +126,8 @@ def extract_line_y(
 def vtu_to_png(files: Sequence[str], scalar_name: str, output_folder: str, clim: tuple[float, float] | None = None):
     """Convert a sequence of .vtu files to .png images using PyVista."""
 
+    # TODO voir comment extraire une composante d'un champ vectoriel (ex: Velocity) pour faire une image de cette composante uniquement
+
     # --- Boucle de rendu ---
     plotter = pv.Plotter(off_screen=True) # Fenêtre invisible
 
@@ -149,7 +151,7 @@ def vtu_to_png(files: Sequence[str], scalar_name: str, output_folder: str, clim:
 
         # Ajuster la caméra (automatique au premier fichier, puis fixe)
         if i == 0:
-            plotter.view_isometric()
+            plotter.view_xy()
 
         # Sauvegarde
         filename = os.path.basename(filepath).replace(".vtu", f"_{scalar_name}.png")
