@@ -773,7 +773,8 @@ class IntegratedModel(GemseoDisciplineWrapper):
         }
         for key in list(data.keys()):
             data[key.value] = data.pop(key)
-        return MetaData(**data)
+        print("DBG data", data)
+        return data
 
     def create_cache_from_archive(self, run_ids: Iterable[str] = ()) -> HDF5Cache:
         """Defines a temporary HDF5 cache file, based on results found on the current
