@@ -451,7 +451,6 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
         print("chain outptu grammar", self._chain.output_grammar.names)
         print("chain outptu grammar", self._chain.output_grammar.required_names)
-        print("chain outptu grammar", self._chain.output_grammar.schema)
         output_data = self._chain.execute(input_data)
 
         end_time = time()

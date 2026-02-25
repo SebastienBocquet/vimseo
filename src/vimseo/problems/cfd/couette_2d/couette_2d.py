@@ -213,6 +213,8 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
 
         output_data[MetaDataNames.error_code] = atleast_1d(error_run)
 
+        print("output_data", output_data)
+
         return output_data
 
     def _check_job_completion(
