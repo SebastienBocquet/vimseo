@@ -86,7 +86,7 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         self.output_grammar = PydanticGrammar("grammar", model=Couette2DOutputGrammar)
 
         self.output_grammar.update_from_data({"error_code": atleast_1d(0)})
-        self.output_grammar.required_names.add("error_code")
+        # self.output_grammar.required_names.add("error_code")
 
         line_data = {}
         # for t in linspace(0, 10, num=11):
@@ -211,7 +211,7 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             # vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Velocity", clim=(0, 70))
             # vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Density", clim=(0, 1.2))
 
-        output_data[MetaDataNames.error_code] = atleast_1d(error_run)
+        output_data["error_code"] = atleast_1d(error_run)
 
         print("output_data", output_data)
 
