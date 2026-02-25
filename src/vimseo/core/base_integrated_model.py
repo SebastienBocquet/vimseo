@@ -281,6 +281,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for name in self.input_grammar.names:
             self.input_grammar.required_names.add(name)
 
+        print("DBG run output grammar before copy", self._chain.disciplines[-1].output_grammar)
         self.output_grammar = deepcopy(self._chain.disciplines[-1].output_grammar)
         self.output_grammar.update_from_data(DEFAULT_METADATA)
         for name in DEFAULT_METADATA:
@@ -288,6 +289,8 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for field_name in self.FIELDS_FROM_FILE:
             self.output_grammar.update_from_data({field_name: array(["names"])})
             self.output_grammar.required_names.add(field_name)
+        
+        print("DBG run output grammar after copy", self._chain.disciplines[-1].output_grammar)
 
         # Set status to DONE, to avoid being locked in FAILED mode.
         self._chain._status = ExecutionStatus.Status.DONE
