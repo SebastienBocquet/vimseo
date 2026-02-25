@@ -281,7 +281,10 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for name in self.input_grammar.names:
             self.input_grammar.required_names.add(name)
 
-        print("DBG run output grammar before copy", self._chain.disciplines[-1].output_grammar.names)
+        print(
+            "DBG run output grammar before copy",
+            self._chain.disciplines[-1].output_grammar.names,
+        )
         self.output_grammar.update_from_names(output_names)
         self.output_grammar.update_from_data(DEFAULT_METADATA)
         for name in DEFAULT_METADATA:
@@ -289,8 +292,11 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for field_name in self.FIELDS_FROM_FILE:
             self.output_grammar.update_from_data({field_name: array(["names"])})
             self.output_grammar.required_names.add(field_name)
-        
-        print("DBG run output grammar after copy", self._chain.disciplines[-1].output_grammar.names)
+
+        print(
+            "DBG run output grammar after copy",
+            self._chain.disciplines[-1].output_grammar.names,
+        )
 
         # Set status to DONE, to avoid being locked in FAILED mode.
         self._chain._status = ExecutionStatus.Status.DONE
@@ -468,7 +474,9 @@ class IntegratedModel(GemseoDisciplineWrapper):
                         field_file_names[name].append(f.name)
 
         if set(field_file_names.keys()) != set(self.FIELDS_FROM_FILE.keys()):
-            missing_fields = set(self.FIELDS_FROM_FILE.keys()) - set(field_file_names.keys())
+            missing_fields = set(self.FIELDS_FROM_FILE.keys()) - set(
+                field_file_names.keys()
+            )
             LOGGER.warning(
                 f"The following fields have not been found in the scratch job directory: "
                 f"{missing_fields}."
@@ -565,7 +573,11 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
         Returns:
         """
-        directory_path = self.archive_manager.job_directory if directory_path == "" else Path(directory_path)
+        directory_path = (
+            self.archive_manager.job_directory
+            if directory_path == ""
+            else Path(directory_path)
+        )
         if not directory_path.exists():
             directory_path.mkdir(parents=True)
 
@@ -740,7 +752,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
             user = getlogin()
         else:
             user = getpass.getuser()
-        data = {
+        return MetaData(**{
             MetaDataNames.model: array([self.__class__.__name__]),
             MetaDataNames.load_case: array([self.__load_case.name]),
             MetaDataNames.error_code: array([error]),
@@ -773,11 +785,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
             MetaDataNames.directory_scratch_job: array([
                 str(self._scratch_manager.job_directory)
             ]),
-        }
-        for key in list(data.keys()):
-            data[key.value] = data.pop(key)
-        print("DBG data", data)
-        return data
+        })
 
     def create_cache_from_archive(self, run_ids: Iterable[str] = ()) -> HDF5Cache:
         """Defines a temporary HDF5 cache file, based on results found on the current
