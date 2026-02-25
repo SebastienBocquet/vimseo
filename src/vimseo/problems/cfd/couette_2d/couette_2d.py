@@ -80,7 +80,8 @@ class Couette2DOutputGrammar(BaseModel):
     """The output grammar for the Couette 2D model."""
 
 
-class Couette2DRun_Dummy(ExternalSoftwareComponent):
+class Couette2DRun_Dummy(RunProcessor):
+
     USE_JOB_DIRECTORY = True
 
     _PERSISTENT_FILE_NAMES: ClassVar[Sequence[str]] = [
@@ -116,13 +117,15 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
 
         self.default_input_data = DEFAULT_INPUT_DATA
 
-        self._job_executor = JobExecutorFactory().create(
-            "BaseInteractiveExecutor",
-            "pyfr run -b {{ backend }} couette-flow.pyfrm couette-flow.ini",
+        self.set_job_executor(
+            JobExecutorFactory().create(
+                "BaseInteractiveExecutor",
+                "pyfr run -b {{ backend }} couette-flow.pyfrm couette-flow.ini",
+            )
         )
 
-    def _run(self, input_data):
-
+    def pre_run(self, input_data):
+        """Pre-run operations."""
         is_empty = not any(self.job_directory.iterdir())
         if not is_empty:
             msg = f"{self.job_directory} should be empty."
@@ -133,44 +136,8 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             output=str(self.job_directory / "couette-flow.msh"),
         )
 
-        template = Path(COUETTE_2D_DIR / "couette_2d.ini.j2").read_text()
-        input_str = BaseJobExecutor._render_template(
-            template,
-            {key: value[0] for key, value in input_data.items()},
-        )
-        Path(self.job_directory / "couette-flow.ini").write_text(input_str)
-
-        subprocess.run(
-            ["pyfr", "import", "couette-flow.msh", "couette-flow.pyfrm"],
-            cwd=self._job_directory,
-            capture_output=True,
-        )
-
-        self._job_executor._set_job_options(
-            self.job_directory,
-        )
-        error_run = self._job_executor.execute(
-            check_subprocess=self._check_subprocess,
-        )
-        if error_run:
-            LOGGER.warning(
-                f"An error has occurred in {self.__class__.__name__}, "
-                f"running command {self._job_executor._command_line}."
-            )
-
-        error_run = 0
-        error_run = self._check_subprocess_completion(
-            error_run, self._check_subprocess, self._job_executor.command_line.split()
-        )
-
-        if error_run:
-            LOGGER.warning(
-                f"An error has occurred in {self.__class__.__name__}, "
-                f"in check subprocess completion."
-            )
-
-        output_data = {}
-
+    def post_run(self, input_data, output_data):
+        """Post-run operations."""
         # Mapping name from PyFR to name in grammar:
         mapping = {
             "Velocity": "velocity",
@@ -226,9 +193,15 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             # vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Velocity", clim=(0, 70))
             # vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Density", clim=(0, 1.2))
 
-        output_data["error_code"] = atleast_1d(error_run)
+    def write_input_files(self, input_data):
 
-        return output_data
+        template = Path(COUETTE_2D_DIR / "couette_2d.ini.j2").read_text()
+        input_str = BaseJobExecutor._render_template(
+            template,
+            {key: value[0] for key, value in input_data.items()},
+        )
+        Path(self.job_directory / "couette-flow.ini").write_text(input_str)
+
 
     def _check_job_completion(
         self,

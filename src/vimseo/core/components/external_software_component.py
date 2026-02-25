@@ -68,6 +68,15 @@ class ExternalSoftwareComponent(BaseComponent):
     def job_executor(self) -> BaseJobExecutor:
         return self._job_executor
 
+    def set_job_executor(self, job_executor: BaseJobExecutor):
+        """Set the job executor.
+
+        Args:
+            job_executor: The job executor.
+        """
+        self._job_executor = job_executor
+
+
     # TODO rename to _is_successful_execution() and return a boolean instead of an error code
     def _check_job_completion(self) -> int:
         """Checks a completion criterion after execution of the subprocess.
