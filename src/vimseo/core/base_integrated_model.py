@@ -282,7 +282,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
             self.input_grammar.required_names.add(name)
 
         print("DBG run output grammar before copy", self._chain.disciplines[-1].output_grammar.names)
-        self.output_grammar = deepcopy(self._chain.disciplines[-1].output_grammar)
+        self.output_grammar.update_from_names(output_names)
         self.output_grammar.update_from_data(DEFAULT_METADATA)
         for name in DEFAULT_METADATA:
             self.output_grammar.required_names.add(name)
