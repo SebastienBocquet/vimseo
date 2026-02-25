@@ -208,8 +208,8 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
                 else:
                     output_data[f"line_{mapped_field}_{suffix}"] = line[field]
 
-            vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Velocity", clim=(0, 70))
-            vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Density", clim=(0, 1.2))
+            # vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Velocity", clim=(0, 70))
+            # vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Density", clim=(0, 1.2))
 
         output_data[MetaDataNames.error_code] = atleast_1d(error_run)
 
