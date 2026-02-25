@@ -42,6 +42,7 @@ from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.base_integrated_model import IntegratedModelSettings
 from vimseo.core.components.component_factory import ComponentFactory
 from vimseo.core.components.external_software_component import ExternalSoftwareComponent
+from vimseo.core.components.run.run_processor import RunProcessor
 from vimseo.job_executor.base_executor import BaseJobExecutor
 from vimseo.job_executor.job_executor_factory import JobExecutorFactory
 from vimseo.problems.cfd.couette_2d import COUETTE_2D_DIR

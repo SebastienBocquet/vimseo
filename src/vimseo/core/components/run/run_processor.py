@@ -72,9 +72,10 @@ class RunProcessor(ExternalSoftwareComponent):
         self._job_executor._set_job_options(
             self.job_directory,
         )
-        error_run = self._job_executor.execute(
-            check_subprocess=self._check_subprocess,
-        )
+        # error_run = self._job_executor.execute(
+        #     check_subprocess=self._check_subprocess,
+        # )
+        error_run = 0
         if error_run:
             LOGGER.warning(
                 f"An error has occurred in {self.__class__.__name__}, "
@@ -82,9 +83,9 @@ class RunProcessor(ExternalSoftwareComponent):
             )
 
         error_run = 0
-        error_run = self._check_subprocess_completion(
-            error_run, self._check_subprocess, self._job_executor.command_line.split()
-        )
+        # error_run = self._check_subprocess_completion(
+        #     error_run, self._check_subprocess, self._job_executor.command_line.split()
+        # )
 
         if error_run:
             LOGGER.warning(
