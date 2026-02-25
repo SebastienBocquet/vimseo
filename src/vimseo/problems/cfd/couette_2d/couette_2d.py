@@ -1,3 +1,18 @@
+# Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 # Copyright (c) 2019 IRT-AESE.
 # All rights reserved.
 #
@@ -10,37 +25,33 @@
 
 from __future__ import annotations
 
-import glob
 import logging
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 from typing import ClassVar
 
 from gemseo.core.grammars.pydantic_grammar import PydanticGrammar
-from gemseo.utils.pydantic import FieldInfo
 from gemseo.utils.pydantic_ndarray import NDArrayPydantic
-from meshio import vtu
-from numpy import array, atleast_1d, linspace, zeros
-from numpy import loadtxt
+from numpy import array
+from numpy import atleast_1d
+from numpy import linspace
 from pydantic import BaseModel
 
-from vimseo.core.model_metadata import DEFAULT_METADATA
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.base_integrated_model import IntegratedModelSettings
 from vimseo.core.components.component_factory import ComponentFactory
 from vimseo.core.components.external_software_component import ExternalSoftwareComponent
-from vimseo.core.model_metadata import MetaDataNames
 from vimseo.job_executor.base_executor import BaseJobExecutor
 from vimseo.job_executor.job_executor_factory import JobExecutorFactory
 from vimseo.problems.cfd.couette_2d import COUETTE_2D_DIR
 from vimseo.problems.cfd.couette_2d.generate_mesh import generate_couette_mesh
-from vimseo.utilities.curves import Curve
-from vimseo.utilities.fields import extract_line_y, vtu_to_png
+from vimseo.utilities.fields import extract_line_y
 from vimseo.utilities.file_utils import wait_for_file
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from collections.abc import Sequence
 
 LOGGER = logging.getLogger(__name__)
 
@@ -70,10 +81,13 @@ class Couette2DOutputGrammar(BaseModel):
 
 
 class Couette2DRun_Dummy(ExternalSoftwareComponent):
-
     USE_JOB_DIRECTORY = True
 
-    _PERSISTENT_FILE_NAMES: ClassVar[Sequence[str]] = [f"couette-flow-{int(t):03d}_{field}.png" for field in ["Velocity", "Density"] for t in linspace(0, 9, num=10)]
+    _PERSISTENT_FILE_NAMES: ClassVar[Sequence[str]] = [
+        f"couette-flow-{int(t):03d}_{field}.png"
+        for field in ["Velocity", "Density"]
+        for t in linspace(0, 9, num=10)
+    ]
 
     auto_detect_grammar_files = False
     default_grammar_type = "PydanticGrammar"
@@ -164,10 +178,9 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             "Pressure": "pressure",
         }
 
-        files = glob.glob(f"{self.job_directory}/*.pyfrs")
+        files = Path.glob(f"{self.job_directory}/*.pyfrs")
         print(f"Found pyfrs files: {files}.")
         for i, file in enumerate(files):
-
             suffix = file.split("-")[-1]
             suffix = suffix.split(".pyfrs")[0]
             pyfrm_file = "couette-flow.pyfrm"
@@ -204,7 +217,9 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
                 if field == "Velocity":
                     # On suppose que Velocity est un champ vectoriel, et on prend sa composante x
                     for i in range(2):
-                        output_data[f"line_{mapped_field}_{i}_{suffix}"] = line[field][:, i]
+                        output_data[f"line_{mapped_field}_{i}_{suffix}"] = line[field][
+                            :, i
+                        ]
                 else:
                     output_data[f"line_{mapped_field}_{suffix}"] = line[field]
 
@@ -212,8 +227,6 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             # vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Density", clim=(0, 1.2))
 
         output_data["error_code"] = atleast_1d(error_run)
-
-        print("output_data", output_data)
 
         return output_data
 
@@ -224,9 +237,10 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         result_file_path = self.job_directory / "couette-flow-010.pyfrs"
         try:
             wait_for_file(result_file_path)
-            return 0
         except FileNotFoundError:
             return 1
+        else:
+            return 0
 
 
 class Couette2DModel(IntegratedModel):
@@ -239,11 +253,11 @@ class Couette2DModel(IntegratedModel):
         "solution": r"^couette-flow-+\d+\.vtu$"
     }
 
-    CURVES = [
-        ("line_y", f"line_density_009"),
-        ("line_y", f"line_velocity_0_009"),
-        ("line_y", f"line_velocity_1_009"),
-        ("line_y", f"line_pressure_009"),
+    CURVES: ClassVar[Sequence[tuple[str]]] = [
+        ("line_y", "line_density_009"),
+        ("line_y", "line_velocity_0_009"),
+        ("line_y", "line_velocity_1_009"),
+        ("line_y", "line_pressure_009"),
     ]
 
     def __init__(self, load_case_name: str, **options):
