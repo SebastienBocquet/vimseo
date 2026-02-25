@@ -92,7 +92,6 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         for t in linspace(0, 9, num=10):
             for field in ["velocity_0", "velocity_1", "density", "pressure"]:
                 line_data[f"line_{field}_{int(t):03d}"] = array([0.0])
-                line_data[f"image_{field}_{int(t):03d}"] = array(["a_str"])
 
         line_data["line_y"] = array([0.0])
         line_data["line_distance"] = array([0.0])
@@ -164,7 +163,7 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             "Pressure": "pressure",
         }
 
-        files = glob.glob(f"{self.job_directory}/*.vtu") #pyfrs")
+        files = glob.glob(f"{self.job_directory}/*.pyfrs")
         print(f"Found pyfrs files: {files}.")
         for i, file in enumerate(files):
 
@@ -205,7 +204,6 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
                         output_data[f"line_{mapped_field}_{i}_{suffix}"] = line[field][:, i]
                 else:
                     output_data[f"line_{mapped_field}_{suffix}"] = line[field]
-                output_data[f"image_{mapped_field}_{suffix}"] = array([f"couette-flow-{suffix}_{field}.png"])
 
             vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Velocity", clim=(0, 70))
             vtu_to_png([vtu_file], output_folder=self.job_directory, scalar_name="Density", clim=(0, 1.2))
