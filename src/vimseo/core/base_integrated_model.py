@@ -449,6 +449,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for discipline in self._chain.disciplines:
             discipline._job_directory = self._scratch_manager.job_directory
 
+        print("chain outptu grammar", self._chain.output_grammar)
         output_data = self._chain.execute(input_data)
 
         end_time = time()
