@@ -84,18 +84,15 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         self.input_grammar = PydanticGrammar("grammar", model=Couette2DInputGrammar)
         self.output_grammar = PydanticGrammar("grammar", model=Couette2DOutputGrammar)
 
-        # TODO update with metadat names, persistent file names
-        self.output_grammar.update_from_data({
-            MetaDataNames.error_code.name: atleast_1d(
-                IntegratedModel._ERROR_CODE_DEFAULT
-            )
-        })
- 
+        self.output_grammar.update_from_data({"error_code": atleast_1d(0)})
+        self.output_grammar.required_names.add("error_code")
+
         line_data = {}
         # for t in linspace(0, 10, num=11):
         for t in linspace(0, 9, num=10):
             for field in ["velocity_0", "velocity_1", "density", "pressure"]:
                 line_data[f"line_{field}_{int(t):03d}"] = array([0.0])
+                line_data[f"image_{field}_{int(t):03d}"] = array(["a_str"])
 
         line_data["line_y"] = array([0.0])
         line_data["line_distance"] = array([0.0])
@@ -112,10 +109,10 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
 
     def _run(self, input_data):
 
-        # is_empty = not any(self.job_directory.iterdir())
-        # if not is_empty:
-        #     msg = f"{self.job_directory} should be empty."
-        #     raise ValueError(msg)
+        is_empty = not any(self.job_directory.iterdir())
+        if not is_empty:
+            msg = f"{self.job_directory} should be empty."
+            raise ValueError(msg)
 
         generate_couette_mesh(
             mesh_size=input_data["dx"][0],
@@ -129,28 +126,28 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
         )
         Path(self.job_directory / "couette-flow.ini").write_text(input_str)
 
-        # subprocess.run(
-        #     ["pyfr", "import", "couette-flow.msh", "couette-flow.pyfrm"],
-        #     cwd=self._job_directory,
-        #     capture_output=True,
-        # )
+        subprocess.run(
+            ["pyfr", "import", "couette-flow.msh", "couette-flow.pyfrm"],
+            cwd=self._job_directory,
+            capture_output=True,
+        )
 
         self._job_executor._set_job_options(
             self.job_directory,
         )
-        # error_run = self._job_executor.execute(
-        #     check_subprocess=self._check_subprocess,
-        # )
-        # if error_run:
-        #     LOGGER.warning(
-        #         f"An error has occurred in {self.__class__.__name__}, "
-        #         f"running command {self._job_executor._command_line}."
-        #     )
+        error_run = self._job_executor.execute(
+            check_subprocess=self._check_subprocess,
+        )
+        if error_run:
+            LOGGER.warning(
+                f"An error has occurred in {self.__class__.__name__}, "
+                f"running command {self._job_executor._command_line}."
+            )
 
         error_run = 0
-        # error_run = self._check_subprocess_completion(
-        #     error_run, self._check_subprocess, self._job_executor.command_line.split()
-        # )
+        error_run = self._check_subprocess_completion(
+            error_run, self._check_subprocess, self._job_executor.command_line.split()
+        )
 
         if error_run:
             LOGGER.warning(
@@ -176,18 +173,18 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             pyfrm_file = "couette-flow.pyfrm"
 
             # # temp
-            vtu_file = file
-            suffix = suffix.replace(".vtu", "")
+            # vtu_file = file
+            # suffix = suffix.replace(".vtu", "")
             # # ----
 
-            # vtu_file = file.replace(".pyfrs", ".vtu")
-            # print(f"Conversion de {file} en format VTU dans {vtu_file}")
-            # subprocess.run(
-            #     f"pyfr export volume {pyfrm_file} {file} {vtu_file}".split(),
-            #     cwd=self._job_directory,
-            #     capture_output=True,
-            # )
-            # print("Conversion terminée.")
+            vtu_file = file.replace(".pyfrs", ".vtu")
+            print(f"Conversion de {file} en format VTU dans {vtu_file}")
+            subprocess.run(
+                f"pyfr export volume {pyfrm_file} {file} {vtu_file}".split(),
+                cwd=self._job_directory,
+                capture_output=True,
+            )
+            print("Conversion terminée.")
 
             line = extract_line_y(
                 vtu_file=vtu_file,
