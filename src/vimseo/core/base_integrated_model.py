@@ -737,7 +737,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
             user = getlogin()
         else:
             user = getpass.getuser()
-        return MetaData(**{
+        data = {
             MetaDataNames.model: array([self.__class__.__name__]),
             MetaDataNames.load_case: array([self.__load_case.name]),
             MetaDataNames.error_code: array([error]),
@@ -770,7 +770,10 @@ class IntegratedModel(GemseoDisciplineWrapper):
             MetaDataNames.directory_scratch_job: array([
                 str(self._scratch_manager.job_directory)
             ]),
-        })
+        }
+        for key in list(data.keys()):
+            data[key.value] = data.pop(key)
+        return MetaData(**data)
 
     def create_cache_from_archive(self, run_ids: Iterable[str] = ()) -> HDF5Cache:
         """Defines a temporary HDF5 cache file, based on results found on the current
