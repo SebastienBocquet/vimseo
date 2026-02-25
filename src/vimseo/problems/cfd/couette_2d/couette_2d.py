@@ -182,7 +182,7 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
             pyfrs_filename = Path(file).name
             vtu_filename = Path(vtu_file).name
             subprocess.run(
-                f"pyfr export volume {pyfrm_file} {pyfrs_filename} {vtu_filename}".split(),
+                f"pyfr export {pyfrm_file} {pyfrs_filename} {vtu_filename}".split(),
                 cwd=self._job_directory,
                 capture_output=True,
             )
