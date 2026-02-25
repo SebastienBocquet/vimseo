@@ -20,6 +20,7 @@ from typing import ClassVar
 from gemseo.core.grammars.pydantic_grammar import PydanticGrammar
 from gemseo.utils.pydantic import FieldInfo
 from gemseo.utils.pydantic_ndarray import NDArrayPydantic
+from meshio import vtu
 from numpy import array, atleast_1d, linspace, zeros
 from numpy import loadtxt
 from pydantic import BaseModel
@@ -178,8 +179,10 @@ class Couette2DRun_Dummy(ExternalSoftwareComponent):
 
             vtu_file = file.replace(".pyfrs", ".vtu")
             print(f"Conversion de {file} en format VTU dans {vtu_file}")
+            pyfrs_filename = Path(file).name
+            vtu_filename = Path(vtu_file).name
             subprocess.run(
-                f"pyfr export volume {pyfrm_file} {file} {vtu_file}".split(),
+                f"pyfr export volume {pyfrm_file} {pyfrs_filename} {vtu_filename}".split(),
                 cwd=self._job_directory,
                 capture_output=True,
             )
