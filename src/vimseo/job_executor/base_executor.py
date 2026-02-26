@@ -120,7 +120,7 @@ class BaseJobExecutor(metaclass=GoogleDocstringInheritanceMeta):
         options = self._user_job_options
         options.update({"executable": self.DEFAULT_EXECUTABLE})
         self._job_options = options
-        self._job_name = options["job_name"] if "job_name" in options else ""
+        self._job_name = options.get("job_name", "")
 
     @property
     def options(self) -> dict:

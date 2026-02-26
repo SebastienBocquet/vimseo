@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
+    from vimseo.core.load_case import LoadCase
     from vimseo.material.material import Material
 
 LOGGER = logging.getLogger(__name__)
@@ -50,12 +51,12 @@ class BaseComponent(GemseoDisciplineWrapper):
 
     def __init__(
         self,
-        load_case_name: str,
+        load_case: LoadCase | None = None,
         material_grammar_file: Path | str = "",
         material: Material | None = None,
     ) -> None:
         super().__init__()
-        self._load_case_name = load_case_name
+        self._load_case = load_case
         self._job_directory = ""
 
         # """Initialize input grammar and default values from the material.

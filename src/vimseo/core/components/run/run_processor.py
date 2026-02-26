@@ -22,13 +22,12 @@ from numpy import atleast_1d
 
 from vimseo.core.components.external_software_component import ExternalSoftwareComponent
 from vimseo.core.model_metadata import MetaDataNames
-from vimseo.job_executor.base_executor import BaseJobExecutor
-from vimseo.job_executor.base_user_job_options import BaseUserJobSettings
 
 if TYPE_CHECKING:
     from vimseo.core.components.subroutines.subroutine_wrapper import SubroutineWrapper
 
 LOGGER = logging.getLogger(__name__)
+
 
 class RunProcessor(ExternalSoftwareComponent):
     """Class defining library of components dedicated to running models.
@@ -51,18 +50,15 @@ class RunProcessor(ExternalSoftwareComponent):
     def n_cpus(self):
         """The number of CPUs used to run the external software."""
         return self._job_executor.options["n_cpus"]
-    
+
     def write_input_files(self, input_data):
         """Write the input files for the external software."""
-        pass
 
     def pre_run(self, input_data):
         """Pre-run operations."""
-        pass
 
     def post_run(self, input_data):
         """Post-run operations."""
-        pass
 
     def _run(self, input_data):
         """Run the external software."""

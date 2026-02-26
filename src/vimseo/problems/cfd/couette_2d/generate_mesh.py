@@ -1,3 +1,18 @@
+# Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 """
 claude.ai (Sonnet 4.6), 19/02/2026.
 Prompt: "Peux tu générer un maillage avec une taille de maille paramétrée à partir du fichier fournit ?
@@ -31,16 +46,18 @@ Usage :
 """
 
 import argparse
-
 import os
-os.environ["DISPLAY"] = ""          # pas d'écran
+
+os.environ["DISPLAY"] = ""  # pas d'écran
 import gmsh
+
 gmsh.initialize(["-nopopup"])
+
 
 def generate_couette_mesh(
     mesh_size: float = 0.25,
-    Lx: float = 2.0,  # largeur du domaine  (de -1 à +1)
-    Ly: float = 1.0,  # hauteur du domaine  (de  0 à  1)
+    lx: float = 2.0,  # largeur du domaine  (de -1 à +1)
+    ly: float = 1.0,  # hauteur du domaine  (de  0 à  1)
     msh_version: float = 2.2,
     output: str = "couette_flow.msh",
     verbose: bool = True,
@@ -61,17 +78,17 @@ def generate_couette_mesh(
     Paramètres
     ----------
     mesh_size          : taille de maille cible (paramètre principal)
-    Lx          : largeur totale du domaine (défaut 2.0, de x=-1 à x=+1)
-    Ly          : hauteur du domaine (défaut 1.0)
+    lx          : largeur totale du domaine (défaut 2.0, de x=-1 à x=+1)
+    ly          : hauteur du domaine (défaut 1.0)
     msh_version : version du format .msh (2.2 recommandé pour PyFR)
     output      : nom du fichier de sortie
     verbose     : afficher les statistiques
     """
 
-    x_left = -Lx / 2  # x = -1
-    x_right = Lx / 2  # x = +1
+    x_left = -lx / 2  # x = -1
+    x_right = lx / 2  # x = +1
     y_bot = 0.0
-    y_top = Ly  # y =  1
+    y_top = ly  # y =  1
 
     gmsh.initialize()
     gmsh.model.add("couette_flow_2d")
@@ -102,10 +119,10 @@ def generate_couette_mesh(
 
     # ------------------------------------------------------------------
     # 4. PÉRIODICITÉ (gauche <-> droite)
-    # Translation en x de -Lx (de droite vers gauche)
+    # Translation en x de -lx (de droite vers gauche)
     # ------------------------------------------------------------------
     # Matrice de transformation 4x4 (translation) : [1,0,0,dx, 0,1,0,0, 0,0,1,0, 0,0,0,1]
-    translation = [1, 0, 0, -Lx, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    translation = [1, 0, 0, -lx, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
     gmsh.model.mesh.setPeriodic(1, [l_left], [l_right], translation)
 
     # ------------------------------------------------------------------
@@ -163,13 +180,13 @@ def parse_args():
         help="Taille de maille globale (défaut: 0.25, identique à l'original)",
     )
     parser.add_argument(
-        "--Lx",
+        "--lx",
         type=float,
         default=2.0,
         help="Largeur du domaine (défaut: 2.0, de x=-1 à x=+1)",
     )
     parser.add_argument(
-        "--Ly", type=float, default=1.0, help="Hauteur du domaine (défaut: 1.0)"
+        "--ly", type=float, default=1.0, help="Hauteur du domaine (défaut: 1.0)"
     )
     parser.add_argument(
         "--msh",

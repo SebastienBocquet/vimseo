@@ -15,20 +15,23 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Sequence
-
-from meshio import read
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyvista as pv
-import os
-import glob
+from meshio import read
+from numpy import array
+from numpy import linalg
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from pathlib import Path
+    from collections.abc import Sequence
 
     from numpy import ndarray
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -61,75 +64,73 @@ class Field:
         )
 
 
-
-def extract_line_y(
-    vtu_file: str,
-    x_probe: float = 0.0,
+def extract_line(
+    vtu_file: str | Path,
+    point_a: tuple[float] = (),
+    point_b: tuple[float] = (),
     n_points: int = 200,
-    fields: list[str] = None,
-    y_min: float = None,
-    y_max: float = None,
+    fields: list[str] | None = None,
 ) -> dict:
     """
-    Extrait les valeurs des champs le long d'une ligne verticale (x=x_probe)
-    depuis un fichier VTU 2D.
+    Extract values from a vtu file along a line defined by two points.
 
-    Paramètres
-    ----------
-    vtu_file  : chemin vers le fichier .vtu
-    x_probe   : position x de la ligne d'extraction
-    n_points  : nombre de points sur la ligne
-    fields    : liste des champs à extraire (None = tous)
-    y_min     : borne inférieure en y (None = auto depuis le maillage)
-    y_max     : borne supérieure en y (None = auto depuis le maillage)
+    Args:
+        vtu_file: The path to a vtu file.
+        point_a: The starting point of the extraction line.
+        point_b: The ending point of the extraction line.
+        n_points: The number of equidistant points along the extraction line.
+        fields: The names of the variables to extract.
 
-    Retourne
-    --------
-    dict avec clés : 'y' + un tableau par champ extrait
+    Returns: a dictionary mapping variable names to arrays containing the extracted
+    values. Items:
+      - ``coords`` to the coordinates of the line points
+      - ``dist`` to the distance of the line points to the line start
+    are added to the dictionary.
     """
     mesh = pv.read(vtu_file)
 
-    # Bornes automatiques depuis le maillage si non spécifiées
-    bounds = mesh.bounds  # (xmin, xmax, ymin, ymax, zmin, zmax)
-    y0 = y_min if y_min is not None else bounds[2]
-    y1 = y_max if y_max is not None else bounds[3]
+    pa = array(point_a, dtype=float)
+    pb = array(point_b, dtype=float)
 
-    # Définir la ligne d'extraction
-    point_a = (x_probe, y0, 0.0)
-    point_b = (x_probe, y1, 0.0)
+    line = mesh.sample_over_line(tuple(pa), tuple(pb), resolution=n_points)
 
-    # Échantillonnage le long de la ligne (interpolation)
-    line = mesh.sample_over_line(point_a, point_b, resolution=n_points)
+    coords = line.points
+    dist = linalg.norm(coords - pa, axis=1)
 
-    # Coordonnées y
-    y_coords = line.points[:, 1]
-
-    # Champs disponibles
     available = list(line.point_data.keys())
     if fields is None:
         fields = available
     else:
-        fields = [f for f in fields if f in available]
         missing = [f for f in fields if f not in available]
+        fields = [f for f in fields if f in available]
         if missing:
-            print(f"  [WARN] Champs non trouvés dans {vtu_file} : {missing}")
-            print(f"  [INFO] Champs disponibles : {available}")
+            LOGGER.warning(
+                f"Variables are not found in {vtu_file} : {missing}. "
+                f"Available fields are: {available}"
+            )
 
-    result = {"y": y_coords}
+    result = {
+        "coords": coords,
+        "dist": dist,
+    }
     for field in fields:
-        data = line.point_data[field]
-        result[field] = data
+        result[field] = line.point_data[field]
 
     return result
 
 
-def vtu_to_png(files: Sequence[str], scalar_name: str, output_folder: str, clim: tuple[float, float] | None = None):
+def vtu_to_png(
+    files: Sequence[str],
+    scalar_name: str,
+    output_folder: str,
+    clim: tuple[float, float] | None = None,
+):
     """Convert a sequence of .vtu files to .png images using PyVista."""
 
     # TODO voir comment extraire une composante d'un champ vectoriel (ex: Velocity) pour faire une image de cette composante uniquement
 
     # --- Boucle de rendu ---
-    plotter = pv.Plotter(off_screen=True) # Fenêtre invisible
+    plotter = pv.Plotter(off_screen=True)  # Fenêtre invisible
 
     for i, filepath in enumerate(files):
         mesh = pv.read(filepath)
@@ -139,11 +140,7 @@ def vtu_to_png(files: Sequence[str], scalar_name: str, output_folder: str, clim:
 
         # Ajout du maillage avec configuration de la colorbar
         plotter.add_mesh(
-            mesh,
-            scalars=scalar_name,
-            cmap="viridis",
-            clim=clim,
-            show_scalar_bar=True
+            mesh, scalars=scalar_name, cmap="viridis", clim=clim, show_scalar_bar=True
         )
 
         # Optionnel : Ajouter un titre ou le nom du fichier sur l'image
@@ -154,8 +151,8 @@ def vtu_to_png(files: Sequence[str], scalar_name: str, output_folder: str, clim:
             plotter.view_xy()
 
         # Sauvegarde
-        filename = os.path.basename(filepath).replace(".vtu", f"_{scalar_name}.png")
-        save_path = os.path.join(output_folder, filename)
+        filename = Path(filepath).name.replace(".vtu", f"_{scalar_name}.png")
+        save_path = Path(output_folder) / filename
         plotter.screenshot(save_path)
 
         print(f"Image sauvegardée : {filename}")

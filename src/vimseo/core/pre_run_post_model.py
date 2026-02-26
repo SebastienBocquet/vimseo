@@ -107,7 +107,6 @@ class PreRunPostModel(IntegratedModel):
         components = [
             component_factory.create(
                 self.PRE_PROC_FAMILY,
-                load_case_name,
                 load_case=load_case,
                 material_grammar_file=self._MATERIAL_GRAMMAR_FILE,
                 material=material,
@@ -116,18 +115,23 @@ class PreRunPostModel(IntegratedModel):
             run_processor,
             component_factory.create(
                 self.POST_PROC_FAMILY,
-                load_case_name,
                 load_case=load_case,
                 check_subprocess=options["check_subprocess"],
             ),
         ]
 
-        # run component has its grammar defined from pre and post components:
-        components[1].input_grammar = deepcopy(components[0].output_grammar)
-        components[1].input_grammar.update(components[0].input_grammar)
-        components[1].output_grammar = deepcopy(components[2].input_grammar)
+        # # TODO update run grammar after super.init.
+        # # run component has its grammar defined from pre and post components:
+        # components[1].input_grammar = deepcopy(components[0].output_grammar)
+        # # TODO is it neccesary? Should be done explicitly by the user instead.
+        # components[1].input_grammar.update(components[0].input_grammar)
+        # components[1].output_grammar = deepcopy(components[2].input_grammar)
+        # components[1].output_grammar.update_from_data({"error_code": atleast_1d(0)})
+        # components[1].output_grammar.required_names.add("error_code")
 
         super().__init__(load_case_name, components, **options)
+
+        # TODO automatically add material grammar to run component input grammar.
 
         self._pre_processor = self._chain.disciplines[0]
         self._run_processor = self._chain.disciplines[1]

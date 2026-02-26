@@ -273,15 +273,16 @@ class IntegratedModel(GemseoDisciplineWrapper):
             **archive_options
         )
 
-        output_names = self._chain.disciplines[-1].output_grammar.names
-        self._chain.output_grammar.restrict_to(output_names)
+        # TODO restrict the input names of disciplines[0]
+        # output_names = self._chain.disciplines[-1].output_grammar.names
+        # self._chain.output_grammar.restrict_to(output_names)
 
         self.input_grammar = deepcopy(self._chain.input_grammar)
         self.default_input_data = self._chain.default_input_data
         for name in self.input_grammar.names:
             self.input_grammar.required_names.add(name)
 
-        self.output_grammar.update_from_names(output_names)
+        self.output_grammar.update_from_names(self._chain.output_grammar.names)
         self.output_grammar.update_from_data(DEFAULT_METADATA)
         for name in DEFAULT_METADATA:
             self.output_grammar.required_names.add(name)
