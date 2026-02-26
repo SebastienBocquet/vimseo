@@ -71,7 +71,7 @@ class ComponentFactory(BaseFactory):
             return klass(**options)
         except TypeError:
             LOGGER.exception(
-                "Failed to create class %s with arguments %s %s",
+                "Failed to create class %s with arguments %s",
                 base_class_name,
                 options,
             )

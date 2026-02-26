@@ -30,7 +30,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
-from numpy import atleast_1d
 from numpy import linspace
 
 from vimseo.core.components.external_software_component import ExternalSoftwareComponent
@@ -59,12 +58,9 @@ class RunPyFR(ExternalSoftwareComponent):
     def __init__(self, **options):
         super().__init__(**options)
 
-        self.output_grammar.update_from_data({"error_code": atleast_1d(0)})
-        self.output_grammar.required_names.add("error_code")
-
         self.set_job_executor(
             JobExecutorFactory().create(
-                "BaseInteractiveExecutor",
+                "PyFRInteractiveExecutor",
                 "pyfr run -b {{ backend }} couette-flow.pyfrm couette-flow.ini",
             )
         )

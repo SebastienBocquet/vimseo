@@ -13,10 +13,24 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import logging
+from pathlib import Path
+
+from vimseo.job_executor.base_interactive_executor import BaseInteractiveExecutor
 from vimseo.job_executor.base_user_job_options import BaseUserJobSettings
+
+LOGGER = logging.getLogger(__name__)
 
 
 class PyFRJobSettings(BaseUserJobSettings):
     """The user job options for PyFR."""
 
     backend: str = "openmp"
+
+
+class PyFRInteractiveExecutor(BaseInteractiveExecutor):
+    """An executor to execute PyFR."""
+
+    def _fetch_convergence(self):
+        vtu_files = sorted(Path(self.job_directory).glob("*.vtu"))
+        LOGGER.info(vtu_files)

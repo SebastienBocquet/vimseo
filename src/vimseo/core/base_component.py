@@ -54,10 +54,12 @@ class BaseComponent(GemseoDisciplineWrapper):
         load_case: LoadCase | None = None,
         material_grammar_file: Path | str = "",
         material: Material | None = None,
+        check_subprocess: bool = False,
     ) -> None:
         super().__init__()
         self._load_case = load_case
         self._job_directory = ""
+        self._check_subprocess = check_subprocess
 
         # """Initialize input grammar and default values from the material.
 

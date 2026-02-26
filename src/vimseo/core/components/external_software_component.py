@@ -62,9 +62,12 @@ class ExternalSoftwareComponent(BaseComponent):
         material: Material | None = None,
         check_subprocess: bool = False,
     ) -> None:
-        super().__init__(load_case, material_grammar_file, material)
+        super().__init__(load_case, material_grammar_file, material, check_subprocess)
+
+        self.output_grammar.update_from_data({"error_code": atleast_1d(0)})
+        self.output_grammar.required_names.add("error_code")
+
         self._job_executor = BaseJobExecutor("")
-        self._check_subprocess = check_subprocess
         self._attached_files = []
 
     @property
@@ -164,7 +167,10 @@ class ExternalSoftwareComponent(BaseComponent):
                     stderr=subprocess.STDOUT,
                 )
 
-            LOGGER.warning("Subprocess returned an error which is ignored")
+            LOGGER.warning(
+                "Subprocess returned an error which is ignored "
+                "(``check_subprocess=False``)."
+            )
 
         return error_subprocess
 

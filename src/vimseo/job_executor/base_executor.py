@@ -161,11 +161,7 @@ class BaseJobExecutor(metaclass=GoogleDocstringInheritanceMeta):
             self._job_options,
         )
 
-    def _is_finished(self) -> bool:
-        """Criterion indicating that the subprocess is finished."""
-        return False
-
-    def _fetch_convergence(self):
+    def _fetch_convergence(self) -> None:
         """Fetch the log of simulation convergence."""
 
     def _execute_external_software(
@@ -173,7 +169,6 @@ class BaseJobExecutor(metaclass=GoogleDocstringInheritanceMeta):
         cmd: Sequence[str],
         check_subprocess: bool,
         activate_convergence_fetching: bool = True,
-        activate_termination_detection: bool = True,
     ) -> int:
         """Execute a subprocess.
 
@@ -211,11 +206,6 @@ class BaseJobExecutor(metaclass=GoogleDocstringInheritanceMeta):
             if activate_convergence_fetching:
                 self._fetch_convergence()
                 time.sleep(1)
-
-            if activate_termination_detection:
-                time.sleep(1)
-                if self._is_finished():
-                    break
 
             if proc.poll() is not None:
                 if activate_convergence_fetching:

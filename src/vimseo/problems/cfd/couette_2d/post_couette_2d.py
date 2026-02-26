@@ -24,7 +24,7 @@ from numpy import atleast_1d
 from numpy import linspace
 from pydantic import BaseModel
 
-from vimseo.core.components.external_software_component import ExternalSoftwareComponent
+from vimseo.core.base_component import BaseComponent
 from vimseo.utilities.fields import extract_line
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ class PreCouette2DOutputGrammar(BaseModel):
     """The output grammar for the Couette 2D model post-processor."""
 
 
-class PostPyFR_Couette2D(ExternalSoftwareComponent):
+class PostPyFR_Couette2D(BaseComponent):
     """Post process the Couette 2D case."""
 
     default_grammar_type = "PydanticGrammar"
@@ -52,7 +52,7 @@ class PostPyFR_Couette2D(ExternalSoftwareComponent):
         load_case: LoadCase,
         material_grammar_file="",
         material=None,
-        check_subprocess=False,
+        check_subprocess: bool = False,
     ):
         super().__init__(load_case, material_grammar_file, material, check_subprocess)
 
