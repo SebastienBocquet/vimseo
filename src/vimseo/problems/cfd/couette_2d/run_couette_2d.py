@@ -101,6 +101,6 @@ class RunPyFR(ExternalSoftwareComponent):
         try:
             wait_for_file(result_file_path)
         except FileNotFoundError:
-            return 1
+            return False
         else:
-            return 0
+            return True
