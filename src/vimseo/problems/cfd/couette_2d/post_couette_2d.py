@@ -16,6 +16,8 @@
 from __future__ import annotations
 
 import logging
+import subprocess
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from gemseo.core.grammars.pydantic_grammar import PydanticGrammar
@@ -89,27 +91,28 @@ class PostPyFR_Couette2D(BaseComponent):
 
         output_data = {}
 
-        files = self.job_directory.glob(pattern="*.vtu")  # pyfrs")
+        files = self.job_directory.glob(pattern="*.pyfrs")
         print(f"Found pyfrs files: {files}.")
         for i, file in enumerate(files):
             suffix = file.name.split("-")[-1]
             suffix = suffix.split(".pyfrs")[0]
 
             # # temp
-            vtu_file = file
-            suffix = suffix.replace(".vtu", "")
+            # vtu_file = file
+            # suffix = suffix.replace(".vtu", "")
             # # ----
 
-            # vtu_file = file.replace(".pyfrs", ".vtu")
-            # print(f"Conversion de {file} en format VTU dans {vtu_file}")
-            # pyfrs_filename = Path(file).name
-            # vtu_filename = Path(vtu_file).name
-            # subprocess.run(
-            #     f"pyfr export {pyfrm_file} {pyfrs_filename} {vtu_filename}".split(),
-            #     cwd=self._job_directory,
-            #     capture_output=True,
-            # )
-            # print("Conversion terminée.")
+            vtu_file = file.replace(".pyfrs", ".vtu")
+            print(f"Conversion de {file} en format VTU dans {vtu_file}")
+            pyfrm_file = "couette-flow.pyfrm"
+            pyfrs_filename = Path(file).name
+            vtu_filename = Path(vtu_file).name
+            subprocess.run(
+                f"pyfr export {pyfrm_file} {pyfrs_filename} {vtu_filename}".split(),
+                cwd=self._job_directory,
+                capture_output=True,
+            )
+            print("Conversion terminée.")
 
             line = extract_line(
                 vtu_file=vtu_file,
