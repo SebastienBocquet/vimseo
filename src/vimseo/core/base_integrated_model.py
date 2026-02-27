@@ -282,7 +282,9 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for name in self.input_grammar.names:
             self.input_grammar.required_names.add(name)
 
-        self.output_grammar.update_from_names(self._chain.output_grammar.names)
+        self.output_grammar.update_from_types(
+            self._chain.output_grammar._get_names_to_types()
+        )
         self.output_grammar.update_from_data(DEFAULT_METADATA)
         for name in DEFAULT_METADATA:
             self.output_grammar.required_names.add(name)
@@ -723,7 +725,11 @@ class IntegratedModel(GemseoDisciplineWrapper):
         if self._chain.execution_status.value != ExecutionStatus.Status.DONE:
             error = 1
         else:
-            error = output_data_raw[MetaDataNames.error_code][0]
+            error = (
+                output_data_raw[MetaDataNames.error_code][0]
+                if MetaDataNames.error_code in output_data_raw
+                else self._ERROR_CODE_DEFAULT
+            )
 
         here = str(Path(__file__).parent)
         try:

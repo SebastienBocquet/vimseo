@@ -18,9 +18,7 @@ from __future__ import annotations
 from numpy import array
 from numpy import atleast_1d
 
-from vimseo.core.components.post.post_processor import PostProcessor
-from vimseo.core.components.pre.pre_processor import PreProcessor
-from vimseo.core.components.run.run_processor import RunProcessor
+from vimseo.core.base_component import BaseComponent
 from vimseo.core.pre_run_post_model import PreRunPostModel
 from vimseo.material_lib import MATERIAL_LIB_DIR
 
@@ -58,7 +56,7 @@ class MockModelWithMaterial(MockModel):
     MATERIAL_FILE = MATERIAL_LIB_DIR / "Mock.json"
 
 
-class MockPre(PreProcessor):
+class MockPre(BaseComponent):
     """Mock Class for pre-processing."""
 
     USE_JOB_DIRECTORY = False
@@ -99,7 +97,7 @@ class MockPre_LC2(MockPre):
         return {"x2": x2}
 
 
-class MockRun(RunProcessor):
+class MockRun(BaseComponent):
     """Mock Class for run."""
 
     def _run(self, input_data):
@@ -108,7 +106,7 @@ class MockRun(RunProcessor):
         return {"y0": y0}
 
 
-class MockPost(PostProcessor):
+class MockPost(BaseComponent):
     """Mock Class for post-processing."""
 
 

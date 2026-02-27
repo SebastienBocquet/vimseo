@@ -19,6 +19,7 @@ import logging
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
+from gemseo.core.discipline.discipline import Discipline
 from numpy import atleast_1d
 
 from vimseo.core.gemseo_discipline_wrapper import GemseoDisciplineWrapper
@@ -48,6 +49,10 @@ class BaseComponent(GemseoDisciplineWrapper):
     _PERSISTENT_FILE_NAMES: ClassVar[Sequence[str]] = []
     """List of files produced in the scratch directory, to be copied to the archive
     directory."""
+
+    auto_detect_grammar_files = True
+    default_cache_type = Discipline.CacheType.HDF5
+    default_grammar_type = Discipline.GrammarType.JSON
 
     def __init__(
         self,

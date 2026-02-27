@@ -22,6 +22,7 @@ from typing import ClassVar
 
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.components.component_factory import ComponentFactory
+from vimseo.core.components.external_software_component import ExternalSoftwareComponent
 from vimseo.core.components.subroutines.subroutine_wrapper_factory import (
     SubroutineWrapperFactory,
 )
@@ -140,7 +141,8 @@ class PreRunPostModel(IntegratedModel):
         self._component_with_jacobian = self.run
         self._set_differentiated_names(self.run)
 
-        self.run.job_executor._user_job_options.update({"n_cpus": self.N_CPUS})
+        if isinstance(self.run, ExternalSoftwareComponent):
+            self.run.job_executor._user_job_options.update({"n_cpus": self.N_CPUS})
 
     @property
     def run(self) -> RunProcessor:

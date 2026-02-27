@@ -28,6 +28,7 @@ from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
 from vimseo.api import create_model
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.model_metadata import DEFAULT_METADATA
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.pre_run_post_model import PreRunPostModel
@@ -49,7 +50,7 @@ def test_check_data_flow(tmp_wd):
             "x1_minimum_only",
             "x1_no_bounds",
         ],
-        "model_outputs": ["y1", *model.get_metadata_names()],
+        "model_outputs": ["x2", "y0", "y1", *model.get_metadata_names()],
         "MockPre_LC1": {
             "inputs": [
                 "x1_maximum_only",
@@ -62,16 +63,12 @@ def test_check_data_flow(tmp_wd):
         "MockRun": {
             "inputs": [
                 "x2",
-                "x1_maximum_only",
-                "x1",
-                "x1_minimum_only",
-                "x1_no_bounds",
             ],
             "outputs": ["y0"],
         },
         "MockPost_LC1": {
             "inputs": ["y0"],
-            "outputs": [MetaDataNames.error_code.name, "y1"],
+            "outputs": ["y1"],
         },
     }
 
@@ -111,7 +108,7 @@ def test_metadata_added_to_outputs(tmp_wd):
     model.EXTRA_INPUT_GRAMMAR_CHECK = True
     model.execute()
     out = model.get_output_data_names()
-    assert set(out) == {"y1", *list(DEFAULT_METADATA.keys())}
+    assert set(out) == {"x2", "y0", "y1", *list(DEFAULT_METADATA.keys())}
 
 
 def test_metadata_vars_from_outputs(tmp_wd):
@@ -121,6 +118,8 @@ def test_metadata_vars_from_outputs(tmp_wd):
     model.execute()
     out = model.get_output_data_names(remove_metadata=True)
     assert set(out) == {
+        "x2",
+        "y0",
         "y1",
     }
 
@@ -195,11 +194,13 @@ def test_metadata(tmp_wd):
 
     assert output_data[MetaDataNames.model][0] == "MockModel"
     assert output_data[MetaDataNames.load_case][0] == "LC1"
-    assert output_data[MetaDataNames.error_code][0] == 0
+    assert (
+        output_data[MetaDataNames.error_code][0] == IntegratedModel._ERROR_CODE_DEFAULT
+    )
     assert output_data[MetaDataNames.description][0] == ""
     assert output_data[MetaDataNames.job_name][0] == ""
     assert len(output_data[MetaDataNames.persistent_result_files]) == 1
-    assert output_data[MetaDataNames.n_cpus][0] == 1
+    assert output_data[MetaDataNames.n_cpus][0] == 0
     assert isinstance(output_data[MetaDataNames.date][0], np.str_)
 
     assert output_data[MetaDataNames.cpu_time][0] >= 0.0
@@ -269,7 +270,7 @@ def test_input_names_groups():
 @pytest.mark.parametrize(
     ("model_name", "load_case", "user_job_options"),
     [
-        ("MockModel", "LC1", BaseUserJobSettings(n_cpus=4)),
+        ("MockExternalSoftware", "LC1", BaseUserJobSettings(n_cpus=4)),
     ],
 )
 def test_set_job_options(tmp_wd, model_name, load_case, user_job_options):
@@ -281,8 +282,7 @@ def test_set_job_options(tmp_wd, model_name, load_case, user_job_options):
     assert model.run.job_executor.options["n_cpus"] == 4
     assert model.run.n_cpus == 4
     model.execute()
-    if model.run.job_executor._job_options:
-        assert model.run.job_executor._job_options.n_cpus == 4
+    assert model.run.job_executor.options["n_cpus"] == 4
 
 
 def test_set_bounds(tmp_wd):

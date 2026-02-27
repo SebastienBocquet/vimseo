@@ -20,7 +20,6 @@ import shutil
 import subprocess
 from typing import TYPE_CHECKING
 
-from gemseo.core.discipline.discipline import Discipline
 from numpy import atleast_1d
 
 from vimseo.core.base_component import BaseComponent
@@ -50,10 +49,6 @@ class ExternalSoftwareComponent(BaseComponent):
 
     _job_executor: BaseJobExecutor
     """A job executor."""
-
-    auto_detect_grammar_files = True
-    default_cache_type = Discipline.CacheType.HDF5
-    default_grammar_type = Discipline.GrammarType.JSON
 
     def __init__(
         self,
@@ -96,9 +91,9 @@ class ExternalSoftwareComponent(BaseComponent):
         self._job_executor._set_job_options(
             self.job_directory,
         )
-        # error_run = self._job_executor.execute(
-        #     check_subprocess=self._check_subprocess,
-        # )
+        error_run = self._job_executor.execute(
+            check_subprocess=self._check_subprocess,
+        )
         error_run = 0
         if error_run:
             LOGGER.warning(
@@ -107,9 +102,9 @@ class ExternalSoftwareComponent(BaseComponent):
             )
 
         error_run = 0
-        # error_run = self._check_subprocess_completion(
-        #     error_run, self._check_subprocess, self._job_executor.command_line.split()
-        # )
+        error_run = self._check_subprocess_completion(
+            error_run, self._check_subprocess, self._job_executor.command_line.split()
+        )
 
         if error_run:
             LOGGER.warning(
@@ -118,9 +113,8 @@ class ExternalSoftwareComponent(BaseComponent):
             )
 
         output_data = {}
-        output_data[MetaDataNames.error_code] = atleast_1d(error_run)
-
         self.post_run(input_data, output_data)
+        output_data[MetaDataNames.error_code] = atleast_1d(error_run)
 
         return output_data
 
