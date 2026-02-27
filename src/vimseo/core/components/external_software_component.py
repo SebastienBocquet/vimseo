@@ -88,6 +88,8 @@ class ExternalSoftwareComponent(BaseComponent):
 
         self.pre_run(input_data)
 
+        self.write_input_files(input_data)
+
         self._job_executor._set_job_options(
             self.job_directory,
         )
