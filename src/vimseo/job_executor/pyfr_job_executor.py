@@ -32,5 +32,5 @@ class PyFRInteractiveExecutor(BaseInteractiveExecutor):
     """An executor to execute PyFR."""
 
     def _fetch_convergence(self):
-        vtu_files = sorted(Path(self.job_directory).glob("*.vtu"))
+        vtu_files = sorted(Path(self._job_directory).glob("*.vtu"))
         LOGGER.info(vtu_files)
