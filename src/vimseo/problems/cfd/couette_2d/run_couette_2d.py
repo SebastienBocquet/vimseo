@@ -31,12 +31,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
+from gemseo.core.grammars.pydantic_grammar import PydanticGrammar
 from numpy import linspace
 
 from vimseo.core.components.external_software_component import ExternalSoftwareComponent
 from vimseo.job_executor.base_executor import BaseJobExecutor
 from vimseo.job_executor.job_executor_factory import JobExecutorFactory
 from vimseo.problems.cfd.couette_2d import COUETTE_2D_DIR
+from vimseo.problems.cfd.couette_2d.pre_couette_2d import PreCouette2DInputGrammar
 from vimseo.utilities.file_utils import wait_for_file
 
 if TYPE_CHECKING:
@@ -58,6 +60,15 @@ class RunPyFR(ExternalSoftwareComponent):
 
     def __init__(self, **options):
         super().__init__(**options)
+
+        # The material grammar must be added to the grammar, since we do not use
+        # a JSON material grammar passed to the component
+        # (through material_grammar_file arg)
+        self.input_grammar.update_from_types(
+            PydanticGrammar(
+                "grammar", model=PreCouette2DInputGrammar
+            )._get_names_to_types()
+        )
 
         self.set_job_executor(
             JobExecutorFactory().create(
