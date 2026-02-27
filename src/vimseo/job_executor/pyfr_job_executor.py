@@ -33,5 +33,6 @@ class PyFRInteractiveExecutor(BaseInteractiveExecutor):
 
     def _fetch_convergence(self):
         files = sorted(Path(self._job_directory).glob("*.pyfrs"))
-        last_time = [f.name.split("-")[-1] for f in files][-1]
-        LOGGER.info(f"Current time: {last_time}")
+        times = [f.name.split("-")[-1] for f in files][-1]
+        if len(times) > 0:
+            LOGGER.info(f"Current time: {times[-1]}")
