@@ -208,6 +208,10 @@ class IntegratedModel(GemseoDisciplineWrapper):
     ``{_LOAD_CASE_DOMAIN}_{load_case_name}`` instead of ``{load_case_name}``.
     """
 
+    _INDEX_DISC_OUTPUT_TO_REMOVE: ClassVar[Sequence[int]] = []
+    """The output names of the disciplines in the ``IntegratedModel._chain``
+    corresponding to these index are removed from the model output grammar."""
+
     auto_detect_grammar_files = False
     default_cache_type = Discipline.CacheType.HDF5
     default_grammar_type = Discipline.GrammarType.JSON
@@ -273,9 +277,22 @@ class IntegratedModel(GemseoDisciplineWrapper):
             **archive_options
         )
 
-        # TODO restrict the input names of disciplines[0]
-        # output_names = self._chain.disciplines[-1].output_grammar.names
-        # self._chain.output_grammar.restrict_to(output_names)
+        chain_output_names = list(self._chain.output_grammar.names)
+        disc_index_to_keep_outputs = [
+            i
+            for i in range(len(self._chain.disciplines))
+            if i not in self._INDEX_DISC_OUTPUT_TO_REMOVE
+        ]
+        names_to_keep = [
+            name
+            for i in disc_index_to_keep_outputs
+            for name in self._chain.disciplines[i].output_grammar.names
+        ]
+        for i in self._INDEX_DISC_OUTPUT_TO_REMOVE:
+            for name in self._chain.disciplines[i].output_grammar.names:
+                if name in chain_output_names and name not in names_to_keep:
+                    chain_output_names.remove(name)
+        self._chain.output_grammar.restrict_to(chain_output_names)
 
         self.input_grammar = deepcopy(self._chain.input_grammar)
         self.default_input_data = self._chain.default_input_data

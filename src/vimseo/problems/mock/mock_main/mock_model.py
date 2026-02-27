@@ -18,7 +18,7 @@ from __future__ import annotations
 from numpy import array
 from numpy import atleast_1d
 
-from vimseo.core.base_component import BaseComponent
+from vimseo.core.components.base_component import BaseComponent
 from vimseo.core.pre_run_post_model import PreRunPostModel
 from vimseo.material_lib import MATERIAL_LIB_DIR
 

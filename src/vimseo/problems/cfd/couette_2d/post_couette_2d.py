@@ -26,7 +26,7 @@ from numpy import atleast_1d
 from numpy import linspace
 from pydantic import BaseModel
 
-from vimseo.core.base_component import BaseComponent
+from vimseo.core.components.base_component import BaseComponent
 from vimseo.utilities.fields import extract_line
 
 if TYPE_CHECKING:

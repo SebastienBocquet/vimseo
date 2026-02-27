@@ -51,7 +51,7 @@ class MockExternalSoftware_LC1(ExternalSoftwareComponent):
         self.set_job_executor(
             JobExecutorFactory().create(
                 "BaseInteractiveExecutor",
-                "powershell Start-Sleep -m 50",
+                "powershell.exe Start-Sleep -m 50",
             )
         )
 

@@ -27,7 +27,7 @@ from __future__ import annotations
 from numpy import atleast_1d
 
 from vimseo.api import create_model
-from vimseo.core.components.post.post_processor import PostProcessor
+from vimseo.core.components.base_component import BaseComponent
 
 # %%
 # A model is created and executed.
@@ -38,7 +38,8 @@ model.execute()
 # %%
 # Then, we want to add a post-processing, without re-running the model.
 # We first create the post-processor.
-class MyPost(PostProcessor):
+class MyPost(BaseComponent):
+    auto_detect_grammar_files = False
     default_grammar_type = "SimpleGrammar"
 
     def __init__(self, **options):

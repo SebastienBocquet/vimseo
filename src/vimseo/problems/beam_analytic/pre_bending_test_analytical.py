@@ -20,7 +20,7 @@ import logging
 from numpy import array
 from numpy import empty
 
-from vimseo.core.base_component import BaseComponent
+from vimseo.core.components.base_component import BaseComponent
 
 LOGGER = logging.getLogger(__name__)
 

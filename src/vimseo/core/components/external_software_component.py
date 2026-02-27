@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 
 from numpy import atleast_1d
 
-from vimseo.core.base_component import BaseComponent
+from vimseo.core.components.base_component import BaseComponent
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.job_executor.base_executor import BaseJobExecutor
 
@@ -152,7 +152,7 @@ class ExternalSoftwareComponent(BaseComponent):
         Returns: The error code.
         """
         if error_subprocess == 0:
-            error_subprocess = not self._is_successful_execution()
+            error_subprocess = int(not self._is_successful_execution())
 
         if error_subprocess != 0:
             if check:

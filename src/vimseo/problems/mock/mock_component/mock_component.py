@@ -18,7 +18,7 @@ from __future__ import annotations
 from numpy import array
 from numpy import atleast_1d
 
-from vimseo.core.base_component import BaseComponent
+from vimseo.core.components.base_component import BaseComponent
 
 
 class MockComponent(BaseComponent):

@@ -21,7 +21,7 @@ import numpy as np
 from numpy import array
 from scipy.interpolate import interp1d
 
-from vimseo.core.base_component import BaseComponent
+from vimseo.core.components.base_component import BaseComponent
 
 LOGGER = logging.getLogger(__name__)
 

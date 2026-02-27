@@ -23,7 +23,7 @@ from gemseo.utils.pydantic_ndarray import NDArrayPydantic
 from numpy import atleast_1d
 from pydantic import BaseModel
 
-from vimseo.core.base_component import BaseComponent
+from vimseo.core.components.base_component import BaseComponent
 from vimseo.problems.cfd.couette_2d.generate_mesh import generate_couette_mesh
 
 if TYPE_CHECKING:

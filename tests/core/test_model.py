@@ -50,7 +50,7 @@ def test_check_data_flow(tmp_wd):
             "x1_minimum_only",
             "x1_no_bounds",
         ],
-        "model_outputs": ["x2", "y0", "y1", *model.get_metadata_names()],
+        "model_outputs": ["y1", *model.get_metadata_names()],
         "MockPre_LC1": {
             "inputs": [
                 "x1_maximum_only",
@@ -108,7 +108,7 @@ def test_metadata_added_to_outputs(tmp_wd):
     model.EXTRA_INPUT_GRAMMAR_CHECK = True
     model.execute()
     out = model.get_output_data_names()
-    assert set(out) == {"x2", "y0", "y1", *list(DEFAULT_METADATA.keys())}
+    assert set(out) == {"y1", *list(DEFAULT_METADATA.keys())}
 
 
 def test_metadata_vars_from_outputs(tmp_wd):
@@ -118,8 +118,6 @@ def test_metadata_vars_from_outputs(tmp_wd):
     model.execute()
     out = model.get_output_data_names(remove_metadata=True)
     assert set(out) == {
-        "x2",
-        "y0",
         "y1",
     }
 

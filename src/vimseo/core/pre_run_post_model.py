@@ -33,9 +33,7 @@ from vimseo.material.material import Material
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from vimseo.core.components.post.post_processor import PostProcessor
-    from vimseo.core.components.pre.pre_processor import PreProcessor
-    from vimseo.core.components.run.run_processor import RunProcessor
+    from vimseo.core.components.base_component import BaseComponent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,9 +59,9 @@ class PreRunPostModel(IntegratedModel):
     in class attribute ``SUBROUTINE_NAMES``.
     """
 
-    _pre_processor: PreProcessor
-    _run_processor: RunProcessor
-    _post_processor: PostProcessor
+    _pre_processor: BaseComponent
+    _run_processor: BaseComponent
+    _post_processor: BaseComponent
 
     PRE_PROC_FAMILY = None
     """The prefix of the pre-processor class name (typically ``MyPre`` for a pre-
@@ -80,6 +78,8 @@ class PreRunPostModel(IntegratedModel):
 
     N_CPUS = 1
     """The default number of cpus used to run the model."""
+
+    _INDEX_DISC_OUTPUT_TO_REMOVE: ClassVar[Sequence[int]] = [0, 1]
 
     def __init__(self, load_case_name: str, **options):
 
@@ -145,7 +145,7 @@ class PreRunPostModel(IntegratedModel):
             self.run.job_executor._user_job_options.update({"n_cpus": self.N_CPUS})
 
     @property
-    def run(self) -> RunProcessor:
+    def run(self) -> BaseComponent:
         """The component running the external software."""
         return self._run_processor
 

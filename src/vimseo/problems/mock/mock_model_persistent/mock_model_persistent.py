@@ -23,8 +23,8 @@ import numpy as np
 from numpy import array
 from numpy import atleast_1d
 
-from vimseo.core.base_component import BaseComponent
 from vimseo.core.base_integrated_model import IntegratedModel
+from vimseo.core.components.base_component import BaseComponent
 from vimseo.core.components.component_factory import ComponentFactory
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_metadata import MetaDataNames

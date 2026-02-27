@@ -25,7 +25,7 @@ LOGGER = logging.getLogger(__name__)
 class PyFRJobSettings(BaseUserJobSettings):
     """The user job options for PyFR."""
 
-    backend: str = "openmp"
+    backend: str = "cuda"
 
 
 class PyFRInteractiveExecutor(BaseInteractiveExecutor):
@@ -33,6 +33,6 @@ class PyFRInteractiveExecutor(BaseInteractiveExecutor):
 
     def _fetch_convergence(self):
         files = sorted(Path(self._job_directory).glob("*.pyfrs"))
-        times = [f.name.split("-")[-1] for f in files]
+        times = [f.basename.split("-")[-1] for f in files]
         if len(times) > 0:
             LOGGER.info(f"Current time: {times[-1]}")
