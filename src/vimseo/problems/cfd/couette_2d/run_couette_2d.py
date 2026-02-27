@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -63,6 +64,13 @@ class RunPyFR(ExternalSoftwareComponent):
                 "PyFRInteractiveExecutor",
                 "pyfr run -b {{ backend }} couette-flow.pyfrm couette-flow.ini",
             )
+        )
+
+    def pre_run(self, input_data):
+        subprocess.run(
+            ["pyfr", "import", "couette-flow.msh", "couette-flow.pyfrm"],
+            cwd=self._job_directory,
+            capture_output=True,
         )
 
     def write_input_files(self, input_data):
