@@ -32,5 +32,6 @@ class PyFRInteractiveExecutor(BaseInteractiveExecutor):
     """An executor to execute PyFR."""
 
     def _fetch_convergence(self):
-        vtu_files = sorted(Path(self._job_directory).glob("*.pyfrs"))
-        LOGGER.info(vtu_files)
+        files = sorted(Path(self._job_directory).glob("*.pyfrs"))
+        last_time = [files.name.split("-")[-1]][-1]
+        LOGGER.info(f"Current time: {last_time}")

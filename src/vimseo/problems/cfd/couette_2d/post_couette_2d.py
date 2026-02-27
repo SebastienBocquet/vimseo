@@ -102,7 +102,7 @@ class PostPyFR_Couette2D(BaseComponent):
             # suffix = suffix.replace(".vtu", "")
             # # ----
 
-            vtu_file = file.replace(".pyfrs", ".vtu")
+            vtu_file = file.with_suffix(".vtu")
             print(f"Conversion de {file} en format VTU dans {vtu_file}")
             pyfrm_file = "couette-flow.pyfrm"
             pyfrs_filename = Path(file).name
