@@ -12974,6 +12974,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-is-vimseo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is VIMSEO?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚡ Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="⚡ Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#model-exploration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model exploration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sensitivity-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sensitivity analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#key-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13148,118 +13209,116 @@ need an operational and extensible VV&amp;UQ framework.</p>
 <p>You can use <a href="https://docs.astral.sh/uv/">uv</a> for installation. <code>uv</code> is an extremely fast
 Python project manager. To install, use:
 <div class="highlight"><pre><span></span><code>uv pip install vimseo
- ```
-
-Pay attention that running the above command will install **VIMSEO** globally on your system.
-
-To isolate **VIMSEO** in an environment using ``uv``, first create a Python environment:
+</code></pre></div></p>
+<p>Pay attention that running the above command will install <strong>VIMSEO</strong> globally on your system.</p>
+<p>To isolate <strong>VIMSEO</strong> in an environment using <code>uv</code>, first create a Python environment:
+<div class="highlight"><pre><span></span><code>uv venv env
+</code></pre></div></p>
+<p>and activate it:
+<div class="highlight"><pre><span></span><code>source env/bin/activate
 </code></pre></div>
-uv venv env
-<div class="highlight"><pre><span></span><code>and activate it:
-</code></pre></div>
-source env/bin/activate
-<div class="highlight"><pre><span></span><code>(The above command is valid under Linux. For other operating systems,
-refer to the command ``uv`` prints when creating the environment).
-
-Then install:
-</code></pre></div>
-uv pip install vimseo
-<div class="highlight"><pre><span></span><code>---
-
-## What is VIMSEO?
-
-&gt; A **Virtual Testing Framework** to provide the foundational architecture and toolbox needed to integrate modelling
-&gt; and simulation capabilities, set up traceable analysis workflows and provide tailored visualisation to support
-&gt; decision-making.
-
-**VIMSEO** is a software library that supports the implementation of a Verification, Validation and Uncertainty
+(The above command is valid under Linux. For other operating systems,
+refer to the command <code>uv</code> prints when creating the environment).</p>
+<p>Then install:
+<div class="highlight"><pre><span></span><code>uv pip install vimseo
+</code></pre></div></p>
+<hr />
+<h2 id="what-is-vimseo">What is VIMSEO?<a class="headerlink" href="#what-is-vimseo" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>A <strong>Virtual Testing Framework</strong> to provide the foundational architecture and toolbox needed to integrate modelling
+and simulation capabilities, set up traceable analysis workflows and provide tailored visualisation to support
+decision-making.</p>
+</blockquote>
+<p><strong>VIMSEO</strong> is a software library that supports the implementation of a Verification, Validation and Uncertainty
 Quantification (VV&amp;UQ) process for the credibility assessment of Modelling and Simulation (M&amp;S) capabilities.
 By providing a framework for the integration of M&amp;S capabilities, a toolbox for performing VV&amp;UQ analyses, a workflow
 engine to define and execute custom analysis processes, as well as a database to share and visualise results with
-stakeholders, **VIMSEO** is the perfect companion to set up simulation-driven decision-making.
-
-**VIMSEO** provides the following building blocks:
-
-- A wrapper for model integration. It is based on the Multi Disciplinary Optimisation (MDO) library
-[GEMSEO](https://gemseo.readthedocs.io/en/stable/index.html). Since **VIMSEO** models derive
+stakeholders, <strong>VIMSEO</strong> is the perfect companion to set up simulation-driven decision-making.</p>
+<p><strong>VIMSEO</strong> provides the following building blocks:</p>
+<ul>
+<li>
+<p>A wrapper for model integration. It is based on the Multi Disciplinary Optimisation (MDO) library
+<a href="https://gemseo.readthedocs.io/en/stable/index.html">GEMSEO</a>. Since <strong>VIMSEO</strong> models derive
 from GEMSEO Disciplines, they can be readily use in MDO scenarios.
-**VIMSEO** model wrapper is particularly relevant for models based on Finite-Element Analysis (FEA)
+<strong>VIMSEO</strong> model wrapper is particularly relevant for models based on Finite-Element Analysis (FEA)
 and in general any model using mesh discretisation. A wrapper specific to models based on
-*Abaqus* FEA software is available.
-
-- A wrapper for analysis methods: standard analysis methods are already integrated
-to run VV&amp;UQ workflows (see figure below), namely _code and solution verification_, _uncertainty quantification_,
-_sensitivity analysis_, _surrogate modelling_ or _stochastic validation_. Other analysis tools allows to exploit validated simulations to support design offices
-(e.g. generate virtual allowables).
-
-![VV&amp;UQ process](images/vvuq_process.png &quot;ASME VVUQ 10-2019&quot;)
-
-- Heavy models can be run on High Performance Computing (HPC) clusters, by selecting a specific model executor
-instead of the default interactive executor.
-
-- Model and analysis settings can be arbitrarily complex thanks
-to [Pydantic](https://docs.pydantic.dev/latest/), which allows an Object-Oriented settings definition,
-and also ensures verification of the passed settings.
-
-- Model and analysis wrappers integrate traceability and storage capabilities (database), based on
-[MLflow tracking](https://mlflow.org/docs/latest/ml/tracking/).
-
-Using this framework ensures a consistent way of building and capitalising M&amp;S and analysis
+<em>Abaqus</em> FEA software is available.</p>
+</li>
+<li>
+<p>A wrapper for analysis methods: standard analysis methods are already integrated
+to run VV&amp;UQ workflows (see figure below), namely <em>code and solution verification</em>, <em>uncertainty quantification</em>,
+<em>sensitivity analysis</em>, <em>surrogate modelling</em> or <em>stochastic validation</em>. Other analysis tools allows to exploit validated simulations to support design offices
+(e.g. generate virtual allowables).</p>
+</li>
+</ul>
+<p><img alt="VV&amp;UQ process" src="images/vvuq_process.png" title="ASME VVUQ 10-2019" /></p>
+<ul>
+<li>
+<p>Heavy models can be run on High Performance Computing (HPC) clusters, by selecting a specific model executor
+instead of the default interactive executor.</p>
+</li>
+<li>
+<p>Model and analysis settings can be arbitrarily complex thanks
+to <a href="https://docs.pydantic.dev/latest/">Pydantic</a>, which allows an Object-Oriented settings definition,
+and also ensures verification of the passed settings.</p>
+</li>
+<li>
+<p>Model and analysis wrappers integrate traceability and storage capabilities (database), based on
+<a href="https://mlflow.org/docs/latest/ml/tracking/">MLflow tracking</a>.</p>
+</li>
+</ul>
+<p>Using this framework ensures a consistent way of building and capitalising M&amp;S and analysis
 methodologies. It avoids (re)developing generic capabilities, in particular traceability and storage of
-simulation and analysis data which directly contributes to increasing the credibility of simulations.
-
-**VIMSEO** helps the model developers and analysis experts integrate VV&amp;UQ-ready capabilities, enabling them to set up and
-run tailored VV&amp;UQ processes to assess their credibility.
-
-## Use Cases
-
-- I want to capitalise modelling capabilities (analytical, FEM, CFD, ...)
-- I want to execute a model remotely, possibly on HPC
-- I want to assess the credibility of a model through the framework of VV&amp;UQ
-- I want to identify model parameters based on a set of reference data, through a calibration sequence
-- I want to propagate input uncertainties to model outputs
-- I want to assess time/space discretisation error of a model
-- I want to perform stochastic validation of a model (i.e. using stochastic error metrics)
-based on a set of reference data capturing input uncertainties
-- I want to transfer modelling and analysis capabilities from experts to engineers
-- I want to build a database of model results and analysis results, for a-posteriori analysis of
-  model accuracy and adequacy for a given application
-
-## ⚡ Quick Start
-
-### Model exploration
-
-**VIMSEO** integrates (among others) a model that represents a straight beam subjected
+simulation and analysis data which directly contributes to increasing the credibility of simulations.</p>
+<p><strong>VIMSEO</strong> helps the model developers and analysis experts integrate VV&amp;UQ-ready capabilities, enabling them to set up and
+run tailored VV&amp;UQ processes to assess their credibility.</p>
+<h2 id="use-cases">Use Cases<a class="headerlink" href="#use-cases" title="Permanent link">&para;</a></h2>
+<ul>
+<li>I want to capitalise modelling capabilities (analytical, FEM, CFD, ...)</li>
+<li>I want to execute a model remotely, possibly on HPC</li>
+<li>I want to assess the credibility of a model through the framework of VV&amp;UQ</li>
+<li>I want to identify model parameters based on a set of reference data, through a calibration sequence</li>
+<li>I want to propagate input uncertainties to model outputs</li>
+<li>I want to assess time/space discretisation error of a model</li>
+<li>I want to perform stochastic validation of a model (i.e. using stochastic error metrics)
+based on a set of reference data capturing input uncertainties</li>
+<li>I want to transfer modelling and analysis capabilities from experts to engineers</li>
+<li>I want to build a database of model results and analysis results, for a-posteriori analysis of
+  model accuracy and adequacy for a given application</li>
+</ul>
+<h2 id="quick-start">⚡ Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="model-exploration">Model exploration<a class="headerlink" href="#model-exploration" title="Permanent link">&para;</a></h3>
+<p><strong>VIMSEO</strong> integrates (among others) a model that represents a straight beam subjected
 to different bending load cases and boundary conditions. It is based on Bernoulli hypothesis
-and a linear isotropic material.
-
-In this first quick start, the user entry point is scripting mode in Python.
+and a linear isotropic material.</p>
+<p>In this first quick start, the user entry point is scripting mode in Python.
 The model is first created.
-The ``MLflowArchive`` manager is chosen such that the results are store
-in a local MLflow database.
+The <code>MLflowArchive</code> manager is chosen such that the results are store
+in a local MLflow database.</p>
+<p>Then, the material associated with the model, characterised
+by a stochastic Young modulus and Poisson's ratio,
+is sampled on 20 points with a Latin Hypercube.</p>
+<div class="highlight"><pre><span></span><code>from __future__ import annotations
 
-Then, the material associated with the model, characterised
-by a stochastic Young modulus and Poisson&#39;s ratio,
-is sampled on 20 points with a Latin Hypercube.
-</code></pre></div>
-from <strong>future</strong> import annotations</p>
-<p>from vimseo.api import create_model
+from vimseo.api import create_model
 from vimseo.core.model_settings import IntegratedModelSettings
 from vimseo.tools.doe.doe import DOEInputs
 from vimseo.tools.doe.doe import DOESettings
-from vimseo.tools.doe.doe import DOETool</p>
-<p>model_name = "BendingTestAnalytical"
-load_case = "Cantilever"
+from vimseo.tools.doe.doe import DOETool
+
+model_name = &quot;BendingTestAnalytical&quot;
+load_case = &quot;Cantilever&quot;
 model = create_model(
     model_name,
     load_case,
     model_options=IntegratedModelSettings(
-        directory_archive_root=f"mlflow_archive/visualize_model_result",
-        directory_scratch_root=f"scratch/visualize_model_result",
-        archive_manager="MlflowArchive",
+        directory_archive_root=f&quot;mlflow_archive/visualize_model_result&quot;,
+        directory_scratch_root=f&quot;scratch/visualize_model_result&quot;,
+        archive_manager=&quot;MlflowArchive&quot;,
     ),
-)</p>
-<p>tool = DOETool()
+)
+
+tool = DOETool()
 tool.execute(
     inputs=DOEInputs(
         model=model, parameter_space=model.material.to_parameter_space()
@@ -13269,47 +13328,39 @@ tool.execute(
 tool.execute()
 tool.save_results()
 tool.plot_results(tool.result, show=True)
-<div class="highlight"><pre><span></span><code>The database GUI is then opened to explore the results:
 </code></pre></div>
-mlflow ui  --backend-store-uri file:\\\C:\Users\john.doe\sandbox\mlflow_archive\visualize_model_result
-<div class="highlight"><pre><span></span><code>![Database of this numerical experiment](images/mlflow_ui_quickstart.png)
-
-All simulation runs have been stored. The GUI allows to query some runs
+<p>The database GUI is then opened to explore the results:</p>
+<div class="highlight"><pre><span></span><code>mlflow ui  --backend-store-uri file:\\\\\\C:\\Users\\john.doe\\sandbox\\mlflow_archive\\visualize_model_result
+</code></pre></div>
+<p><img alt="Database of this numerical experiment" src="images/mlflow_ui_quickstart.png" /></p>
+<p>All simulation runs have been stored. The GUI allows to query some runs
 based on a SQL-like syntax
-(see [MLflow Tracking](https://mlflow.org/docs/latest/ml/tracking/)
-for more information).
-
-![Result exploration with contour plot](images/mlflow_ui_comparison_quickstart.png)
-
-The GUI also proposes basic exploration visualisations.
+(see <a href="https://mlflow.org/docs/latest/ml/tracking/">MLflow Tracking</a>
+for more information).</p>
+<p><img alt="Result exploration with contour plot" src="images/mlflow_ui_comparison_quickstart.png" /></p>
+<p>The GUI also proposes basic exploration visualisations.
 In this contour plot, in the central region, we see vertical isolines,
-indicating that the beam&#39;s reaction force only depends on the Young modulus.
+indicating that the beam's reaction force only depends on the Young modulus.
 It is effectively the case since in this simple analytical model,
-Poisson&#39;s ratio is not taken int account.
+Poisson's ratio is not taken int account.
 The complex isolines on the right and left borders are artefacts
-due to a lack of sampling.
-
-### Sensitivity analysis
-
-In this second quick start, the user&#39;s entry points is a dashboard.
-The ``dashboard_workflow`` allows to define a workflow of model analysis:
+due to a lack of sampling.</p>
+<h3 id="sensitivity-analysis">Sensitivity analysis<a class="headerlink" href="#sensitivity-analysis" title="Permanent link">&para;</a></h3>
+<p>In this second quick start, the user's entry points is a dashboard.
+The <code>dashboard_workflow</code> allows to define a workflow of model analysis:</p>
+<div class="highlight"><pre><span></span><code>dashboard_workflow
 </code></pre></div>
-dashboard_workflow
-<div class="highlight"><pre><span></span><code>Here a sensitivity analysis on the above linear beam model is defined,
-exploring a parameter space defined by the geometry of the beam:
-
-![Workflow setup](images/workflow_gui.png){ width=&quot;500&quot; }
-
-The workflow can be downloaded as a ``JSON`` file.
-It means that a workflow can be fully serialised in a human-readable format.
-
-Then, the workflow can be executed through the ``workflow_executor`` command,
-to which the path to the workflow ``JSON`` file is passed:
-</code></pre></div>
-workflow_executor.exe C:\Users\john.doe\Downloads\john.doe_2025-10-03_T10-01-04_Workflow.json
-Workflow results: {'model1': BendingTestAnalytical
+<p>Here a sensitivity analysis on the above linear beam model is defined,
+exploring a parameter space defined by the geometry of the beam:</p>
+<p><img alt="Workflow setup" src="images/workflow_gui.png" width="500" /></p>
+<p>The workflow can be downloaded as a <code>JSON</code> file.
+It means that a workflow can be fully serialised in a human-readable format.</p>
+<p>Then, the workflow can be executed through the <code>workflow_executor</code> command,
+to which the path to the workflow <code>JSON</code> file is passed:</p>
+<div class="highlight"><pre><span></span><code>workflow_executor.exe C:\\Users\\john.doe\\Downloads\\john.doe_2025-10-03_T10-01-04_Workflow.json
+Workflow results: {&#39;model1&#39;: BendingTestAnalytical
    Inputs: height, imposed_dplt, length, nu_p, relative_support_location, width, young_modulus
-   Outputs: cpu_time, date, description, directory_archive_job, directory_archive_root, directory_scratch_job, directory_scratch_root, dplt, dplt_at_force_location, dplt_grid, error_code, job_name, load_case, location_max_dplt, machine, maximum_dplt, model, moment, moment_grid, n_cpus, persistent_result_files, reaction_forces, user, vims_git_version, 'space1': Parameter space:
+   Outputs: cpu_time, date, description, directory_archive_job, directory_archive_root, directory_scratch_job, directory_scratch_root, dplt, dplt_at_force_location, dplt_grid, error_code, job_name, load_case, location_max_dplt, machine, maximum_dplt, model, moment, moment_grid, n_cpus, persistent_result_files, reaction_forces, user, vims_git_version, &#39;space1&#39;: Parameter space:
 +--------+-------------+-------------------+-------------+-------+--------------------------------------------------+--------------------+
 | Name   | Lower bound |       Value       | Upper bound | Type  |               Initial distribution               | Transformation(x)= |
 +--------+-------------+-------------------+-------------+-------+--------------------------------------------------+--------------------+
@@ -13317,8 +13368,8 @@ Workflow results: {'model1': BendingTestAnalytical
 | width  |     28.5    | 30.78498297907959 |     31.5    | float |  Triangular(lower=28.5, mode=30.0, upper=31.5)   |      Trunc(x)      |
 | height |      38     | 41.63483214184417 |      42     | float |  Triangular(lower=38.0, mode=40.0, upper=42.0)   |      Trunc(x)      |
 +--------+-------------+-------------------+-------------+-------+--------------------------------------------------+--------------------+,
-'indices1': MorrisAnalysis.SensitivityIndices(mu={'reaction_forces': [{'length': array([220.64039355]), 'width': array([-112.47100512]), 'height': array([-424.28003754])}]}, mu_star={'reaction_forces': [{'length': array([643.73448155]), 'width': array([112.47100512]), 'height': array([424.28003754])}]}, sigma={'reaction_forces': [{'length': array([678.48213518]), 'width': array([23.12801862]), 'height': array([132.24363825])}]}, relative_sigma={'reaction_forces': [{'length': array([1.05397824]), 'width': array([0.20563539]), 'height': array([0.31168951])}]}, min={'reaction_forces': [{'length': array([335.89282962]), 'width': array([92.30668277]), 'height': array([287.39919242])}]}, max={'reaction_forces': [{'length': array([1040.80989219]), 'width': array([148.73381196]), 'height': array([631.69372198])}]})}
-```</p>
+&#39;indices1&#39;: MorrisAnalysis.SensitivityIndices(mu={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([220.64039355]), &#39;width&#39;: array([-112.47100512]), &#39;height&#39;: array([-424.28003754])}]}, mu_star={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([643.73448155]), &#39;width&#39;: array([112.47100512]), &#39;height&#39;: array([424.28003754])}]}, sigma={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([678.48213518]), &#39;width&#39;: array([23.12801862]), &#39;height&#39;: array([132.24363825])}]}, relative_sigma={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([1.05397824]), &#39;width&#39;: array([0.20563539]), &#39;height&#39;: array([0.31168951])}]}, min={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([335.89282962]), &#39;width&#39;: array([92.30668277]), &#39;height&#39;: array([287.39919242])}]}, max={&#39;reaction_forces&#39;: [{&#39;length&#39;: array([1040.80989219]), &#39;width&#39;: array([148.73381196]), &#39;height&#39;: array([631.69372198])}]})}
+</code></pre></div>
 <p>The result of the analysis defined in each workflow step is stored on disk,
 in a directory having the name of the analysis.</p>
 <h2 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h2>
