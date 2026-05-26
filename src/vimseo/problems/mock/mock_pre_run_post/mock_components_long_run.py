@@ -30,4 +30,49 @@
 
 from __future__ import annotations
 
-DUMMY_LOAD_CASE_NAME = "DUMMY_LOAD_CASE_NAME"
+import logging
+import sys
+from typing import TYPE_CHECKING
+
+from vimseo.core.components.external_software_component import ExternalSoftwareComponent
+from vimseo.job_executor.base_executor import BaseJobExecutor
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from vimseo.material.material import Material
+
+LOGGER = logging.getLogger(__name__)
+
+
+class MockLongRun(ExternalSoftwareComponent):
+    """A mock class for emulation of a long run.
+
+    Simulation time is equal to ``input_data|"x_1"]`` seconds."""
+
+    def __init__(
+        self,
+        load_case_name: str = "",
+        material_grammar_file: Path | str = "",
+        material: Material | None = None,
+        check_subprocess: bool = False,
+    ) -> None:
+        super().__init__(
+            load_case_name, material_grammar_file, material, check_subprocess
+        )
+        self._job_executor = BaseJobExecutor("")
+
+    def _run(self, input_data):
+
+        simulation_time = int(input_data["x2"][0])
+        LOGGER.info(f"Executing a mock run of {simulation_time} seconds.")
+        if sys.platform.startswith("win"):
+            self._job_executor.execute(
+                f"powershell Start-Sleep -Seconds {simulation_time}"
+            )
+        else:
+            self._job_executor.execute(f"sleep {simulation_time}")
+
+        x2 = input_data["x2"]
+        y0 = x2 * 2
+        return {"y0": y0}

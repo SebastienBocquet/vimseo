@@ -30,4 +30,12 @@
 
 from __future__ import annotations
 
-DUMMY_LOAD_CASE_NAME = "DUMMY_LOAD_CASE_NAME"
+from vimseo.core.pre_run_post_model import PreRunPostModel
+
+
+class MockModelLongRun(PreRunPostModel):
+    """Mock Class to emulate a long run."""
+
+    PRE_PROC_FAMILY = "MockPre"  # x2 = x1 + 2
+    RUN_FAMILY = "MockLongRun"  # y0 = x2 * 2
+    POST_PROC_FAMILY = "MockPost"  # y1 = y0 + 1

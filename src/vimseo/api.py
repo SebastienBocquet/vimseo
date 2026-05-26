@@ -1,3 +1,18 @@
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 # Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
 #
 # This program is free software; you can redistribute it and/or
@@ -33,6 +48,7 @@ from vimseo.config.global_configuration import _configuration as configuration
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_factory import ModelFactory
 from vimseo.core.model_settings import IntegratedModelSettings
+from vimseo.problems.load_cases import DUMMY_LOAD_CASE_NAME
 from vimseo.tools.post_tools.plot_factory import PlotFactory
 from vimseo.tools.tools_factory import ToolsFactory
 
@@ -42,15 +58,15 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def activate_logger(level: int | None = None):
-    if not level:
-        level = _nameToLevel[configuration.logging.upper()]
-    configure_logger(level=level)
+def activate_logger(**options):
+    level = options.get("level", _nameToLevel[configuration.logging.upper()])
+    options["level"] = level
+    configure_logger(**options)
 
 
 def create_model(
     model_name,
-    load_case_name,
+    load_case_name=DUMMY_LOAD_CASE_NAME,
     model_options: IntegratedModelSettings | None = None,
     **options,
 ) -> IntegratedModel:
