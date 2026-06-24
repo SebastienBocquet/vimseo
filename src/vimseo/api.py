@@ -1,44 +1,10 @@
-# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License version 3 as published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-# Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License version 3 as published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-# Copyright (c) 2020 IRT-AESE.
-# All rights reserved.
-#
-# Contributors:
-#    INITIAL AUTHORS - API and implementation and/or documentation
-#        :author: Ludovic BARRIERE
-#    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
 import logging
 import warnings
+
+from vimseo.problems.load_cases import DUMMY_LOAD_CASE_NAME
+
 warnings.filterwarnings(
     "ignore",
     message="No runtime found",
@@ -49,16 +15,8 @@ import logging
 from logging import _nameToLevel
 from typing import TYPE_CHECKING
 
-from gemseo import configure_logger
-from gemseo.utils.metrics.metric_factory import MetricFactory
-
-from vimseo.config.global_configuration import _configuration as configuration
-from vimseo.core.load_case_factory import LoadCaseFactory
-from vimseo.core.model_factory import ModelFactory
-from vimseo.core.model_settings import IntegratedModelSettings
-from vimseo.problems.load_cases import DUMMY_LOAD_CASE_NAME
-from vimseo.tools.post_tools.plot_factory import PlotFactory
-from vimseo.tools.tools_factory import ToolsFactory
+from vimseo.core.components.component_factory import ComponentFactory
+from vimseo.core.pre_run_post_model import PreRunPostModel
 
 if TYPE_CHECKING:
     from vimseo.core.base_integrated_model import IntegratedModel
@@ -66,10 +24,12 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def activate_logger(**options):
-    level = options.get("level", _nameToLevel[configuration.logging.upper()])
-    options["level"] = level
-    configure_logger(**options)
+def activate_logger(level: int | None = None):
+    from gemseo import configure_logger
+    if not level:
+        from vimseo.config.global_configuration import _configuration as configuration
+        level = _nameToLevel[configuration.logging.upper()]
+    configure_logger(level=level)
 
 
 def create_model(
@@ -88,7 +48,10 @@ def create_model(
 
     Returns: An instance of an :class:`.IntegratedModel`.
     """
+    from vimseo.core.model_factory import ModelFactory
     if model_options:
+        if options:
+            raise ValueError("Cannot specify both model_options and options")
         options.update(model_options.model_dump())
     return ModelFactory().create(model_name, load_case_name, **options)
 
@@ -102,6 +65,8 @@ def get_available_load_cases(model_name: str) -> list[str]:
     Returns:
         The load cases associated with the specified model.
     """
+    from vimseo.core.model_factory import ModelFactory
+    from vimseo.core.load_case_factory import LoadCaseFactory
     lc_factory = LoadCaseFactory()
     model_class = ModelFactory().get_class(model_name)
     domain = model_class._LOAD_CASE_DOMAIN
@@ -152,6 +117,7 @@ def get_available_models(load_case: str = "") -> list[str]:
     Returns:
         The list of names of the available models.
     """
+    from vimseo.core.model_factory import ModelFactory
     mf = ModelFactory()
     model_names = mf.class_names
     if load_case == "":
@@ -161,15 +127,17 @@ def get_available_models(load_case: str = "") -> list[str]:
     model_to_lc = {}
     for model_name in model_names:
         model_to_lc[model_name] = get_available_load_cases(model_name)
-    models = []
+    model_names = []
     for model, load_cases in model_to_lc.items():
         if load_case in load_cases:
-            models.append(model)
-    return sorted(models)
+            model_names.append(model)
+    
+    return sorted(model_names)
 
 
 def get_available_plots():
     """The available plots, deriving from ``Plotter``."""
+    from vimseo.tools.post_tools.plot_factory import PlotFactory
     class_names = PlotFactory().class_names
     class_names.remove("Plotter")
     return class_names
@@ -177,12 +145,13 @@ def get_available_plots():
 
 def get_available_metrics():
     """The available comparison metrics."""
+    from gemseo.utils.metrics.metric_factory import MetricFactory
     return MetricFactory().class_names
-    # class_names.remove("BaseMetrics")
 
 
 def get_available_tools():
     """The available tools."""
+    from vimseo.tools.tools_factory import ToolsFactory
     class_names = ToolsFactory().class_names
     class_names.remove("BaseTool")
     return class_names
@@ -190,12 +159,14 @@ def get_available_tools():
 
 def print_config():
     """Returns: representation of the current configuration variables."""
+    from vimseo.config.global_configuration import _configuration as configuration
     LOGGER.info(configuration.model_dump())
 
 
 def print_config_help():
     """Return the help about configuration file."""
+    from vimseo.config.global_configuration import _configuration as configuration
     LOGGER.info(configuration.model_fields)
 
 
-activate_logger()
+activate_logger(_nameToLevel["INFO"])
