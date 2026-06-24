@@ -114,19 +114,31 @@ def get_available_load_cases(model_name: str) -> list[str]:
             all_load_case_names.append(lc.name)
         except ImportError:
             continue
-    # Remove duplicate names
-    load_case_names = list(set(all_load_case_names))
-    matching_load_case_names = []
-    for load_case_name in load_case_names:
-        try:
-            create_model(
-                model_name,
-                load_case_name,
-                IntegratedModelSettings(archive_manager="DirectoryArchive"),
-            )
-            matching_load_case_names.append(load_case_name)
-        except (ImportError, AttributeError):
-            continue
+
+    if model_name != "PreRunPostModel" and issubclass(model_class, PreRunPostModel):
+        all_component_names = ComponentFactory().class_names
+        matching_load_case_names = []
+        for c in all_component_names:
+            candidate_load_case_name = c.removeprefix(model_class.PRE_PROC_FAMILY + "_")
+            if c.startswith(model_class.PRE_PROC_FAMILY) and candidate_load_case_name in all_load_case_names:
+                matching_load_case_names.append(candidate_load_case_name)
+    else:
+        # TODO: for non PreRunPostModel, define the load cases used by a model explicitely (as class attribute).
+        load_case_names = list(set(all_load_case_names))
+        matching_load_case_names = []
+        for load_case_name in load_case_names:
+            if load_case_name == DUMMY_LOAD_CASE_NAME:
+                continue
+            try:
+                create_model(
+                    model_name,
+                    load_case_name,
+                    archive_manager="DirectoryArchive",
+                )
+                matching_load_case_names.append(load_case_name)
+            except (ImportError, AttributeError):
+                continue
+
     return sorted(matching_load_case_names)
 
 
