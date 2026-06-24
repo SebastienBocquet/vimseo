@@ -17,8 +17,12 @@ from __future__ import annotations
 
 from strenum import StrEnum
 
-from vimseo.storage_management.directory_storage import DirectoryArchive
-from vimseo.storage_management.mlflow_storage import MlflowArchive
+def __getattr__(name: str):
+    if name == "MlflowArchive":
+        from vimseo.storage_management.mlflow_storage import MlflowArchive
+        globals()[name] = MlflowArchive
+        return MlflowArchive
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class ArchiveManager(StrEnum):
@@ -26,7 +30,16 @@ class ArchiveManager(StrEnum):
     Mlflow = "MlflowArchive"
 
 
-NAME_TO_ARCHIVE_CLASS = {
-    "DirectoryArchive": DirectoryArchive,
-    "MlflowArchive": MlflowArchive,
+_ARCHIVE_CLASSES = {
+    "DirectoryArchive": "vimseo.storage_management.directory_storage",
+    "MlflowArchive": "vimseo.storage_management.mlflow_storage",
 }
+
+def _get_archive_class(name: str):
+    module_path = _ARCHIVE_CLASSES.get(name)
+    if module_path is None:
+        raise ValueError(f"Unknown archive manager: {name!r}")
+    import importlib
+    module = importlib.import_module(module_path)
+    return getattr(module, name)
+
