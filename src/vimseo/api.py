@@ -155,6 +155,8 @@ def get_available_models(load_case: str = "") -> list[str]:
     mf = ModelFactory()
     model_names = mf.class_names
     if load_case == "":
+        model_names.remove("PreRunPostModel")
+        model_names.remove("ModelComposition")
         return model_names
     model_to_lc = {}
     for model_name in model_names:
