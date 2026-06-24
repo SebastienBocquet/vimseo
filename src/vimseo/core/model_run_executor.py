@@ -19,9 +19,13 @@ import logging
 from argparse import ArgumentParser
 from pathlib import Path
 
+from numpy import array
+from numpy.compat import unicode
+
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.model_settings import IntegratedModelSettings
+from vimseo.lib_vimseo.solver_utilities import write_job_arguments_to_file
 
 LOGGER = logging.getLogger(__name__)
 
@@ -67,6 +71,15 @@ parser.add_argument(
     " and directly modify the run command line.",
 )
 
+def load_job_arguments(file_path: str | Path):
+    """Load json file containing arguments for Abaqus.
+    List are casted to Numpy arrays, and unicode strings are casted to strings."""
+    import json
+    arguments = json.load(open(file_path))
+    for k, v in arguments.items():
+        if isinstance(v, list):
+            arguments[k] = array(v)
+    return arguments
 
 def model_run_executor(
     model_name: str, load_case_name: str, job_name: str, dir_path: str, n_cpus: int
@@ -83,7 +96,9 @@ def model_run_executor(
     model.run.job_executor.set_options(
         model.run._job_executor._USER_JOB_OPTIONS_MODEL(n_cpus=n_cpus)
     )
-    model._chain.disciplines[1].execute({"error_pre": 0})
+    input_data = load_job_arguments(Path(dir_path) / "_preproc_outputs.json")
+    output_data = model._chain.disciplines[1].execute(input_data)
+    write_job_arguments_to_file(Path(dir_path) / "_run_outputs.json", output_data)
 
 
 def main():
