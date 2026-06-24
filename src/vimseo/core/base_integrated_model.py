@@ -438,13 +438,13 @@ class IntegratedModel(GemseoDisciplineWrapper):
         if self._whether_use_scratch_dir():
             self._scratch_manager.create_job_directory()
             LOGGER.info(
-                f"Current root directory of scratch directory is "
+                f"Current root directory of job scratch directory is "
                 f"{self._scratch_manager.root_directory}."
             )
 
         self._archive_manager.create_job_directory()
         LOGGER.info(
-            f"Current root directory of job directory is "
+            f"Current root directory of job archive directory is "
             f"{self._archive_manager.root_directory}."
         )
 
