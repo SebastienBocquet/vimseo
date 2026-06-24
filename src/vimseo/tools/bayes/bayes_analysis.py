@@ -1,3 +1,18 @@
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 # Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
 #
 # This program is free software; you can redistribute it and/or
@@ -36,6 +51,7 @@ from numpy import isnan
 from numpy import linspace
 from numpy import log
 from numpy import mean
+from numpy import ndarray
 from numpy import ones
 from numpy import random
 from numpy import std
@@ -44,6 +60,7 @@ from numpy import vstack
 from numpy import zeros
 from openturns import ComposedDistribution
 from openturns import DeconditionedDistribution
+from openturns import Distribution
 from openturns import Normal
 from openturns import RandomGenerator
 from openturns import Sample
@@ -67,7 +84,6 @@ if TYPE_CHECKING:
 
     from matplotlib.pyplot import Axes
     from matplotlib.pyplot import Figure
-    from openturns import Distribution
 
 random.seed(1)  # noqa: NPY002
 RandomGenerator.SetSeed(0)  # noqa: NPY002
@@ -104,7 +120,7 @@ class BayesSettings(BaseSettings):
         "<http://openturns.github.io/openturns/latest/user_manual/"
         "probabilistic_modelling.html>`_.",
     )
-    prior_dist: ComposedDistribution | list[dist] = Field(
+    prior_dist: ComposedDistribution | list[Distribution] = Field(
         default=[],
         description="The prior distribution. Either a list of openturns distribution.",
     )
@@ -117,10 +133,10 @@ class BayesSettings(BaseSettings):
 class BayesInputs(BaseInputs):
     """The inputs of a Bayes analysis."""
 
-    data: array = Field(
+    data: ndarray = Field(
         default=empty, description="The data from which the inference is carried out."
     )
-    x0s: array = Field(
+    x0s: ndarray = Field(
         default=empty,
         description="The starting points of the algorithm. "
         "In practice a 1-D array of size the number "
