@@ -38,6 +38,14 @@
 from __future__ import annotations
 
 import logging
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message="No runtime found",
+    category=UserWarning,
+)
+
+import logging
 from logging import _nameToLevel
 from typing import TYPE_CHECKING
 
