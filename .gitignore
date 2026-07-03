@@ -4,6 +4,7 @@
 /sandbox
 /build
 /dist
+__pycache__/
 
 /src/vimseo.egg-info
 
