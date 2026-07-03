@@ -76,8 +76,36 @@ def force_fluxes(
     return np.vstack((N_I, N_II))
 
 
+# Relative tolerance used to decide whether coupling/asymmetry terms of the
+# stiffness matrix are genuine or just rounding noise. It is compared against
+# terms scaled by the norm of the matrix (see ``Calc_S_matrix``).
+_ISOTROPY_RTOL = 1e-9
+
+
 def Calc_S_matrix(C_strat: np.ndarray) -> list[np.ndarray, float]:
     """Return the effective compliance matrix and the angle of the orthotropic axes."""
+
+    # Degenerate (in-plane isotropic) case: when both the extension-shear
+    # coupling and the C11/C22 asymmetry are at the rounding-noise level relative
+    # to the stiffness magnitude, the orthotropy axes are undefined -- every
+    # rotation leaves the stiffness invariant. The angle otherwise computed as
+    # arctan(coupling / asymmetry) is then a 0/0 ratio of noise, not reproducible
+    # across platforms/BLAS. We make the arbitrary but deterministic choice
+    # omega = 0 (keep the current frame), which is physically exact here.
+    scale = np.linalg.norm(C_strat)
+
+    coupling = np.abs(C_strat[0, 2]) + np.abs(C_strat[1, 2])
+
+    asymmetry = np.abs(C_strat[0, 0] - C_strat[1, 1])
+
+    if coupling <= _ISOTROPY_RTOL * scale and asymmetry <= _ISOTROPY_RTOL * scale:
+        C_final = C_strat.copy()
+
+        C_final[-1, :2] = np.zeros(2)
+
+        C_final[:2, -1] = np.zeros(2)
+
+        return np.linalg.inv(C_final), 0.0
 
     # Identification of possible reference points
 
@@ -155,6 +183,42 @@ def S_12(S_strat: np.ndarray) -> tuple[complex, complex]:
     return s1, s2
 
 
+# Floor on the separation |s1 - s2| of the characteristic roots. The Tan
+# potentials divide by (s1 - s2), which vanishes at the isotropic double root
+# s1 = s2 = i. The stress field has a finite (removable) limit there, but the
+# direct evaluation loses all precision once |s1 - s2| drops below ~1e-6 (and
+# yields NaN at exactly 0). Flooring the separation keeps the computation well
+# conditioned; because the field is continuous in (s1, s2), the induced bias is
+# of order the floor and negligible for engineering purposes.
+_MIN_ROOT_SEPARATION = 1e-4
+
+
+def _separate_roots(
+    s1: complex, s2: complex, min_separation: float = _MIN_ROOT_SEPARATION
+) -> tuple[complex, complex]:
+    """Nudge near-equal characteristic roots apart, deterministically.
+
+    The two roots are pushed symmetrically around their midpoint until their
+    separation reaches ``min_separation``, keeping the (physical) direction of
+    the separation. An exactly double root has an undefined direction; the
+    imaginary axis is then chosen arbitrarily (both roots sit near +i).
+    """
+    separation = s1 - s2
+
+    magnitude = np.abs(separation)
+
+    if magnitude >= min_separation:
+        return s1, s2
+
+    midpoint = 0.5 * (s1 + s2)
+
+    direction = separation / magnitude if magnitude > 0 else 1j
+
+    half = 0.5 * min_separation * direction
+
+    return midpoint + half, midpoint - half
+
+
 def Calc_S12_eff(C_strat: np.ndarray) -> tuple[complex, complex]:
     """Return the effective s1 and s2 for a given stiffness matrix."""
 
@@ -174,7 +238,8 @@ def Calc_S12_eff(C_strat: np.ndarray) -> tuple[complex, complex]:
         np.cos(omega) - s2_st * np.sin(omega)
     )
 
-    return s1, s2
+    # Regularise the isotropic double-root singularity (see _separate_roots).
+    return _separate_roots(s1, s2)
 
 
 def zeta(
