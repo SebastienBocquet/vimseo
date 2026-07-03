@@ -1,3 +1,18 @@
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 # Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
 #
 # This program is free software; you can redistribute it and/or
@@ -28,6 +43,7 @@ from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
 from vimseo.api import create_model
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.model_metadata import DEFAULT_METADATA
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.pre_run_post_model import PreRunPostModel
@@ -273,7 +289,7 @@ def test_input_names_groups():
 @pytest.mark.parametrize(
     ("model_name", "load_case", "user_job_options"),
     [
-        ("MockModel", "LC1", BaseUserJobSettings(n_cpus=4)),
+        ("MockExternalSoftware", "LC1", BaseUserJobSettings(n_cpus=4)),
     ],
 )
 def test_set_job_options(tmp_wd, model_name, load_case, user_job_options):
