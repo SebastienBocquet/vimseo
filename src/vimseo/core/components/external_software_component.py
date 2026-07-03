@@ -95,7 +95,7 @@ class ExternalSoftwareComponent(BaseComponent):
     def pre_run(self, input_data):
         """Pre-run operations."""
 
-    def post_run(self, input_data, output_data, error_code):
+    def post_run(self, input_data, output_data):
         """Post-run operations."""
 
     def _run(self, input_data):
@@ -130,7 +130,7 @@ class ExternalSoftwareComponent(BaseComponent):
             )
 
         output_data = {}
-        self.post_run(input_data, output_data, error_run)
+        self.post_run(input_data, output_data)
         output_data[self._ERROR_CODE_NAME] = error_run
 
         return output_data
