@@ -251,16 +251,14 @@ def zeta(
 
     val2 = z2 / np.sqrt(z2**2 - R**2 * (1 + s2**2))
 
-    if np.real(val1) >= 0 and np.real(val2) >= 0:
-        return val1, val2
+    # Select the root with non-negative real part, independently for each value.
+    # Written with ``np.where`` so it works for both scalars and grid arrays; the
+    # original four if/else cases were exactly this per-value sign flip.
+    val1 = np.where(np.real(val1) >= 0, val1, -val1)
 
-    if np.real(val1) < 0 and np.real(val2) >= 0:
-        return -val1, val2
+    val2 = np.where(np.real(val2) >= 0, val2, -val2)
 
-    if np.real(val1) >= 0 and np.real(val2) < 0:
-        return val1, -val2
-
-    return -val1, -val2
+    return val1, val2
 
 
 def phi(
@@ -326,11 +324,107 @@ def tan_model(
     s1, s2 = Calc_S12_eff(C_pli)  
 
     # Infinite force fluxes along direction 1 and 2
-    F_ = force_fluxes(R, s1, s2, p, x, y)  
+    F_ = force_fluxes(R, s1, s2, p, x, y)
 
     u = 2 * R / w
 
     # Correction for a finite plate
-    coeff = (2 + (1 - u) ** 3) / (3 - 3 * u)  
+    coeff = (2 + (1 - u) ** 3) / (3 - 3 * u)
 
     return coeff * np.linalg.solve(M_rot, np.sum(F_, axis=0))
+
+
+def tan_model_grid(
+    r: np.ndarray,
+    theta: np.ndarray,
+    N: np.ndarray,
+    C_strat: np.ndarray,
+    R: float,
+    w: float,
+) -> np.ndarray:
+    """Vectorised :func:`tan_model` over arrays of ``(r, theta)``.
+
+    Everything that does not depend on the evaluation point (principal frame,
+    effective roots ``s1``/``s2``, finite-width correction) is computed once
+    instead of once per point, and the force fluxes are evaluated with array
+    operations. The result is numerically identical to calling ``tan_model`` on
+    each point.
+
+    Args:
+        r: Distances from the hole centre, shape ``(K,)``.
+        theta: Angles from the x-axis, shape ``(K,)``.
+        N: The applied load vector ``(N_x, N_y, N_xy)``.
+        C_strat: The stiffness matrix of the laminate.
+        R: The radius of the hole.
+        w: The width of the plate.
+
+    Returns:
+        The stresses ``(N_xx, N_yy, N_xy)`` at each point, shape ``(K, 3)``.
+    """
+    r = np.asarray(r, dtype=float)
+
+    theta = np.asarray(theta, dtype=float)
+
+    # --- quantities constant over the grid (computed once) ---
+    a = principal_stress(N)
+
+    M_rot = Mat_rot(a)
+
+    p = np.dot(M_rot, N)
+
+    p[2] = 0
+
+    C_pli = np.linalg.multi_dot([M_rot, C_strat, M_rot.T])
+
+    s1, s2 = Calc_S12_eff(C_pli)
+
+    u = 2 * R / w
+
+    coeff = (2 + (1 - u) ** 3) / (3 - 3 * u)
+
+    # --- per-point force fluxes (vectorised force_fluxes + phi) ---
+    x = r * np.cos(theta - a)
+
+    y = r * np.sin(theta - a)
+
+    z1 = x + s1 * y
+
+    z2 = x + s2 * y
+
+    zeta1, zeta2 = zeta(z1, z2, s1, s2, R)
+
+    denom1 = 2 * (s1 - s2) * (1 + s1 * 1j)
+
+    denom2 = 2 * (s1 - s2) * (1 + s2 * 1j)
+
+    # phi1 uses zeta1 / denom1, phi2 uses zeta2 / denom2 (see ``phi``).
+    phi1_0 = -1j * p[0] * (1 - zeta1) / denom1
+
+    phi1_1 = p[1] * s2 * (1 - zeta1) / denom1
+
+    phi2_0 = 1j * p[0] * (1 - zeta2) / denom2
+
+    phi2_1 = -p[1] * s1 * (1 - zeta2) / denom2
+
+    # N_I (column 0) + N_II (column 1), matching ``force_fluxes`` then summing.
+    flux = np.empty((3, r.size))
+
+    flux[0] = (
+        p[0]
+        + 2 * np.real(s1**2 * phi1_0 + s2**2 * phi2_0)
+        + 2 * np.real(s1**2 * phi1_1 + s2**2 * phi2_1)
+    )
+
+    flux[1] = (
+        2 * np.real(phi1_0 + phi2_0)
+        + p[1]
+        + 2 * np.real(phi1_1 + phi2_1)
+    )
+
+    flux[2] = (
+        -2 * np.real(s1 * phi1_0 + s2 * phi2_0)
+        - 2 * np.real(s1 * phi1_1 + s2 * phi2_1)
+    )
+
+    # Back to the global frame; solve broadcasts over the columns of ``flux``.
+    return (coeff * np.linalg.solve(M_rot, flux)).T

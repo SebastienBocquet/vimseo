@@ -36,6 +36,7 @@ from typing import ClassVar
 
 from composipy import LaminateProperty
 from meshio import Mesh
+from numpy import arange
 from numpy import arctan2
 from numpy import array
 from numpy import atleast_1d
@@ -55,7 +56,7 @@ from vimseo.core.components.component_factory import ComponentFactory
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.model_settings import IntegratedModelSettings
-from vimseo.lib_vimseo.tan_lib import tan_model
+from vimseo.lib_vimseo.tan_lib import tan_model_grid
 from vimseo.material_lib.orthotropic import ORTHOTROPIC_MATERIAL
 from vimseo.utilities.fields import extract_line
 from vimseo.utilities.plotting_utils import plotly_save_and_show
@@ -172,38 +173,28 @@ class TanRun_Tension(BaseComponent):
         ])
 
         d0_ = 0.0
-        # Create quad connectivity
-        # Node index at (i,j) = i * ny + j
-        quads = []
-        for i in range(n_x - 1):
-            for j in range(n_y - 1):
-                n0 = i * n_y + j
-                n1 = (i + 1) * n_y + j
-                n2 = (i + 1) * n_y + (j + 1)
-                n3 = i * n_y + (j + 1)
-                quads.append([n0, n1, n2, n3])
-        quads = array(quads)
+        # Create quad connectivity. Node index at (i, j) = i * n_y + j.
+        i_quad, j_quad = meshgrid(arange(n_x - 1), arange(n_y - 1), indexing="ij")
+        i_quad = i_quad.ravel()
+        j_quad = j_quad.ravel()
+        quads = column_stack([
+            i_quad * n_y + j_quad,
+            (i_quad + 1) * n_y + j_quad,
+            (i_quad + 1) * n_y + (j_quad + 1),
+            i_quad * n_y + (j_quad + 1),
+        ])
 
-        flux_n = zeros((n_x, n_y, 3))
+        # Evaluate the Tan solution on the whole grid at once (vectorised), then
+        # blank out the points falling inside the hole.
+        x_0 = xx - 0.5 * length
+        y_0 = yy - 0.5 * width
+        r = sqrt(x_0**2 + y_0**2)
+        theta = arctan2(y_0, x_0)
 
-        for i in range(n_x):
-            for j in range(n_y):
-                x_0 = x[i] - 0.5 * length
-                y_0 = y[j] - 0.5 * width
-
-                r = sqrt(x_0**2 + y_0**2)
-
-                theta = arctan2(y_0, x_0)
-
-                if r < radius + d0_:
-                    for k in range(3):
-                        flux_n[i, j, k] = nan
-
-                else:
-                    res = tan_model(r, theta, load, c_strat, radius, width)
-
-                    for k in range(3):
-                        flux_n[i, j, k] = res[k]
+        flux_n = tan_model_grid(
+            r.ravel(), theta.ravel(), load, c_strat, radius, width
+        ).reshape(n_x, n_y, 3)
+        flux_n[r < radius + d0_] = nan
 
         flatten_flux = flux_n.reshape(-1, 3)  # shape (nx*ny, 3)
 
