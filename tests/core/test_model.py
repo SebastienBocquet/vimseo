@@ -68,16 +68,12 @@ def test_check_data_flow(tmp_wd):
         "MockRun": {
             "inputs": [
                 "x2",
-                "x1_maximum_only",
-                "x1",
-                "x1_minimum_only",
-                "x1_no_bounds",
             ],
             "outputs": ["y0"],
         },
         "MockPost_LC1": {
             "inputs": ["y0"],
-            "outputs": [MetaDataNames.error_code.name, "y1"],
+            "outputs": ["y1"],
         },
     }
 
@@ -201,11 +197,13 @@ def test_metadata(tmp_wd):
 
     assert output_data[MetaDataNames.model][0] == "MockModel"
     assert output_data[MetaDataNames.load_case][0] == "LC1"
-    assert output_data[MetaDataNames.error_code][0] == 0
+    assert (
+        output_data[MetaDataNames.error_code][0] == IntegratedModel._ERROR_CODE_DEFAULT
+    )
     assert output_data[MetaDataNames.description][0] == ""
     assert output_data[MetaDataNames.job_name][0] == ""
     assert len(output_data[MetaDataNames.persistent_result_files]) == 1
-    assert output_data[MetaDataNames.n_cpus][0] == 1
+    assert output_data[MetaDataNames.n_cpus][0] == 0
     assert isinstance(output_data[MetaDataNames.date][0], np.str_)
 
     assert output_data[MetaDataNames.cpu_time][0] >= 0.0
@@ -287,8 +285,7 @@ def test_set_job_options(tmp_wd, model_name, load_case, user_job_options):
     assert model.run.job_executor.options["n_cpus"] == 4
     assert model.run.n_cpus == 4
     model.execute()
-    if model.run.job_executor._job_options:
-        assert model.run.job_executor._job_options.n_cpus == 4
+    assert model.run.job_executor.options["n_cpus"] == 4
 
 
 def test_set_bounds(tmp_wd):
