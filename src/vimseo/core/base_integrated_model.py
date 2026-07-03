@@ -786,7 +786,8 @@ class IntegratedModel(GemseoDisciplineWrapper):
         return MetaData(**{
             MetaDataNames.model: array([self.__class__.__name__]),
             MetaDataNames.load_case: array([self._load_case.name]),
-            MetaDataNames.error_code: array([error]),
+            # ``error`` may be a scalar (default / failure) or a 1-element array
+            MetaDataNames.error_code: np.atleast_1d(error).astype(int),
             MetaDataNames.description: array([str(self.job_description)]),
             MetaDataNames.job_name: array([self._job_name]),
             # Use a non-empty list in the absence of persistent files, otherwise
