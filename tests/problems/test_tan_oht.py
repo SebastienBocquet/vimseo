@@ -46,12 +46,12 @@ from vimseo.problems.tan_oh.tan_oht import material
 # short-circuit in ``Calc_S_matrix``) and the characteristic roots merge, s1 = s2
 # (handled by the root-separation floor in ``Calc_S12_eff``). Both are needed for
 # this reference value to be deterministic and reproducible across BLAS/platforms.
-QUASI_ISOTROPIC_STACKING = np.array([0, 45, -45, 90, 90, -45, 45, 0])
+QUASI_ISOTROPIC_STACKING = np.array([0.0, 45.0, -45.0, 90.0, 90.0, -45.0, 45.0, 0.0])
 
 # A strongly orthotropic (0-dominant) stacking. Its roots s1 and s2 are well
 # separated (|s1 - s2| ~ 4.2), so the solution is well conditioned and
 # reproducible across platforms (see the module docstring of ``tan_lib``).
-ORTHOTROPIC_STACKING = np.array([0, 0, 90, 0, 0, 90, 0, 0])
+ORTHOTROPIC_STACKING = np.array([0.0, 0.0, 90.0, 0.0, 0.0, 90.0, 0.0, 0.0])
 
 
 def _build_c_strat(stacking: np.ndarray) -> tuple[np.ndarray, float]:
@@ -70,21 +70,17 @@ def _build_c_strat(stacking: np.ndarray) -> tuple[np.ndarray, float]:
 @pytest.mark.parametrize(
     ("stacking", "expected_sigma_xx_d0"),
     [
-        pytest.param(QUASI_ISOTROPIC_STACKING, 2063.958, id="quasi_isotropic"),
-        pytest.param(ORTHOTROPIC_STACKING, 1979.791, id="orthotropic"),
+        pytest.param(QUASI_ISOTROPIC_STACKING, 2094.956, id="quasi_isotropic"),
+        pytest.param(ORTHOTROPIC_STACKING, 1972.320, id="orthotropic"),
     ],
 )
 def test_tan_oh(tmp_wd, stacking, expected_sigma_xx_d0):
     """Run the Tension Tan model for a given laminate and check its outputs."""
-    c_strat, thickness = _build_c_strat(stacking)
-
+    # c_strat is now derived from the stacking, so only the stacking is passed.
     model = create_model("TanOpenHole", "Tension")
-    output_data = model.execute({
-        "stacking_sequence": stacking,
-        "c_strat": c_strat,
-        "thickness": np.atleast_1d(thickness),
-    })
+    output_data = model.execute({"stacking_sequence": stacking})
     input_data = model.get_input_data()
+    thickness = input_data["thickness"][0]
     model_result = ModelResult.from_data(
         {"outputs": output_data, "inputs": input_data}, load_fields=True
     )
@@ -146,3 +142,94 @@ def test_tan_solution_is_continuous_through_isotropy():
     # instead of oscillating or diverging.
     tail = stresses[-4:]
     assert np.ptp(tail) < 1e-4 * np.abs(stresses[-1])
+
+
+def test_tan_oh_jacobian(tmp_wd):
+    """The analytic JAX Jacobian matches finite differences (gemseo check_jacobian).
+
+    Requires the ``jax`` extra. Checked on a well-conditioned orthotropic
+    laminate with non-stationary ply angles (so ``d/d(angle) != 0``), made the
+    model default so gemseo's finite differences perturb around it for the
+    non-differentiated inputs. ``c_strat`` is derived from the stacking, so
+    ``stacking_sequence`` is a genuine differentiated input (CLT chain). A
+    per-input step scaled to the input magnitude is used because the inputs span
+    very different scales.
+    """
+    pytest.importorskip("jax")
+
+    stacking = np.array([30.0, -30.0, 60.0, 15.0, 15.0, 60.0, -30.0, 30.0])
+
+    model = create_model("TanOpenHole", "Tension")
+    model.default_input_data.update({"stacking_sequence": stacking})
+    model.execute()
+    model.cache = None  # force finite differences to actually re-execute
+
+    inputs = model.get_input_data()
+    for name in ["load", "radius", "width", "d0", "stacking_sequence"]:
+        # Step scaled to the input magnitude, floored so it is never 0 (e.g. when
+        # the first component of an input happens to be 0).
+        step = 1e-6 * max(abs(float(inputs[name].flat[0])), 1.0)
+        assert model.check_jacobian(
+            input_names=[name],
+            output_names=["sigma_xx_r", "sigma_xx_d0"],
+            step=step,
+            threshold=1e-5,
+        ), f"Jacobian check failed for input {name!r}"
+
+
+def test_tan_oh_jacobian_near_isotropy():
+    """Document the gradient-vs-FD gap of d(sigma_xx_d0) near isotropy.
+
+    Requires the ``jax`` extra. The numpy forward and the JAX kernel are
+    identical here, so this gap is not a numpy/JAX artefact: near a
+    (quasi-)isotropic laminate the Tan solution has a *kink* in ``radius`` / ``d0``
+    (a zeta branch flips as the evaluation point moves through the near-double
+    root), so its one-sided derivatives differ. The analytic (one-sided) gradient
+    then departs from a central finite difference (which averages across the
+    kink) by a few percent, while ``load`` and ``width`` stay accurate. This is a
+    fast, lib-level check that records the gap and guards against a blow-up (NaN
+    or a wildly wrong gradient).
+    """
+    pytest.importorskip("jax")
+    import jax
+    import jax.numpy as jnp
+
+    from vimseo.lib_vimseo import tan_lib_jax
+
+    radius, width, d0, load_x, thickness = 3.175, 32.0, 0.71, 1000.0, 8 * PLY_THICKNESS
+
+    def sigma_numpy(load_x, radius, width, d0, c_strat):
+        load = np.array([load_x / thickness, 0.0, 0.0])
+        return (
+            thickness
+            * tan_lib.tan_model(radius + d0, np.pi / 2, load, c_strat, radius, width)[0]
+        )
+
+    isotropic = np.array([[6e10, 2e10, 0.0], [2e10, 6e10, 0.0], [0.0, 0.0, 2e10]])
+    laminates = {
+        "quasi_isotropic": _build_c_strat(QUASI_ISOTROPIC_STACKING)[0],
+        "isotropic": isotropic,
+    }
+    names = ["load", "radius", "width", "d0"]
+    base = [load_x, radius, width, d0]
+    # load/width stay tight; radius/d0 legitimately drift a few % near isotropy.
+    bounds = {"load": 1e-4, "width": 1e-4, "radius": 0.1, "d0": 0.1}
+
+    for c_strat in laminates.values():
+        analytic = jax.grad(
+            lambda lx, r, w, dd, c=c_strat: tan_lib_jax.sigma_xx_hole_edge(
+                lx, r, w, dd, thickness, jnp.asarray(c)
+            ),
+            argnums=(0, 1, 2, 3),
+        )(*base)
+        for i, name in enumerate(names):
+            analytic_i = float(analytic[i])
+            assert np.isfinite(analytic_i)
+            h = 1e-6 * abs(base[i])
+            plus = list(base)
+            plus[i] += h
+            minus = list(base)
+            minus[i] -= h
+            fd = (sigma_numpy(*plus, c_strat) - sigma_numpy(*minus, c_strat)) / (2 * h)
+            rel_err = abs(analytic_i - fd) / max(abs(fd), 1e-9)
+            assert rel_err < bounds[name], f"{name}: rel_err={rel_err:.2e}"

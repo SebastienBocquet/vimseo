@@ -41,14 +41,13 @@ from numpy import arctan2
 from numpy import array
 from numpy import atleast_1d
 from numpy import column_stack
-from numpy import isnan
 from numpy import linspace
 from numpy import meshgrid
 from numpy import nan
+from numpy import pi
 from numpy import sqrt
 from numpy import zeros
 from plotly.graph_objs import Scatter
-from scipy.interpolate import interp1d
 
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.components.base_component import BaseComponent
@@ -56,6 +55,7 @@ from vimseo.core.components.component_factory import ComponentFactory
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.model_settings import IntegratedModelSettings
+from vimseo.lib_vimseo.tan_lib import tan_model
 from vimseo.lib_vimseo.tan_lib import tan_model_grid
 from vimseo.material_lib.orthotropic import ORTHOTROPIC_MATERIAL
 from vimseo.utilities.fields import extract_line
@@ -80,7 +80,9 @@ DEFAULT_INPUT_DATA = {
     "length": atleast_1d(80.0),
     "load": array([1000.0]),
     "coarsening_factor": atleast_1d(1.0),
-    "stacking_sequence": array([0, 45, -45, 90, 90, -45, 45, 0]),
+    # Ply angles in degrees, as floats so they are continuous (differentiable)
+    # variables -- the stacking drives c_strat (see ``compute_c_strat``).
+    "stacking_sequence": array([0.0, 45.0, -45.0, 90.0, 90.0, -45.0, 45.0, 0.0]),
 }
 
 material = ORTHOTROPIC_MATERIAL
@@ -100,18 +102,25 @@ material.update_from_dict(
     relation_name="orthotropic",
 )
 material.name_to_material_relation["orthotropic"].set_thickness(PLY_THICKNESS)
-laminate = LaminateProperty(
-    DEFAULT_INPUT_DATA["stacking_sequence"],
-    material.name_to_material_relation["orthotropic"].get_relation(),
-)
-A = laminate.A  # Rigidité de membrane
-# B = laminate.B  # Couplage (devrait être proche de 0 si symétrique)
-# D = laminate.D  # Rigidité de flexion
-total_thickness = len(DEFAULT_INPUT_DATA["stacking_sequence"]) * PLY_THICKNESS
-c_eff = A / total_thickness
 
-DEFAULT_INPUT_DATA["c_strat"] = c_eff
+total_thickness = len(DEFAULT_INPUT_DATA["stacking_sequence"]) * PLY_THICKNESS
 DEFAULT_INPUT_DATA["thickness"] = atleast_1d(total_thickness)
+
+
+def compute_c_strat(stacking_sequence):
+    """Effective membrane stiffness ``A / total_thickness`` from the ply angles.
+
+    Classical lamination theory (via composipy). ``c_strat`` is therefore a
+    *derived* quantity of ``stacking_sequence`` (and the module material), not a
+    free input -- this removes the ambiguity of passing an inconsistent
+    ``(c_strat, stacking_sequence)`` pair. The differentiable JAX counterpart is
+    :func:`vimseo.lib_vimseo.tan_lib_jax.c_strat_from_layup`.
+    """
+    laminate = LaminateProperty(
+        stacking_sequence,
+        material.name_to_material_relation["orthotropic"].get_relation(),
+    )
+    return array(laminate.A) / (len(stacking_sequence) * PLY_THICKNESS)
 
 
 class TanRun_Tension(BaseComponent):
@@ -151,7 +160,7 @@ class TanRun_Tension(BaseComponent):
 
         load = array([input_data["load"][0], 0.0, 0.0]) / thickness
 
-        c_strat = input_data["c_strat"]
+        c_strat = compute_c_strat(input_data["stacking_sequence"])
 
         output_data = {}
 
@@ -241,11 +250,26 @@ class PostFieldExtraction(BaseComponent):
         )
         self._fields_from_file = fields_from_file
 
-        input_names = ["length", "width", "radius", "d0", "dx", "dy"]
+        input_names = [
+            "length",
+            "width",
+            "radius",
+            "d0",
+            "dx",
+            "dy",
+            "load",
+            "thickness",
+        ]
 
         self.input_grammar.update_from_data({
             name: array([0.0]) for name in input_names
         })
+        # The stacking drives c_strat (computed here), needed to evaluate the
+        # stress directly at the hole edge (see ``_run``).
+        self.input_grammar.update_from_data({
+            "stacking_sequence": DEFAULT_INPUT_DATA["stacking_sequence"]
+        })
+        input_names.append("stacking_sequence")
 
         for name in input_names:
             self.input_grammar.required_names.add(name)
@@ -262,8 +286,9 @@ class PostFieldExtraction(BaseComponent):
         width = input_data["width"][0]
         radius = input_data["radius"][0]
         d0 = input_data["d0"][0]
-        input_data["dx"][0]
-        input_data["dy"][0]
+        thickness = input_data["thickness"][0]
+        c_strat = compute_c_strat(input_data["stacking_sequence"])
+        load = array([input_data["load"][0], 0.0, 0.0]) / thickness
 
         line_extremities = {
             self._line_name: ((0.5 * length, 0.0, 0.0), (0.5 * length, width, 0.0)),
@@ -283,15 +308,18 @@ class PostFieldExtraction(BaseComponent):
             for name in self._flux_components:
                 output_data[f"{line_name}_{name}"] = line[name]
 
-        f = interp1d(
-            y[~isnan(line["sigma_xx"])],
-            line["sigma_xx"][~isnan(line["sigma_xx"])],
-            bounds_error=False,
-            fill_value="extrapolate",
-            kind="quadratic",
+        # sigma_xx just past the hole edge, evaluated directly on the Tan
+        # solution (r = radius [+ d0], theta = pi/2 is the transverse center
+        # line). This is differentiable and consistent with the analytic
+        # Jacobian of ``TanOpenHole`` (see ``_compute_jacobian``), unlike the
+        # former pyvista/scipy extraction of the discretised field.
+        output_data["sigma_xx_r"] = atleast_1d(
+            thickness * tan_model(radius, 0.5 * pi, load, c_strat, radius, width)[0]
         )
-        output_data["sigma_xx_r"] = atleast_1d(f(0.5 * width + radius))
-        output_data["sigma_xx_d0"] = atleast_1d(f(0.5 * width + radius + d0))
+        output_data["sigma_xx_d0"] = atleast_1d(
+            thickness
+            * tan_model(radius + d0, 0.5 * pi, load, c_strat, radius, width)[0]
+        )
 
         # TODO: compute reserve factor based on strength criteria instead of just returning 1.0
         output_data["reserve_factor"] = atleast_1d(1.0)
@@ -322,6 +350,87 @@ class TanOpenHole(IntegratedModel):
             ],
             **options,
         )
+
+    #: Scalar outputs and physical inputs handled by :meth:`_compute_jacobian`.
+    _JACOBIAN_OUTPUTS: ClassVar[Sequence[str]] = ("sigma_xx_r", "sigma_xx_d0")
+    _JACOBIAN_SCALAR_INPUTS: ClassVar[Sequence[str]] = (
+        "load",
+        "radius",
+        "width",
+        "d0",
+        "thickness",
+    )
+
+    def _compute_jacobian(self, input_names=(), output_names=()):
+        """Analytic Jacobian of the hole-edge stresses via the JAX kernel.
+
+        Fills ``self.jac[output][input]`` for ``sigma_xx_r`` / ``sigma_xx_d0``
+        with respect to ``load``, ``radius``, ``width``, ``d0``, ``thickness``
+        and ``stacking_sequence``, using the differentiable
+        :mod:`~vimseo.lib_vimseo.tan_lib_jax` (requires the ``jax`` extra). The
+        outputs are evaluated directly on the Tan solution, consistently with
+        ``PostFieldExtraction``.
+
+        ``c_strat`` is a derived quantity (classical lamination theory from
+        ``stacking_sequence`` and the module material), so the ply-angle Jacobian
+        goes through the full chain ``stacking -> c_strat -> sigma`` and is a
+        genuine derivative of the discipline output (validated by finite
+        differences). The material constants are read from the module-level
+        ``material``.
+        """
+        import jax
+
+        from vimseo.lib_vimseo import tan_lib_jax as tan_jax
+
+        data = self.get_input_data()
+        c_strat = array(compute_c_strat(data["stacking_sequence"]), dtype=float)
+        args = (
+            float(data["load"][0]),
+            float(data["radius"][0]),
+            float(data["width"][0]),
+            float(data["d0"][0]),
+            float(data["thickness"][0]),
+            c_strat,
+        )
+        jac_scalar = jax.jacobian(tan_jax.scalar_outputs, argnums=(0, 1, 2, 3, 4))(
+            *args
+        )
+
+        self._init_jacobian(input_names, output_names)
+        for out_index, output_name in enumerate(self._JACOBIAN_OUTPUTS):
+            if output_name not in self.jac:
+                continue
+            row = self.jac[output_name]
+            for in_index, input_name in enumerate(self._JACOBIAN_SCALAR_INPUTS):
+                if input_name in row:
+                    row[input_name] = array([[float(jac_scalar[in_index][out_index])]])
+
+        # d(sigma)/d(stacking angles) through the CLT chain stacking -> c_strat.
+        needs_stacking = any(
+            "stacking_sequence" in self.jac.get(name, {})
+            for name in self._JACOBIAN_OUTPUTS
+        )
+        if needs_stacking:
+            props = material.name_to_material_relation[
+                "orthotropic"
+            ].get_values_as_dict()
+            jac_stacking = jax.jacobian(tan_jax.scalar_outputs_from_layup, argnums=4)(
+                float(data["load"][0]),
+                float(data["radius"][0]),
+                float(data["width"][0]),
+                float(data["d0"][0]),
+                array(data["stacking_sequence"], dtype=float),
+                float(props["E1"]),
+                float(props["E2"]),
+                float(props["G12"]),
+                float(props["nu12"]),
+            )
+            for out_index, output_name in enumerate(self._JACOBIAN_OUTPUTS):
+                row = self.jac.get(output_name)
+                if row is not None and "stacking_sequence" in row:
+                    row["stacking_sequence"] = array(jac_stacking[out_index]).reshape(
+                        1, -1
+                    )
 
     def _plot_curves(self, figures, result, directory_path, save, show):
         figures = super()._plot_curves(

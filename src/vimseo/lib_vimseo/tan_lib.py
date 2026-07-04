@@ -35,14 +35,11 @@ def Mat_rot(angle: float) -> np.ndarray:
 
     c = np.cos(angle)
 
-    return np.round(
-        np.array([
-            [c**2, s**2, 2 * c * s],
-            [s**2, c**2, -2 * c * s],
-            [-c * s, c * s, c**2 - s**2],
-        ]),
-        10,
-    )
+    return np.array([
+        [c**2, s**2, 2 * c * s],
+        [s**2, c**2, -2 * c * s],
+        [-c * s, c * s, c**2 - s**2],
+    ])
 
 
 def force_fluxes(

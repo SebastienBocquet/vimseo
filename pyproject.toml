@@ -42,6 +42,14 @@ dependencies = [
     "composipy",
 ]
 
+[project.optional-dependencies]
+# Differentiable JAX port of the Tan kernel (vimseo.lib_vimseo.tan_lib_jax).
+# Pinned < 0.5 to stay compatible with the numpy 1.26 baseline.
+jax = [
+    "jax >=0.4,<0.5",
+    "jaxlib >=0.4,<0.5",
+]
+
 [dependency-groups]
 dev = [
     "covdefaults >=2",
