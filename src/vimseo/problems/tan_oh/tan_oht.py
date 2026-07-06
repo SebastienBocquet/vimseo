@@ -35,6 +35,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 
 from composipy import LaminateProperty
+from composipy import OrthotropicMaterial
 from meshio import Mesh
 from numpy import arange
 from numpy import arctan2
@@ -57,7 +58,8 @@ from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.model_settings import IntegratedModelSettings
 from vimseo.lib_vimseo.tan_lib import tan_model
 from vimseo.lib_vimseo.tan_lib import tan_model_grid
-from vimseo.material_lib.orthotropic import ORTHOTROPIC_MATERIAL
+from vimseo.material.material import Material
+from vimseo.material_lib import MATERIAL_LIB_DIR
 from vimseo.utilities.fields import extract_line
 from vimseo.utilities.plotting_utils import plotly_save_and_show
 
@@ -67,7 +69,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from vimseo.core.load_case import LoadCase
-    from vimseo.material.material import Material
 
 LOGGER = logging.getLogger(__name__)
 
@@ -85,41 +86,33 @@ DEFAULT_INPUT_DATA = {
     "stacking_sequence": array([0.0, 45.0, -45.0, 90.0, 90.0, -45.0, 45.0, 0.0]),
 }
 
-material = ORTHOTROPIC_MATERIAL
 PLY_THICKNESS = 0.125e-3
-material.update_from_dict(
-    {
-        "E1": 135e9,
-        "E2": 10e9,
-        "G12": 5e9,
-        "nu12": 0.3,
-        "Xt": 1500e6,
-        "Xc": 1200e6,
-        "Yt": 40e6,
-        "Yc": 120e6,
-        "S12": 50e6,
-    },
-    relation_name="orthotropic",
-)
-material.name_to_material_relation["orthotropic"].set_thickness(PLY_THICKNESS)
+
+# The ply material (E1, E2, G12, nu12, strengths) lives in a JSON next to its
+# grammar; the grammar makes the properties model inputs (see the components),
+# and the material provides their default values.
+MATERIAL_FILE = MATERIAL_LIB_DIR / "composite.json"
+MATERIAL_GRAMMAR_FILE = MATERIAL_LIB_DIR / "composite_grammar.json"
+material = Material.from_json(MATERIAL_FILE)
+
+# Material property names driving the (elastic) membrane stiffness c_strat.
+STIFFNESS_PROPERTY_NAMES = ("E1", "E2", "G12", "nu12")
 
 total_thickness = len(DEFAULT_INPUT_DATA["stacking_sequence"]) * PLY_THICKNESS
 DEFAULT_INPUT_DATA["thickness"] = atleast_1d(total_thickness)
 
 
-def compute_c_strat(stacking_sequence):
-    """Effective membrane stiffness ``A / total_thickness`` from the ply angles.
+def compute_c_strat(stacking_sequence, e1, e2, g12, nu12):
+    """Effective membrane stiffness ``A / total_thickness`` from ply angles + material.
 
     Classical lamination theory (via composipy). ``c_strat`` is therefore a
-    *derived* quantity of ``stacking_sequence`` (and the module material), not a
-    free input -- this removes the ambiguity of passing an inconsistent
+    *derived* quantity of ``stacking_sequence`` and the ply elastic constants,
+    not a free input -- this removes the ambiguity of passing an inconsistent
     ``(c_strat, stacking_sequence)`` pair. The differentiable JAX counterpart is
     :func:`vimseo.lib_vimseo.tan_lib_jax.c_strat_from_layup`.
     """
-    laminate = LaminateProperty(
-        stacking_sequence,
-        material.name_to_material_relation["orthotropic"].get_relation(),
-    )
+    ply = OrthotropicMaterial(e1=e1, e2=e2, v12=nu12, g12=g12, thickness=PLY_THICKNESS)
+    laminate = LaminateProperty(stacking_sequence, ply)
     return array(laminate.A) / (len(stacking_sequence) * PLY_THICKNESS)
 
 
@@ -132,7 +125,7 @@ class TanRun_Tension(BaseComponent):
     USE_JOB_DIRECTORY = True
 
     auto_detect_grammar_files = False
-    default_grammar_type = "SimpleGrammar"
+    default_grammar_type = "JSONGrammar"
 
     def __init__(self, **options):
         super().__init__(**options)
@@ -160,7 +153,10 @@ class TanRun_Tension(BaseComponent):
 
         load = array([input_data["load"][0], 0.0, 0.0]) / thickness
 
-        c_strat = compute_c_strat(input_data["stacking_sequence"])
+        c_strat = compute_c_strat(
+            input_data["stacking_sequence"],
+            *(input_data[name][0] for name in STIFFNESS_PROPERTY_NAMES),
+        )
 
         output_data = {}
 
@@ -232,7 +228,7 @@ class PostFieldExtraction(BaseComponent):
     """A post-processor to extract data from a field."""
 
     auto_detect_grammar_files = False
-    default_grammar_type = "SimpleGrammar"
+    default_grammar_type = "JSONGrammar"
 
     def __init__(
         self,
@@ -287,7 +283,10 @@ class PostFieldExtraction(BaseComponent):
         radius = input_data["radius"][0]
         d0 = input_data["d0"][0]
         thickness = input_data["thickness"][0]
-        c_strat = compute_c_strat(input_data["stacking_sequence"])
+        c_strat = compute_c_strat(
+            input_data["stacking_sequence"],
+            *(input_data[name][0] for name in STIFFNESS_PROPERTY_NAMES),
+        )
         load = array([input_data["load"][0], 0.0, 0.0]) / thickness
 
         line_extremities = {
@@ -342,10 +341,14 @@ class TanOpenHole(IntegratedModel):
                 ComponentFactory().create(
                     "TanRun",
                     load_case=LoadCaseFactory().create(load_case_name),
+                    material_grammar_file=MATERIAL_GRAMMAR_FILE,
+                    material=material,
                 ),
                 PostFieldExtraction(
                     load_case=LoadCaseFactory().create(load_case_name),
                     fields_from_file=self.FIELDS_FROM_FILE,
+                    material_grammar_file=MATERIAL_GRAMMAR_FILE,
+                    material=material,
                 ),
             ],
             **options,
@@ -365,35 +368,34 @@ class TanOpenHole(IntegratedModel):
         """Analytic Jacobian of the hole-edge stresses via the JAX kernel.
 
         Fills ``self.jac[output][input]`` for ``sigma_xx_r`` / ``sigma_xx_d0``
-        with respect to ``load``, ``radius``, ``width``, ``d0``, ``thickness``
-        and ``stacking_sequence``, using the differentiable
+        with respect to ``load``, ``radius``, ``width``, ``d0``, ``thickness``,
+        ``stacking_sequence`` and the ply elastic constants (``E1``, ``E2``,
+        ``G12``, ``nu12``), using the differentiable
         :mod:`~vimseo.lib_vimseo.tan_lib_jax` (requires the ``jax`` extra). The
         outputs are evaluated directly on the Tan solution, consistently with
         ``PostFieldExtraction``.
 
         ``c_strat`` is a derived quantity (classical lamination theory from
-        ``stacking_sequence`` and the module material), so the ply-angle Jacobian
-        goes through the full chain ``stacking -> c_strat -> sigma`` and is a
-        genuine derivative of the discipline output (validated by finite
-        differences). The material constants are read from the module-level
-        ``material``.
+        ``stacking_sequence`` and the material constants), so the ply-angle and
+        material Jacobians go through the full chain ``(stacking, material) ->
+        c_strat -> sigma`` and are genuine derivatives of the discipline output
+        (validated by finite differences).
         """
         import jax
 
         from vimseo.lib_vimseo import tan_lib_jax as tan_jax
 
         data = self.get_input_data()
-        c_strat = array(compute_c_strat(data["stacking_sequence"]), dtype=float)
-        args = (
-            float(data["load"][0]),
-            float(data["radius"][0]),
-            float(data["width"][0]),
-            float(data["d0"][0]),
-            float(data["thickness"][0]),
-            c_strat,
-        )
+        load_x = float(data["load"][0])
+        radius = float(data["radius"][0])
+        width = float(data["width"][0])
+        d0 = float(data["d0"][0])
+        angles = array(data["stacking_sequence"], dtype=float)
+        stiffness = tuple(float(data[name][0]) for name in STIFFNESS_PROPERTY_NAMES)
+
+        c_strat = array(compute_c_strat(angles, *stiffness), dtype=float)
         jac_scalar = jax.jacobian(tan_jax.scalar_outputs, argnums=(0, 1, 2, 3, 4))(
-            *args
+            load_x, radius, width, d0, float(data["thickness"][0]), c_strat
         )
 
         self._init_jacobian(input_names, output_names)
@@ -405,32 +407,27 @@ class TanOpenHole(IntegratedModel):
                 if input_name in row:
                     row[input_name] = array([[float(jac_scalar[in_index][out_index])]])
 
-        # d(sigma)/d(stacking angles) through the CLT chain stacking -> c_strat.
-        needs_stacking = any(
-            "stacking_sequence" in self.jac.get(name, {})
-            for name in self._JACOBIAN_OUTPUTS
-        )
-        if needs_stacking:
-            props = material.name_to_material_relation[
-                "orthotropic"
-            ].get_values_as_dict()
-            jac_stacking = jax.jacobian(tan_jax.scalar_outputs_from_layup, argnums=4)(
-                float(data["load"][0]),
-                float(data["radius"][0]),
-                float(data["width"][0]),
-                float(data["d0"][0]),
-                array(data["stacking_sequence"], dtype=float),
-                float(props["E1"]),
-                float(props["E2"]),
-                float(props["G12"]),
-                float(props["nu12"]),
-            )
+        # d(sigma)/d(stacking, E1, E2, G12, nu12) through the CLT chain
+        # (stacking, material) -> c_strat -> sigma.
+        layup_inputs = ("stacking_sequence", *STIFFNESS_PROPERTY_NAMES)
+        if any(
+            name in self.jac.get(output_name, {})
+            for output_name in self._JACOBIAN_OUTPUTS
+            for name in layup_inputs
+        ):
+            # argnums 4..8 map to (angles, e1, e2, g12, nu12).
+            jac_layup = jax.jacobian(
+                tan_jax.scalar_outputs_from_layup, argnums=(4, 5, 6, 7, 8)
+            )(load_x, radius, width, d0, angles, *stiffness)
             for out_index, output_name in enumerate(self._JACOBIAN_OUTPUTS):
                 row = self.jac.get(output_name)
-                if row is not None and "stacking_sequence" in row:
-                    row["stacking_sequence"] = array(jac_stacking[out_index]).reshape(
-                        1, -1
-                    )
+                if row is None:
+                    continue
+                for arg_index, input_name in enumerate(layup_inputs):
+                    if input_name in row:
+                        row[input_name] = array(
+                            jac_layup[arg_index][out_index]
+                        ).reshape(1, -1)
 
     def _plot_curves(self, figures, result, directory_path, save, show):
         figures = super()._plot_curves(

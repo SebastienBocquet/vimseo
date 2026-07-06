@@ -31,7 +31,6 @@
 
 import numpy as np
 import pytest
-from composipy import LaminateProperty
 from numpy.testing import assert_array_almost_equal
 
 from vimseo.api import create_model
@@ -39,6 +38,8 @@ from vimseo.core.model_result import ModelResult
 from vimseo.lib_vimseo import tan_lib
 from vimseo.problems.tan_oh.tan_oht import NOMINAL_GRID_SIZE
 from vimseo.problems.tan_oh.tan_oht import PLY_THICKNESS
+from vimseo.problems.tan_oh.tan_oht import STIFFNESS_PROPERTY_NAMES
+from vimseo.problems.tan_oh.tan_oht import compute_c_strat
 from vimseo.problems.tan_oh.tan_oht import material
 
 # The default stacking is quasi-isotropic, which drives ``tan_lib`` to its two
@@ -57,14 +58,14 @@ ORTHOTROPIC_STACKING = np.array([0.0, 0.0, 90.0, 0.0, 0.0, 90.0, 0.0, 0.0])
 def _build_c_strat(stacking: np.ndarray) -> tuple[np.ndarray, float]:
     """Build the effective membrane stiffness ``c_strat`` for a stacking.
 
-    Mirrors the construction performed at import time in ``tan_oht`` for the
-    default stacking.
+    Uses the model's ``compute_c_strat`` with the default material values.
     """
-    laminate = LaminateProperty(
-        stacking, material.name_to_material_relation["orthotropic"].get_relation()
+    properties = material.get_values_as_dict()
+    c_strat = compute_c_strat(
+        stacking, *(properties[name] for name in STIFFNESS_PROPERTY_NAMES)
     )
     total_thickness = len(stacking) * PLY_THICKNESS
-    return np.array(laminate.A) / total_thickness, total_thickness
+    return np.array(c_strat), total_thickness
 
 
 @pytest.mark.parametrize(
@@ -150,10 +151,10 @@ def test_tan_oh_jacobian(tmp_wd):
     Requires the ``jax`` extra. Checked on a well-conditioned orthotropic
     laminate with non-stationary ply angles (so ``d/d(angle) != 0``), made the
     model default so gemseo's finite differences perturb around it for the
-    non-differentiated inputs. ``c_strat`` is derived from the stacking, so
-    ``stacking_sequence`` is a genuine differentiated input (CLT chain). A
-    per-input step scaled to the input magnitude is used because the inputs span
-    very different scales.
+    non-differentiated inputs. ``c_strat`` is derived from the stacking and the
+    ply elastic constants, so ``stacking_sequence`` and ``E1/E2/G12/nu12`` are
+    genuine differentiated inputs (CLT chain). A per-input step scaled to the
+    input magnitude is used because the inputs span very different scales.
     """
     pytest.importorskip("jax")
 
@@ -165,7 +166,18 @@ def test_tan_oh_jacobian(tmp_wd):
     model.cache = None  # force finite differences to actually re-execute
 
     inputs = model.get_input_data()
-    for name in ["load", "radius", "width", "d0", "stacking_sequence"]:
+    checked_inputs = [
+        "load",
+        "radius",
+        "width",
+        "d0",
+        "stacking_sequence",
+        "E1",
+        "E2",
+        "G12",
+        "nu12",
+    ]
+    for name in checked_inputs:
         # Step scaled to the input magnitude, floored so it is never 0 (e.g. when
         # the first component of an input happens to be 0).
         step = 1e-6 * max(abs(float(inputs[name].flat[0])), 1.0)
