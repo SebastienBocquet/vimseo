@@ -245,3 +245,68 @@ def test_tan_oh_jacobian_near_isotropy():
             fd = (sigma_numpy(*plus, c_strat) - sigma_numpy(*minus, c_strat)) / (2 * h)
             rel_err = abs(analytic_i - fd) / max(abs(fd), 1e-9)
             assert rel_err < bounds[name], f"{name}: rel_err={rel_err:.2e}"
+
+
+def test_numpy_and_jax_forwards_match():
+    """The numpy forward and the JAX kernel must evaluate the same function.
+
+    The model forward is numpy while its Jacobian is computed by JAX, so the two
+    must agree for the Jacobian to be consistent with the discipline output.
+
+    The scalar model outputs (``sigma_xx_r``, ``sigma_xx_d0`` -- the Jacobian
+    basis) are checked tightly for both a well-conditioned and a quasi-isotropic
+    laminate. The full flux field is checked on the well-conditioned laminate
+    only: near isotropy a few near-zero-flux points differ in sign (zeta branch
+    selection at ``real(.) == 0``), negligible in absolute terms but large in
+    relative terms, so a whole-field tight check there would be meaningless.
+    """
+    pytest.importorskip("jax")
+    import jax.numpy as jnp
+
+    from vimseo.lib_vimseo import tan_lib_jax
+
+    length, width, radius, d0, load_x = 80.0, 32.0, 3.175, 0.71, 1000.0
+    thickness = len(ORTHOTROPIC_STACKING) * PLY_THICKNESS
+    load = np.array([load_x / thickness, 0.0, 0.0])
+
+    # (a) scalar model outputs match for both laminates.
+    for stacking in (ORTHOTROPIC_STACKING, QUASI_ISOTROPIC_STACKING):
+        c_strat = _build_c_strat(stacking)[0]
+        numpy_r = (
+            thickness
+            * tan_lib.tan_model(radius, np.pi / 2, load, c_strat, radius, width)[0]
+        )
+        numpy_d0 = (
+            thickness
+            * tan_lib.tan_model(radius + d0, np.pi / 2, load, c_strat, radius, width)[0]
+        )
+        jax_r, jax_d0 = np.asarray(
+            tan_lib_jax.scalar_outputs(
+                load_x, radius, width, d0, thickness, jnp.asarray(c_strat)
+            )
+        )
+        assert numpy_r == pytest.approx(jax_r, rel=1e-6)
+        assert numpy_d0 == pytest.approx(jax_d0, rel=1e-6)
+
+    # (b) whole flux field matches on the well-conditioned orthotropic laminate.
+    c_strat = _build_c_strat(ORTHOTROPIC_STACKING)[0]
+    x = np.linspace(0, length, NOMINAL_GRID_SIZE)
+    y = np.linspace(0, width, NOMINAL_GRID_SIZE)
+    xx, yy = np.meshgrid(x, y, indexing="ij")
+    r = np.sqrt((xx - 0.5 * length) ** 2 + (yy - 0.5 * width) ** 2).ravel()
+    theta = np.arctan2(yy - 0.5 * width, xx - 0.5 * length).ravel()
+    outside = r >= radius
+    numpy_flux = tan_lib.tan_model_grid(
+        r[outside], theta[outside], load, c_strat, radius, width
+    )
+    jax_flux = np.asarray(
+        tan_lib_jax.tan_point(
+            jnp.asarray(r[outside]),
+            jnp.asarray(theta[outside]),
+            jnp.asarray(load),
+            jnp.asarray(c_strat),
+            radius,
+            width,
+        )
+    ).T
+    np.testing.assert_allclose(jax_flux, numpy_flux, rtol=1e-8, atol=1e-6)
