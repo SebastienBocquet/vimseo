@@ -1,4 +1,4 @@
-# Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -13,13 +13,6 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Copyright (c) 2022 IRT-AESE.
-# All rights reserved.
-#
-# Contributors:
-#    INITIAL AUTHORS -
-#        :author: Jorge CAMACHO-CASERO, Ludovic BARRIERE
-#    OTHER AUTHORS   - MACROSCOPIC CHANGES
 from __future__ import annotations
 
 from pathlib import Path
@@ -311,7 +304,7 @@ class SpaceTool(BaseAnalysisTool):
     def execute(
         self,
         inputs: SpaceToolInputs | None = None,
-        setting: SpaceToolSettings | None = None,
+        settings: SpaceToolSettings | None = None,
         **options,
     ) -> SpaceToolResult:
         self.update(**options)
