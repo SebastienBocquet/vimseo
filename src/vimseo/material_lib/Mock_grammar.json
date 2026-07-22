@@ -1,5 +1,5 @@
 {
-  "name": "OPFM_default_material",
+  "name": "mock_material",
   "required": [
     "E1"
   ],
@@ -16,5 +16,5 @@
   },
   "$schema": "http://json-schema.org/draft-04/schema",
   "type": "object",
-  "id": "#OPFM_default_material"
+  "id": "#mock_material"
 }
