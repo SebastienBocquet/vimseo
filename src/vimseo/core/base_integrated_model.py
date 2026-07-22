@@ -1,4 +1,4 @@
-# Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -438,14 +438,12 @@ class IntegratedModel(GemseoDisciplineWrapper):
         if self._whether_use_scratch_dir():
             self._scratch_manager.create_job_directory()
             LOGGER.info(
-                f"Current root directory of job scratch directory is "
-                f"{self._scratch_manager.root_directory}."
+                f"Current scratch directory is {self._scratch_manager._job_directory}."
             )
 
         self._archive_manager.create_job_directory()
         LOGGER.info(
-            f"Current root directory of job archive directory is "
-            f"{self._archive_manager.root_directory}."
+            f"Current archive directory is {self._archive_manager._job_directory}."
         )
 
         for discipline in self._chain.disciplines:
@@ -472,7 +470,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
         output_data.update({
             name: array([str(file_name) for file_name in field_file_names[name]])
-            for name, file_names in field_file_names.items()
+            for name in field_file_names
         })
 
         # metadata as additional outputs
