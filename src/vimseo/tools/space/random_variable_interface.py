@@ -1,3 +1,18 @@
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 # Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
 #
 # This program is free software; you can redistribute it and/or
@@ -68,11 +83,20 @@ def add_random_variable_interface(
                 settings=settings,
             )
         else:
+            dumped = settings.model_dump()
             parameters = {
                 k: v
-                for k, v in settings.model_dump().items()
+                for k, v in dumped.items()
                 if k in OPTIONS_PER_DISTRIBUTION[f"OT{settings.name}Distribution"]
             }
+            # The distribution options above never include the truncation bounds,
+            # yet ``add_random_vector`` forwards them per component just like the
+            # scalar path does through ``settings``. Without this the model bounds
+            # are silently dropped for a vector variable, so a distribution built
+            # with truncation on would still overflow the model's validity domain.
+            for bound in ("lower_bound", "upper_bound"):
+                if dumped.get(bound) is not None:
+                    parameters[bound] = dumped[bound]
             parameter_space.add_random_vector(
                 variable_name,
                 size=size,
