@@ -1,3 +1,18 @@
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 # Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
 #
 # This program is free software; you can redistribute it and/or
@@ -108,9 +123,9 @@ class BaseJobExecutor(metaclass=GoogleDocstringInheritanceMeta):
             check_subprocess: Whether to raise an error in case of subprocess failure.
         """
         self._command_line = self._replace_in_command_line(self._command_template)
-        return self._execute_external_software(
-            self._command_line.split(), check_subprocess
-        )
+        cmd = self._command_line.split()
+        LOGGER.info(f"Executing command: {cmd}")
+        return self._execute_external_software(cmd, check_subprocess)
 
     def set_options(self, options: BaseUserJobSettings):
         if not isinstance(options, self._USER_JOB_OPTIONS_MODEL):
