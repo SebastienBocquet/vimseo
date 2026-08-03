@@ -1,4 +1,4 @@
-# Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -43,6 +43,21 @@ class DisciplineWrapperComponent(BaseComponent):
                 IntegratedModel._ERROR_CODE_DEFAULT
             )
         })
+
+    @property
+    def job_executor(self):
+        """The job executor of the wrapped discipline, or ``None``.
+
+        A wrapped model runs as a single component, so — unlike an
+        :class:`~vimseo.core.components.external_software_component.ExternalSoftwareComponent`
+        — this component has no executor of its own. Forwarding the wrapped
+        model's single :attr:`~vimseo.core.base_integrated_model.IntegratedModel.job_executor`
+        keeps it visible at the composition's top level (so a single executor can
+        be enforced and driven across the whole chain) without flattening the
+        wrapped model into its components. ``None`` when the wrapped discipline is
+        not an integrated model (a plain GEMSEO discipline has no executor).
+        """
+        return getattr(self._discipline, "job_executor", None)
 
     def _run(self, input_data):
         output_data = self._discipline.execute(input_data)

@@ -667,8 +667,36 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
     @property
     def run(self) -> BaseComponent:
-        """The component running the external software."""
-        return self._chain.disciplines[0]
+        """The component running the external software.
+
+        Identified by **type** — the ``isinstance(discipline, RunProcessor)``
+        component of the chain — so it is found wherever it sits, whatever the
+        number of components; it falls back to the first component when the chain
+        has no run component (a plain computational model). This is the **single
+        place** that depends on the component-class hierarchy: when that hierarchy
+        changes (e.g. ``RunProcessor`` is removed or renamed), adapt the detection
+        here only. (``PreRunPostModel`` overrides this with its stored run
+        processor, so its own accessor is unaffected by the hierarchy.)
+        """
+        from vimseo.core.components.run.run_processor import RunProcessor
+
+        runs = [
+            discipline
+            for discipline in self._chain.disciplines
+            if isinstance(discipline, RunProcessor)
+        ]
+        return runs[0] if runs else self._chain.disciplines[0]
+
+    @property
+    def job_executor(self):
+        """The job executor the job-settings form configures and the run step restores.
+
+        The executor of the model's :attr:`run` component — the scheduler doing
+        the heavy solve — or ``None`` when that component carries none. It never
+        raises: a model whose pre/post run interactively while its run uses a
+        scheduler carries several distinct executors, which is legitimate.
+        """
+        return getattr(self.run, "job_executor", None)
 
     def _classify_variables(self, data):
         """Split a dictionary of variables according to the variable groups:
