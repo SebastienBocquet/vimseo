@@ -454,29 +454,9 @@ class IntegratedModel(GemseoDisciplineWrapper):
         end_time = time()
         self._run_time = end_time - start_time
 
-        # Fields
-        field_file_names = defaultdict(list)
-        if self.scratch_job_directory not in ["", None]:
-            for f in self.scratch_job_directory.iterdir():
-                for name, field_re in self.FIELDS_FROM_FILE.items():
-                    if match(field_re, f.name):
-                        field_file_names[name].append(f.name)
-
-        self._archive_manager.add_persistent_file_names([
-            file_name
-            for file_names in field_file_names.values()
-            for file_name in file_names
-        ])
-
-        output_data.update({
-            name: array([str(file_name) for file_name in field_file_names[name]])
-            for name in field_file_names
-        })
-
-        # metadata as additional outputs
-        meta_data = self.generate_metadata(output_data)
-        output_data.update(asdict(meta_data))
-
+        # Collect field files, generate metadata and write the archive (results
+        # + persistent files); then enforce the scratch-persistency policy.
+        self.archive_outputs(output_data)
         self._manage_persistency(output_data)
 
         return output_data
@@ -831,16 +811,58 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
         return self.cache
 
-    def _manage_persistency(self, output_data):
-        """Write results in archive."""
+    def _collect_field_files(self, output_data):
+        """Register the run's field files as persistent and add them to *output_data*.
 
-        # TODO refactor when ModelResult is implemented
+        Scans the scratch job directory for files matching ``FIELDS_FROM_FILE``,
+        records them on the archive manager (so :meth:`archive_outputs` copies
+        them), and adds their names into *output_data* as the field outputs.
+        """
+        field_file_names = defaultdict(list)
+        if self.scratch_job_directory not in ["", None]:
+            for f in self.scratch_job_directory.iterdir():
+                for name, field_re in self.FIELDS_FROM_FILE.items():
+                    if match(field_re, f.name):
+                        field_file_names[name].append(f.name)
+
+        self._archive_manager.add_persistent_file_names([
+            file_name
+            for file_names in field_file_names.values()
+            for file_name in file_names
+        ])
+
+        output_data.update({
+            name: array([str(file_name) for file_name in field_file_names[name]])
+            for name in field_file_names
+        })
+
+    def archive_outputs(self, output_data):
+        """Archive the model result: field files, metadata, results, persistent files.
+
+        Runs the archive half of the ``execute`` tail against the current scratch
+        job directory — collecting field files (:meth:`_collect_field_files`),
+        generating the metadata into *output_data*, then writing ``results.json``
+        and copying the persistent files through the archive manager. The archive
+        job directory must already be created
+        (``self._archive_manager.create_job_directory()``). Unlike
+        :meth:`_manage_persistency` it does **not** touch the scratch-persistency
+        policy, so a caller that ran individual disciplines (the vtt GUI's
+        pre/run/post flow) can archive exactly as ``model.execute`` does without
+        deleting the job directory it is reading.
+        """
+        self._collect_field_files(output_data)
+
+        meta_data = self.generate_metadata(output_data)
+        output_data.update(asdict(meta_data))
+
         result_model = {"inputs": self.get_input_data(), "outputs": output_data}
-
         self._archive_manager.enforce_persistency_policy(result_model)
-
         self._archive_manager.copy_persistent_files(self._scratch_manager.job_directory)
+        return output_data
 
+    def _manage_persistency(self, output_data):
+        """Enforce the scratch-persistency policy (archiving is done separately)."""
+        result_model = {"inputs": self.get_input_data(), "outputs": output_data}
         self._scratch_manager.enforce_persistency_policy(result_model)
 
     def _whether_use_scratch_dir(self):
