@@ -1,0 +1,20 @@
+{
+  "name": "MockSleepRun_output",
+  "required": [
+    "y0"
+  ],
+  "properties": {
+    "y0": {
+      "description": "y0",
+      "type": "array",
+      "items": {
+        "type": "number",
+        "maximum": 100.0,
+        "minimum": -100.0
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "type": "object",
+  "id": "#MockSleepRun_output"
+}

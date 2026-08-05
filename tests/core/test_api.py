@@ -51,4 +51,5 @@ def test_available_models(tmp_wd):
         "MockModelPersistent",
         "MockModelWithMaterial",
         "MockModelLongRun",
+        "MockModelSleep",
     }
