@@ -39,6 +39,10 @@ from vimseo.core.pre_run_post_model import (  # ruff: ignore[module-import-not-a
     PreRunPostModel,
 )
 
+from vimseo.utilities.datasets import (  # ruff: ignore[module-import-not-at-top-of-file]
+    to_dataset as to_dataset,
+)
+
 # isort: on
 
 if TYPE_CHECKING:
