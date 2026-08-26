@@ -1,5 +1,5 @@
 {
-  "name": "mock_material",
+  "name": "MockGrammar",
   "required": [
     "E1"
   ],
@@ -16,5 +16,5 @@
   },
   "$schema": "http://json-schema.org/draft-04/schema",
   "type": "object",
-  "id": "#mock_material"
+  "id": "#mock_grammar"
 }

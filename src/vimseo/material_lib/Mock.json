@@ -1,6 +1,6 @@
 {
-  "name": "Mock",
-  "grammar_name": "mock_material",
+  "name": "MockDefaultMaterial",
+  "grammar_name": "MockGrammar",
   "description": "",
   "material_relations": [
     {

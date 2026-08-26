@@ -85,14 +85,14 @@ def test_compatible_materials_without_a_material():
 def test_compatible_materials_of_an_unmigrated_model():
     """A model whose material carries no grammar name still offers that one material."""
     assert [info.name for info in compatible_materials("MockModelWithMaterial")] == [
-        "Mock"
+        "MockDefaultMaterial"
     ]
 
 
 def test_get_available_materials_without_a_model():
     """Without a model name, every discoverable material is returned."""
     names = {info.name for info in get_available_materials()}
-    assert {"Mock", "Ta6v", "Ta6v_annealed"} <= names
+    assert {"MockDefaultMaterial", "Ta6v", "Ta6v_annealed"} <= names
 
 
 def test_resolve_material_by_name_path_and_instance():
