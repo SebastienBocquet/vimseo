@@ -124,7 +124,7 @@ class BaseJobExecutor(metaclass=GoogleDocstringInheritanceMeta):
         """
         self._command_line = self._replace_in_command_line(self._command_template)
         cmd = self._command_line.split()
-        LOGGER.info(f"Executing command: {cmd}")
+        LOGGER.info(f"Executing command: {self._command_line}")
         return self._execute_external_software(cmd, check_subprocess)
 
     def set_options(self, options: BaseUserJobSettings):
