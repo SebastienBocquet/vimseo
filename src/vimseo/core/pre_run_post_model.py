@@ -13,21 +13,6 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Copyright 2021 IRT Saint Exupéry, https://www.irt-saintexupery.com
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License version 3 as published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 from __future__ import annotations
 
 import logging
@@ -42,14 +27,15 @@ from vimseo.core.components.subroutines.subroutine_wrapper_factory import (
 )
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_settings import IntegratedModelSettings
-from vimseo.material.material import Material
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
     from vimseo.core.components.post.post_processor import PostProcessor
     from vimseo.core.components.pre.pre_processor import PreProcessor
     from vimseo.core.components.run.run_processor import RunProcessor
+    from vimseo.material.material import Material
 
 LOGGER = logging.getLogger(__name__)
 
@@ -95,12 +81,17 @@ class PreRunPostModel(IntegratedModel):
     N_CPUS = 1
     """The default number of cpus used to run the model."""
 
-    def __init__(self, load_case_name: str, **options):
+    def __init__(
+        self,
+        load_case_name: str,
+        material: str | Path | Material | None = None,
+        **options,
+    ):
 
         options = IntegratedModelSettings(**options).model_dump()
-        material = (
-            Material.from_json(self.MATERIAL_FILE) if self.MATERIAL_FILE != "" else None
-        )
+        # Resolved once here and handed down to ``super().__init__`` as an object, so the
+        # material JSON is read a single time instead of once per level.
+        material = self._load_material(material)
 
         component_factory = ComponentFactory()
 
@@ -145,7 +136,7 @@ class PreRunPostModel(IntegratedModel):
         components[1].input_grammar.update(components[0].input_grammar)
         components[1].output_grammar = deepcopy(components[2].input_grammar)
 
-        super().__init__(load_case_name, components, **options)
+        super().__init__(load_case_name, components, material=material, **options)
 
         self._pre_processor = self._chain.disciplines[0]
         self._run_processor = self._chain.disciplines[1]

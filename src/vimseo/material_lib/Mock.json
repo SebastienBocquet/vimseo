@@ -1,5 +1,6 @@
 {
   "name": "Mock",
+  "grammar_name": "mock_material",
   "description": "",
   "material_relations": [
     {

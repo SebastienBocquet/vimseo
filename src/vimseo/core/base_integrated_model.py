@@ -58,6 +58,7 @@ from vimseo.core.model_metadata import MetaData
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.model_settings import IntegratedModelSettings
 from vimseo.material.material import Material
+from vimseo.material.material_registry import resolve_material
 from vimseo.storage_management import _get_archive_class
 from vimseo.storage_management.scratch_storage import DirectoryScratch
 from vimseo.utilities.json_grammar_utils import load_input_bounds
@@ -215,17 +216,34 @@ class IntegratedModel(GemseoDisciplineWrapper):
     default_cache_type = Discipline.CacheType.HDF5
     default_grammar_type = Discipline.GrammarType.JSON
 
+    @classmethod
+    def _load_material(
+        cls, material: str | Path | Material | None = None
+    ) -> Material | None:
+        """Return the material to build this model with.
+
+        *material* overrides :attr:`.MATERIAL_FILE` and may be a material name, the path
+        to a material JSON file, or an already-built :class:`.Material`; ``None`` falls
+        back to the material the model class declares (itself possibly none). Shared with
+        :class:`.PreRunPostModel`, which needs the same resolution one level earlier, to
+        hand the material to its components.
+        """
+        if material is not None:
+            return resolve_material(material)
+        return (
+            Material.from_json(cls.MATERIAL_FILE) if cls.MATERIAL_FILE != "" else None
+        )
+
     def __init__(
         self,
         load_case_name: str,
         components: Iterable[BaseComponent],
+        material: str | Path | Material | None = None,
         **options,
     ):
         options = IntegratedModelSettings(**options).model_dump()
         self.name = self.__class__.__name__
-        self.__material = (
-            Material.from_json(self.MATERIAL_FILE) if self.MATERIAL_FILE != "" else None
-        )
+        self.__material = self._load_material(material)
         self.__load_case = LoadCaseFactory().create(
             load_case_name, domain=self._LOAD_CASE_DOMAIN
         )
