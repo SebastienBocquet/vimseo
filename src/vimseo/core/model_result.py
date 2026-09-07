@@ -34,12 +34,8 @@ from vimseo.storage_management.base_storage_manager import PersistencyPolicy
 from vimseo.storage_management.directory_storage import DirectoryArchive
 from vimseo.tools.base_result import BaseResult
 from vimseo.utilities.curves import Curve
-<<<<<<< HEAD
-from vimseo.utilities.fields import MeshField
-=======
 from vimseo.utilities.curves import CurveSet
-from vimseo.utilities.fields import Field
->>>>>>> cb3f9c6c (feat(plots): declare model figures with PLOTS, allowing several lines)
+from vimseo.utilities.fields import MeshField
 
 if TYPE_CHECKING:
     from vimseo.core.base_integrated_model import IntegratedModel
