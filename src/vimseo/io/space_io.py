@@ -136,6 +136,17 @@ class SpaceToolFileIO(BaseToolFileIO):
                     distribution_parameters[variable_name]["name"] = marginal.settings[
                         "name"
                     ]
+                    # A truncated # distribution round-trips through the JSON.
+                    # See the vector patch
+                    # in random_variable_interface.add_random_variable_interface.
+                    for bound in ("lower_bound", "upper_bound"):
+                        value = marginal.settings.get(bound)
+                        if value is None:
+                            continue
+                        if distribution.dimension == 1:
+                            distribution_parameters[variable_name][bound] = value
+                        else:
+                            distribution_parameters[variable_name][bound].append(value)
             distribution_parameters[variable_name]["size"] = distribution.dimension
 
         return distribution_parameters

@@ -22,7 +22,9 @@ from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.uncertainty.distributions.base_distribution import (
     InterfacedDistributionSettings,
 )
+from numpy import array
 
+from vimseo.api import create_model
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.io.test_data import IO_DATA_DIR
 from vimseo.tools.space.random_variable_interface import add_random_variable_interface
@@ -82,9 +84,12 @@ def test_write(tmp_wd):
         settings_dict = json.load(f)["parameter_space"]["x"]
         distribution_parameters = DistributionParameters(**settings_dict)
         assert distribution_parameters.name == "Triangular"
-        assert distribution_parameters.mode == 0.5
-        assert distribution_parameters.lower == 0.475
-        assert distribution_parameters.upper == 0.525
+        assert distribution_parameters.mode == 0.5  # ruff: ignore[float-equality-comparison]
+        assert distribution_parameters.lower == 0.475  # ruff: ignore[float-equality-comparison]
+        assert distribution_parameters.upper == 0.525  # ruff: ignore[float-equality-comparison]
+        # An untruncated distribution carries no truncation bounds.
+        assert "lower_bound" not in settings_dict
+        assert "upper_bound" not in settings_dict
 
 
 def test_write_for_interfaced_distribution(tmp_wd):
@@ -106,5 +111,86 @@ def test_write_for_interfaced_distribution(tmp_wd):
     )
     marginal = read_parameter_space.distributions["x"].marginals[0]
     assert marginal.settings["name"] == "Normal"
-    assert marginal.mean == 1.0
-    assert marginal.standard_deviation == 0.05
+    assert marginal.mean == 1.0  # ruff: ignore[float-equality-comparison]
+    assert marginal.standard_deviation == 0.05  # ruff: ignore[float-equality-comparison]
+
+
+def test_write_with_truncation(tmp_wd):
+    """A truncated distribution keeps its ``lower_bound``/``upper_bound`` on write + read.
+
+    Regression: ``_serialize_distribution_parameters`` only emitted the keys in
+    ``OPTIONS_PER_DISTRIBUTION`` (``mu``/``sigma`` for a normal), so the truncation
+    bounds were silently dropped on write and the distribution was reloaded
+    untruncated. The sibling gap on the vector *build* path is covered by
+    ``test_space_builders.test_update_vector_from_model_center_and_cov_with_truncation``.
+    """
+    file_base_name = "result"
+    space_tool = SpaceTool()
+    space_tool.execute(
+        distribution_name="OTNormalDistribution",
+        space_builder_name="FromCenterAndCov",
+        center_values={"x": 1.0},
+        cov=0.05,
+        lower_bounds={"x": 0.9},
+        upper_bounds={"x": 1.1},
+    )
+    SpaceToolFileIO().write(space_tool.result, file_base_name=file_base_name)
+
+    with open(f"{file_base_name}.json") as f:
+        settings_dict = json.load(f)["parameter_space"]["x"]
+    assert settings_dict["lower_bound"] == 0.9  # ruff: ignore[float-equality-comparison]
+    assert settings_dict["upper_bound"] == 1.1  # ruff: ignore[float-equality-comparison]
+
+    read_parameter_space = (
+        SpaceToolFileIO().read(file_name=f"{file_base_name}.json").parameter_space
+    )
+    check_distribution(
+        read_parameter_space,
+        "x",
+        mu=1.0,
+        sigma=0.05,
+        lower_bound=0.9,
+        upper_bound=1.1,
+    )
+
+
+def test_write_vector_with_truncation(tmp_wd):
+    """A truncated *vector* distribution round-trips its per-component bounds.
+
+    Exercises the ``dimension > 1`` branch of the serializer: the bounds must come
+    back as one value per component, and rebuild a truncated distribution on read.
+    """
+    file_base_name = "result"
+    space_tool = SpaceTool()
+    model = create_model("MockModelPersistent", "LC1")
+    model.EXTRA_INPUT_GRAMMAR_CHECK = True
+    variable_name = "x3"  # a size-3 vector input
+    model_lower = array([0.98, 1.0, 2.90])
+    model_upper = array([1.02, 2.2, 3.10])
+    model.lower_bounds[variable_name] = model_lower
+    model.upper_bounds[variable_name] = model_upper
+    space_tool.execute(
+        distribution_name="OTNormalDistribution",
+        space_builder_name="FromModelCenterAndCov",
+        model=model,
+        variable_names=[variable_name],
+        use_default_values_as_center=True,
+        cov=0.05,
+        truncate_to_model_bounds=True,
+    )
+    SpaceToolFileIO().write(space_tool.result, file_base_name=file_base_name)
+
+    with open(f"{file_base_name}.json") as f:
+        settings_dict = json.load(f)["parameter_space"][variable_name]
+    assert settings_dict["lower_bound"] == model_lower.tolist()
+    assert settings_dict["upper_bound"] == model_upper.tolist()
+
+    read_parameter_space = (
+        SpaceToolFileIO().read(file_name=f"{file_base_name}.json").parameter_space
+    )
+    check_distribution(
+        read_parameter_space,
+        variable_name,
+        lower_bound=model_lower,
+        upper_bound=model_upper,
+    )
