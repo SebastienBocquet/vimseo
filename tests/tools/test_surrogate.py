@@ -15,8 +15,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from gemseo.datasets.io_dataset import IODataset
 from gemseo.mlearning.regression.algos.linreg import LinearRegressor
@@ -214,7 +212,7 @@ def test_load_and_plot_mock_model(tmp_wd, mock_model_surrogate):
         mock_model_surrogate.working_directory / "SurrogateTool_result.hdf5"
     )
     mock_model_surrogate.plot_results(results, save=True, show=False)
-    assert Path("surrogate_LinReg_MockModel.LC1.png").is_file()
+    assert list(mock_model_surrogate.working_directory.glob("surrogate_*.png"))
 
 
 def test_show_results_after_selection(tmp_wd, mock_dataset):

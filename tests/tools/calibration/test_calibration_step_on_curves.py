@@ -16,12 +16,12 @@
 from __future__ import annotations
 
 import pytest
-from gemseo_calibration.calibrator import CalibrationMetricSettings
 from numpy import atleast_1d
 
 from vimseo.api import create_model
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.tools.base_result import assert_results_equal
+from vimseo.tools.calibration.calibration_metrics import CalibrationMetricSettings
 from vimseo.tools.calibration.calibration_step import CalibrationStep
 from vimseo.tools.calibration.calibration_step import CalibrationStepInputs
 from vimseo.tools.calibration.calibration_step import CalibrationStepSettings
@@ -59,7 +59,7 @@ def calibration_on_curves(mesh: str):
             name_to_models={"Dummy": "MockCurves"},
             control_outputs={
                 output_name: CalibrationMetricSettings(
-                    measure="SBPISE", mesh=mesh
+                    metric_name="SBPISE", mesh_name=mesh
                 ).model_dump()
             },
             input_names=[

@@ -230,7 +230,6 @@ class SensitivityTool(BaseAnalysisTool):
                 save=save,
                 directory_path=directory_path,
                 file_format="html",
-                font_size=12,
             ).figures[0]
 
             final_names = []
@@ -242,9 +241,20 @@ class SensitivityTool(BaseAnalysisTool):
                 else:
                     final_names.append(name)
 
+            # gemseo's standard mu*/sigma scatter plot keys its indices by
+            # whole input-variable name and assumes one scalar value per name,
+            # so it cannot mix a vector-valued input (several components) with
+            # a scalar one on the same chart; restrict it to scalar inputs
+            # (already fully covered by the radar and bar plots above).
+            scalar_input_names = [
+                name
+                for name in result.analysis.input_names
+                if result.variable_dimensions[name] == 1
+            ]
             for name in final_names:
                 figures["standard_plot"] = result.analysis.plot(
                     output=name,
+                    input_names=scalar_input_names,
                     show=show,
                     save=save,
                     file_path=directory_path / f"standard_plot_{name}",

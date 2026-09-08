@@ -155,7 +155,7 @@ def test_update_from_parameter_space():
     )
     material.update_from_parameter_space(parameter_space)
     assert material.name_to_property["E1"].distribution == DistributionParameters(
-        **parameter_space.distributions["E1"].marginals[0].settings
+        **parameter_space.distributions["E1"].marginals[0].vimseo_settings.model_dump()
     )
 
 
@@ -207,7 +207,11 @@ def test_to_json_schema(tmp_wd):
     assert schema_file.is_file()
 
     schema = json.loads(schema_file.read_text())
-    assert schema == material.model_json_schema()
+    # ``model_json_schema()`` returns a fresh dict on every call (unlike the pydantic
+    # version this test was written against, which cached and returned the same dict,
+    # so a previous stamping happened to leak into it); stamp a fresh one here to
+    # compare like for like instead of relying on that incidental caching behavior.
+    assert schema == material._stamp_grammar_name(material.model_json_schema())
 
 
 def test_update_uniform_distribution_keeps_parameters():

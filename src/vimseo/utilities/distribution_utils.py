@@ -25,7 +25,10 @@ def check_distribution(parameter_space, var_name, parameters=(), **kwargs):
     if len(parameters) > 0:
         if len(parameter_space.distributions[var_name].marginals) == 1:
             parameters_from_distribution = (
-                parameter_space.distributions[var_name].marginals[0].settings
+                parameter_space
+                .distributions[var_name]
+                .marginals[0]
+                .vimseo_settings.model_dump()
             )
             assert parameters == parameters_from_distribution["parameters"]
         else:
@@ -38,7 +41,10 @@ def check_distribution(parameter_space, var_name, parameters=(), **kwargs):
             print("Parameter name: ", k)
             print("Expected value: ", v)
             parameters_from_distribution = [
-                parameter_space.distributions[var_name].marginals[i].settings[k]
+                parameter_space
+                .distributions[var_name]
+                .marginals[i]
+                .vimseo_settings.model_dump()[k]
                 for i in range(len(parameter_space.distributions[var_name].marginals))
             ]
             print(

@@ -266,6 +266,7 @@ class IntegratedModel(GemseoDisciplineWrapper):
         return (
             Material.from_json(cls.MATERIAL_FILE) if cls.MATERIAL_FILE != "" else None
         )
+
     def __init_subclass__(cls, **kwargs):
         """Reject the models still declaring the removed ``CURVES`` attribute.
 
@@ -303,12 +304,6 @@ class IntegratedModel(GemseoDisciplineWrapper):
             self._cache_file_path = f"{self.name}_{self._load_case.name}_cache.hdf"
 
         super().__init__(name=self.__class__.__name__)
-        if self.default_cache_type == CacheType.HDF5:
-            self.set_cache(
-                cache_type=Discipline.CacheType.HDF5,
-                hdf_file_path=self._cache_file_path,
-                hdf_node_path="node",
-            )
 
         self._job_name = options["job_name"]
 
@@ -367,12 +362,40 @@ class IntegratedModel(GemseoDisciplineWrapper):
         self.output_grammar.update_from_types(
             self._chain.output_grammar._get_names_to_types()
         )
+        # ``update_from_types`` loses the item type of array-valued outputs (e.g.
+        # a string array and a float array are both plain ``numpy.ndarray`` to
+        # Python), silently turning e.g. a string output's grammar type into
+        # "number" and making the discipline reject its own output at validation.
+        # Refine those types from the wrapped disciplines' own JSON grammars,
+        # which do preserve them (unlike the chain's coarser aggregate grammar).
+        for discipline in self._chain.disciplines:
+            if isinstance(discipline.output_grammar, JSONGrammar):
+                excluded_names = set(discipline.output_grammar.names) - set(
+                    chain_output_names
+                )
+                self.output_grammar.update(
+                    discipline.output_grammar,
+                    excluded_names=excluded_names,
+                    merge=True,
+                )
         self.output_grammar.update_from_data(DEFAULT_METADATA)
         for name in DEFAULT_METADATA:
             self.output_grammar.required_names.add(name)
         for field_name in self.FIELDS_FROM_FILE:
             self.output_grammar.update_from_data({field_name: array(["names"])})
             self.output_grammar.required_names.add(field_name)
+
+        # Set the cache only once the input/output grammars have reached their
+        # final state: ``set_cache`` builds data converters bound to the grammar
+        # objects as they are at this point, and ``self.input_grammar`` above is
+        # reassigned (not mutated in place) after ``super().__init__``, so setting
+        # the cache any earlier would bind it to a stale, near-empty grammar.
+        if self.default_cache_type == CacheType.HDF5:
+            self.set_cache(
+                cache_type=Discipline.CacheType.HDF5,
+                hdf_file_path=self._cache_file_path,
+                hdf_node_path="node",
+            )
 
         # Set status to DONE, to avoid being locked in FAILED mode.
         self._chain._status = ExecutionStatus.Status.DONE

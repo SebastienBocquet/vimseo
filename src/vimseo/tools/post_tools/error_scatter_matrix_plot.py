@@ -72,9 +72,8 @@ class ErrorScatterMatrix(Plotter):
         scatter_matrix = GemseoScatterMatrix(
             dataset,
             kde=True,
-            coloring_variable=f"{metric_name}[{output_name}]",
-            axis_labels_as_keys=True,
-            dimensions=ds.get_variable_names(IODataset.INPUT_GROUP),
+            classifier=f"{metric_name}[{output_name}]",
+            variable_names=ds.get_variable_names(IODataset.INPUT_GROUP),
         )
         scatter_matrix.title = f"Metric {metric_name} for output {output_name}"
         self.result.figure = scatter_matrix.execute(
