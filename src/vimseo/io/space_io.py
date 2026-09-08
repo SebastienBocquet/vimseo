@@ -23,15 +23,13 @@ from typing import BinaryIO
 from typing import TextIO
 
 from gemseo.algos.parameter_space import ParameterSpace
-from gemseo.uncertainty.distributions.base_distribution import (
-    InterfacedDistributionSettings,
-)
 
 from vimseo.io.base_tool_io import BaseToolFileIO
 from vimseo.lib_vimseo.solver_utilities import EnhancedJSONEncoderModelWrapper
 from vimseo.tools.space.random_variable_interface import OPTIONS_PER_DISTRIBUTION
 from vimseo.tools.space.space_tool_result import SpaceToolResult
 from vimseo.utilities.distribution import DistributionParameters
+from vimseo.utilities.distribution import InterfacedDistributionSettings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -108,10 +106,11 @@ class SpaceToolFileIO(BaseToolFileIO):
         for variable_name, distribution in parameter_space.distributions.items():
             distribution_parameters[variable_name] = defaultdict(list)
             for marginal in distribution.marginals:
-                ot_distribution_name = f"OT{marginal.settings['name']}Distribution"
+                settings = marginal.vimseo_settings.model_dump()
+                ot_distribution_name = f"OT{settings['name']}Distribution"
                 expected_keys = OPTIONS_PER_DISTRIBUTION.get(ot_distribution_name, ())
                 if expected_keys == () or not set(expected_keys).issubset(
-                    set(marginal.settings.keys())
+                    set(settings.keys())
                 ):
                     if distribution.dimension > 1:
                         msg = (
@@ -122,20 +121,16 @@ class SpaceToolFileIO(BaseToolFileIO):
                         raise ValueError(msg)
                     # distribution interface is with parameters. We only handle
                     # scalar variables in this case:
-                    distribution_parameters[variable_name] = marginal.settings
+                    distribution_parameters[variable_name] = settings
                 else:
                     for k in expected_keys:
                         if distribution.dimension == 1:
-                            distribution_parameters[variable_name][k] = (
-                                marginal.settings[k]
-                            )
+                            distribution_parameters[variable_name][k] = settings[k]
                         else:
                             distribution_parameters[variable_name][k].append(
-                                marginal.settings[k]
+                                settings[k]
                             )
-                    distribution_parameters[variable_name]["name"] = marginal.settings[
-                        "name"
-                    ]
+                    distribution_parameters[variable_name]["name"] = settings["name"]
             distribution_parameters[variable_name]["size"] = distribution.dimension
 
         return distribution_parameters

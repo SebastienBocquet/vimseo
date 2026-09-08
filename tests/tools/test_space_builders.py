@@ -20,13 +20,11 @@ from pathlib import Path
 
 import pytest
 from gemseo.algos.parameter_space import ParameterSpace
-from gemseo.uncertainty.distributions.base_distribution import (
-    InterfacedDistributionSettings,
-)
 from numpy import array
 from numpy import maximum
 from numpy import minimum
 from numpy import sign
+from pydantic import ValidationError
 
 import vimseo.tools as tools
 from vimseo.api import create_model
@@ -38,6 +36,7 @@ from vimseo.tools.lib.space_builders import FromModelMinAndMax
 from vimseo.tools.space.random_variable_interface import add_random_variable_interface
 from vimseo.tools.space.space_tool import SpaceTool
 from vimseo.utilities.distribution import DistributionSettings
+from vimseo.utilities.distribution import InterfacedDistributionSettings
 from vimseo.utilities.distribution_utils import check_distribution
 
 TOOL_PATH = Path(tools.__path__[0])
@@ -313,7 +312,6 @@ def test_update_from_center_and_cov_with_truncation(
     [
         ("OTUniformDistribution", -1.0, 2.0, 0.5, None, ""),
         ("OTTriangularDistribution", -1.0, 2.0, None, 0.5, ""),
-        ("OTTriangularDistribution", -1.0, 2.0, None, -1.0, "mini"),
     ],
 )
 def test_update_from_min_and_max(
@@ -355,6 +353,27 @@ def test_update_from_min_and_max(
             mode=expected_mode,
             lower=minimum,
             upper=maximum,
+        )
+
+
+def test_update_from_min_and_max_triangular_mode_at_bound(tmp_wd):
+    """A triangular mode exactly at a bound is now rejected by stock gemseo.
+
+    Stock gemseo (>=6.2) validates ``OTTriangularDistribution_Settings`` with a
+    strict ``minimum < mode < maximum``, unlike the private gemseo fork this used
+    to depend on, which had no such validator. Raw OpenTURNS itself still accepts
+    a degenerate triangle (``ot.Triangular(-1.0, -1.0, 2.0)`` builds fine), so this
+    is a gemseo-level tightening, not a mathematical necessity; documented here
+    rather than worked around.
+    """
+    space_tool = SpaceTool()
+    with pytest.raises(ValidationError, match="minimum < mode < maximum"):
+        space_tool.execute(
+            distribution_name="OTTriangularDistribution",
+            space_builder_name="FromMinAndMax",
+            minimum_values={"young_modulus": -1.0},
+            maximum_values={"young_modulus": 2.0},
+            center_value_expr="mini",
         )
 
 

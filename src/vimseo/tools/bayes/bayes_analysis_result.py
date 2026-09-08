@@ -19,8 +19,8 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from gemseo.third_party.prettytable.prettytable import PrettyTable
 from gemseo.utils.string_tools import MultiLineString
+from prettytable import PrettyTable
 
 from vimseo.tools.base_tool import BaseResult
 

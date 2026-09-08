@@ -19,9 +19,6 @@ import json
 
 import pytest
 from gemseo.algos.parameter_space import ParameterSpace
-from gemseo.uncertainty.distributions.base_distribution import (
-    InterfacedDistributionSettings,
-)
 
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.io.test_data import IO_DATA_DIR
@@ -29,6 +26,7 @@ from vimseo.tools.space.random_variable_interface import add_random_variable_int
 from vimseo.tools.space.space_tool import SpaceTool
 from vimseo.tools.space.space_tool_result import SpaceToolResult
 from vimseo.utilities.distribution import DistributionParameters
+from vimseo.utilities.distribution import InterfacedDistributionSettings
 from vimseo.utilities.distribution_utils import check_distribution
 
 
@@ -82,9 +80,9 @@ def test_write(tmp_wd):
         settings_dict = json.load(f)["parameter_space"]["x"]
         distribution_parameters = DistributionParameters(**settings_dict)
         assert distribution_parameters.name == "Triangular"
-        assert distribution_parameters.mode == 0.5
-        assert distribution_parameters.lower == 0.475
-        assert distribution_parameters.upper == 0.525
+        assert distribution_parameters.mode == 0.5  # ruff: ignore[float-equality-comparison]
+        assert distribution_parameters.lower == 0.475  # ruff: ignore[float-equality-comparison]
+        assert distribution_parameters.upper == 0.525  # ruff: ignore[float-equality-comparison]
 
 
 def test_write_for_interfaced_distribution(tmp_wd):
@@ -105,6 +103,6 @@ def test_write_for_interfaced_distribution(tmp_wd):
         SpaceToolFileIO().read(file_name=f"{file_base_name}.json").parameter_space
     )
     marginal = read_parameter_space.distributions["x"].marginals[0]
-    assert marginal.settings["name"] == "Normal"
-    assert marginal.mean == 1.0
-    assert marginal.standard_deviation == 0.05
+    assert marginal.vimseo_settings.name == "Normal"
+    assert marginal.mean == 1.0  # ruff: ignore[float-equality-comparison]
+    assert marginal.standard_deviation == 0.05  # ruff: ignore[float-equality-comparison]

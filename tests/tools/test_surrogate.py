@@ -15,8 +15,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from gemseo.datasets.io_dataset import IODataset
 from gemseo.mlearning.regression.algos.linreg import LinearRegressor
@@ -79,7 +77,7 @@ def mock_model_surrogate(mock_dataset):
     candidates = surrogate_tool.options["candidates"]
     for i, candidate in enumerate(candidates):
         if candidate[0] == "PolynomialRegressor":
-            del candidates[i]  # noqa: B909
+            del candidates[i]  # ruff: ignore[loop-iterator-mutation]
     surrogate_tool.execute(
         model=model,
         dataset=mock_dataset,
@@ -182,7 +180,7 @@ def test_surrogate_bending_test_analytical(
     #  > if algo_name not in self.descriptions:
     #      E
     #      TypeError: unhashable
-    #      type: 'IODataset'
+    #      type: 'IODataset'  # ruff: ignore[legacy-type-comment]
     #  / home / sebastien.bocquet / PycharmProjects / vims_only /.tox / py311 / lib / python3
     #  .11 / site - packages / gemseo / algos / algorithm_library.py: 375: TypeError
     # dataset = CustomDOE().execute(surrogate_tool.result.model, input_dataset).dataset
@@ -214,7 +212,7 @@ def test_load_and_plot_mock_model(tmp_wd, mock_model_surrogate):
         mock_model_surrogate.working_directory / "SurrogateTool_result.hdf5"
     )
     mock_model_surrogate.plot_results(results, save=True, show=False)
-    assert Path("surrogate_LinReg_MockModel.LC1.png").is_file()
+    assert list(mock_model_surrogate.working_directory.glob("surrogate_*.png"))
 
 
 def test_show_results_after_selection(tmp_wd, mock_dataset):
@@ -229,7 +227,7 @@ def test_show_results_after_selection(tmp_wd, mock_dataset):
     candidates = surrogate_tool.options["candidates"]
     for i, candidate in enumerate(candidates):
         if candidate[0] == "PolynomialRegressor":
-            del candidates[i]  # noqa: B909
+            del candidates[i]  # ruff: ignore[loop-iterator-mutation]
 
     surrogate_tool.execute(
         model=model,

@@ -32,7 +32,7 @@ from gemseo.datasets.dataset import Dataset
 from gemseo.datasets.io_dataset import IODataset
 from gemseo.post.dataset.bars import BarPlot
 from gemseo.utils.directory_creator import DirectoryNamingMethod
-from gemseo_calibration.calibrator import CalibrationMetricSettings
+from gemseo_calibration.metrics.factory import CalibrationMetricFactory
 from gemseo_calibration.scenario import CalibrationScenario
 from numpy import array
 from numpy import atleast_1d
@@ -52,6 +52,8 @@ from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.base_settings import BaseSettings
+from vimseo.tools.calibration.calibration_metrics import SBPISE
+from vimseo.tools.calibration.calibration_metrics import CalibrationMetricSettings
 from vimseo.tools.calibration.calibration_step_result import CalibrationStepResult
 from vimseo.tools.post_tools.calibration_plots import CalibrationCurves
 from vimseo.utilities.model_data import MetricVariableType
@@ -301,12 +303,12 @@ class CalibrationStep(BaseAnalysisTool):
             for name, metric_settings in control_outputs_.items():
                 key = add_namespace(name, load_case)
                 namespaced_control_outputs[key] = deepcopy(control_outputs_[name])
-                if metric_settings["mesh"] not in [None, ""]:
-                    namespaced_control_outputs[key]["mesh"] = add_namespace(
-                        metric_settings["mesh"], load_case
+                if metric_settings["mesh_name"] not in [None, ""]:
+                    namespaced_control_outputs[key]["mesh_name"] = add_namespace(
+                        metric_settings["mesh_name"], load_case
                     )
                     setting_names = list(metric_settings.keys())
-                    setting_names.remove("mesh")
+                    setting_names.remove("mesh_name")
                     for name in setting_names:
                         namespaced_control_outputs[key][name] = metric_settings[name]
 
@@ -394,8 +396,15 @@ class CalibrationStep(BaseAnalysisTool):
 
         calibration_metrics = []
         for variable_name, settings in namespaced_control_outputs.items():
-            settings["output"] = variable_name
-            calibration_metrics.append(CalibrationMetricSettings(**settings))
+            settings["output_name"] = variable_name
+            metric_settings = CalibrationMetricSettings(**settings)
+            calibration_metrics.append(metric_settings)
+            if metric_settings.metric_name == "SBPISE":
+                # gemseo-calibration's factory only constructs a metric as
+                # ``SBPISE(output_name=..., mesh_name=...)``, so its
+                # scaling/penalization settings must be relayed this way
+                # instead (see ``CalibrationMetricSettings``'s docstring).
+                SBPISE._settings_by_output_name[variable_name] = metric_settings
         calibration = CalibrationScenario(
             models, namespaced_input_names, calibration_metrics, design_space
         )
@@ -413,17 +422,24 @@ class CalibrationStep(BaseAnalysisTool):
             f"{decapsulate_length_one_array(calibration.posterior_parameters)}"
         )
 
+        # Stock gemseo-calibration's ``CalibrationMetricSettings.mesh_name``
+        # defaults to ``""`` (not ``None``), unlike the private fork this used
+        # to depend on, so an empty mesh name can no longer be assumed to mean
+        # "integrated metric with an auto-generated axis" on its own: it is
+        # also what a non-integrated metric (e.g. MSE) always reports, since it
+        # has no mesh concept at all. Ask the metric factory instead.
+        metric_factory = CalibrationMetricFactory()
         self._metric_variables = []
         for variable_name, settings in namespaced_control_outputs.items():
-            if settings["mesh"] not in [None, ""]:
+            if settings["mesh_name"] not in [None, ""]:
                 self._metric_variables.append(
                     MetricVariable(
                         variable_name,
                         MetricVariableType.CURVE,
-                        settings["mesh"],
+                        settings["mesh_name"],
                     )
                 )
-            elif settings["mesh"] == "":
+            elif metric_factory.is_integrated_metric(settings["metric_name"]):
                 self._metric_variables.append(
                     MetricVariable(
                         variable_name,
@@ -512,7 +528,7 @@ class CalibrationStep(BaseAnalysisTool):
         self.result.post_processing_figures.update({
             f"optimization_history_{fig_name}": fig
             for fig_name, fig in calibration.post_process(
-                "OptHistoryView",
+                post_name="OptHistoryView",
                 save=True,
                 show=False,
                 directory_path=self.working_directory,
@@ -527,7 +543,7 @@ class CalibrationStep(BaseAnalysisTool):
                     key: next(
                         iter(
                             calibration.post_process(
-                                "DataVersusModel",
+                                post_name="DataVersusModel",
                                 output=f"{load_case}:{output_name}",
                                 save=True,
                                 show=False,

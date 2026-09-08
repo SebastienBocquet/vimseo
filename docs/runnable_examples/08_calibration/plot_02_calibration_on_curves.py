@@ -27,8 +27,6 @@ from __future__ import annotations
 import logging
 
 from gemseo.algos.opt.nlopt.settings.nlopt_cobyla_settings import NLOPT_COBYLA_Settings
-from gemseo_calibration.calibrator import CalibrationMetricSettings
-from gemseo_calibration.measures.integrated_measure import CurveScaling
 from numpy import atleast_1d
 
 from vimseo import EXAMPLE_RUNS_DIR
@@ -38,6 +36,8 @@ from vimseo.core.model_settings import IntegratedModelSettings
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.problems.mock.mock_curves.mock_curves import MockCurves
 from vimseo.storage_management.base_storage_manager import PersistencyPolicy
+from vimseo.tools.calibration.calibration_metrics import CalibrationMetricSettings
+from vimseo.tools.calibration.calibration_metrics import CurveScaling
 from vimseo.tools.calibration.calibration_step import CalibrationStep
 from vimseo.tools.calibration.calibration_step import CalibrationStepInputs
 from vimseo.tools.calibration.calibration_step import CalibrationStepSettings
@@ -119,8 +119,8 @@ step.execute(
         name_to_models={"Dummy": model},
         control_outputs={
             output_name: CalibrationMetricSettings(
-                measure="SBPISE",
-                mesh="y_axis",
+                metric_name="SBPISE",
+                mesh_name="y_axis",
                 scaling=CurveScaling.XYRange,
             ).model_dump()
         },

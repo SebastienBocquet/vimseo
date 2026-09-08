@@ -17,13 +17,51 @@ from __future__ import annotations
 
 from json import dumps
 
-from gemseo.uncertainty.distributions.base_distribution import DistributionSettings
 from gemseo.utils.string_tools import MultiLineString
+from pydantic import BaseModel
 from pydantic import ConfigDict
 
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
 DEFAULT_MIN_MAX = 1e12
+
+
+class DistributionSettings(BaseModel):
+    """Generic settings shared across the distribution kinds handled by vimseo.
+
+    Stock gemseo (>=6.2) only ships one pydantic settings model per distribution
+    class (e.g. ``OTNormalDistribution_Settings``); this generic model lets
+    vimseo's UI/JSON space definitions stay distribution-agnostic, as it used to
+    be with the private gemseo fork this class was ported from.
+    """
+
+    ConfigDict(extra="forbid")
+
+    name: str
+    mode: float | list[float] = 0.0
+    lower: float | list[float] = -DEFAULT_MIN_MAX
+    upper: float | list[float] = DEFAULT_MIN_MAX
+    sigma: float | list[float] = 0.0
+    mu: float | list[float] = 1.0
+    mean: float | list[float] = 0.0
+    loc: float | list[float] = 0.0
+    location: float | list[float] = 0.0
+    shape: float | list[float] = 1.0
+    scale: float | list[float] = 1.0
+    rate: float | list[float] = 1.0
+    lower_bound: float | list[float] | None = None
+    upper_bound: float | list[float] | None = None
+
+
+class InterfacedDistributionSettings(BaseModel):
+    """Settings to define a distribution interfaced from a third-party library."""
+
+    ConfigDict(extra="forbid")
+
+    name: str
+    parameters: tuple = ()
+    lower_bound: float | None = None
+    upper_bound: float | None = None
 
 
 class DistributionParameters(DistributionSettings):

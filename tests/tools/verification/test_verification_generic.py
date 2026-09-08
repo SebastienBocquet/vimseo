@@ -64,7 +64,7 @@ def parameter_space():
     over [-1, 1]."""
     parameter_space = ParameterSpace()
     parameter_space.add_random_variable(
-        "x1", "OTUniformDistribution", size=1, lower=-1.0, upper=1.0
+        "x1", "OTUniformDistribution", size=1, minimum=-1.0, maximum=1.0
     )
     return parameter_space
 

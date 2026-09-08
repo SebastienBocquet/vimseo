@@ -19,7 +19,6 @@ import collections.abc
 
 import pytest
 from gemseo.settings.opt import NLOPT_COBYLA_Settings
-from gemseo_calibration.calibrator import CalibrationMetricSettings
 from numpy import atleast_1d
 from numpy import ndarray
 
@@ -27,6 +26,7 @@ from vimseo.api import create_model
 from vimseo.core.model_settings import IntegratedModelSettings
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.tools.base_result import assert_results_equal
+from vimseo.tools.calibration.calibration_metrics import CalibrationMetricSettings
 from vimseo.tools.calibration.calibration_step import CalibrationStep
 from vimseo.tools.calibration.calibration_step import CalibrationStepInputs
 from vimseo.tools.calibration.calibration_step import CalibrationStepSettings
@@ -64,7 +64,7 @@ def calibration_step_on_scalars(max_iter):
         ),
         settings=CalibrationStepSettings(
             name_to_models={"Cantilever": "BendingTestAnalytical"},
-            control_outputs={output_name: CalibrationMetricSettings(measure="MSE")},
+            control_outputs={output_name: CalibrationMetricSettings(metric_name="MSE")},
             input_names=[
                 "height",
                 "width",
@@ -147,7 +147,7 @@ def test_calibration_step_with_starting_point(tmp_wd):
         settings=CalibrationStepSettings(
             name_to_models={"Cantilever": "BendingTestAnalytical"},
             control_outputs={
-                "reaction_forces": CalibrationMetricSettings(measure="MSE")
+                "reaction_forces": CalibrationMetricSettings(metric_name="MSE")
             },
             input_names=[
                 "height",
@@ -158,7 +158,7 @@ def test_calibration_step_with_starting_point(tmp_wd):
         ),
     )
 
-    assert step.result.prior_parameters["young_modulus"] == 2e5  # noqa: RUF069
+    assert step.result.prior_parameters["young_modulus"] == 2e5  # ruff: ignore[float-equality-comparison]
     assert step.result.posterior_parameters["young_modulus"] == pytest.approx(
         TARGET_YOUNG_MODULUS, rel=1e-2
     )
@@ -220,7 +220,7 @@ def test_calibration_step_on_scalars_multiple_models(tmp_wd):
                 "ThreePoints": "BendingTestAnalytical",
             },
             control_outputs={
-                output_name: CalibrationMetricSettings(measure="RelativeMSE")
+                output_name: CalibrationMetricSettings(metric_name="RelativeMSE")
             },
             input_names=[
                 "height",

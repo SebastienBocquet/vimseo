@@ -22,12 +22,12 @@ from gemseo.algos.design_space import DesignSpace
 from gemseo.algos.opt.nlopt.settings.nlopt_cobyla_settings import NLOPT_COBYLA_Settings
 from gemseo.datasets.io_dataset import IODataset
 from gemseo.post.hessian_history import np_min
-from gemseo_calibration.measures.integrated_measure import CurveScaling
 from numpy import concatenate
 from numpy import linspace
 from numpy import max as np_max
 
 from vimseo.api import activate_logger
+from vimseo.tools.calibration.calibration_metrics import CurveScaling
 from vimseo.tools.calibration.calibration_step import CalibrationMetricSettings
 from vimseo.tools.calibration.calibration_step import CalibrationStep
 from vimseo.tools.calibration.calibration_step import CalibrationStepInputs
@@ -138,8 +138,8 @@ def check_abscissa_bound_penalization(
             name_to_models={"Dummy": "MockCurvesXRange"},
             control_outputs={
                 "y": CalibrationMetricSettings(
-                    measure="SBPISE",
-                    mesh="y_axis",
+                    metric_name="SBPISE",
+                    mesh_name="y_axis",
                     scaling=CurveScaling.XYRange,
                     x_left_penalization_factor=1.0,
                     x_right_penalization_factor=1.0,

@@ -35,6 +35,7 @@ from pydantic import create_model
 
 from vimseo.material.material_property import MaterialProperty
 from vimseo.material.material_relation import MaterialRelation
+from vimseo.tools.space.random_variable_interface import add_random_variable_interface
 from vimseo.utilities.distribution import DEFAULT_MIN_MAX
 from vimseo.utilities.distribution import DistributionParameters
 from vimseo.utilities.json_grammar_utils import BaseJsonIO
@@ -73,7 +74,7 @@ class Material(BaseJsonIO):
         props = []
         for mat_rel in self.material_relations:
             for prop in mat_rel.properties:
-                props.append(prop)  # noqa: PERF402
+                props.append(prop)  # ruff: ignore[manual-list-copy]
         return props
 
     @property
@@ -233,7 +234,7 @@ class Material(BaseJsonIO):
             if name in name_to_property:
                 p = name_to_property[name]
                 distribution = DistributionParameters(
-                    **distribution.marginals[0].settings
+                    **distribution.marginals[0].vimseo_settings.model_dump()
                 )
                 p.distribution = distribution
                 p.distribution.lower_bound = p.lower_bound
@@ -251,10 +252,10 @@ class Material(BaseJsonIO):
         for prop in self.properties:
             if prop.name in variable_names:
                 if prop.name in self.uncertain_variables:
-                    parameter_space.add_random_variable(
+                    add_random_variable_interface(
+                        parameter_space,
                         prop.name,
-                        f"OT{prop.distribution.name}Distribution",
-                        settings=prop.distribution,
+                        prop.distribution,
                     )
                 else:
                     parameter_space.add_variable(

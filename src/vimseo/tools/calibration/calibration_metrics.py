@@ -21,10 +21,12 @@ from typing import TYPE_CHECKING
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-from gemseo_calibration.measures.integrated_measure import CurveScaling
-from gemseo_calibration.measures.integrated_measure import IntegratedMeasure
-from gemseo_calibration.measures.mean_measure import MeanMeasure
-from gemseo_calibration.measures.mse import MSE
+from gemseo_calibration.metrics.base_integrated_metric import BaseIntegratedMetric
+from gemseo_calibration.metrics.base_mean_metric import BaseMeanMetric
+from gemseo_calibration.metrics.mse import MSE
+from gemseo_calibration.metrics.settings import (
+    CalibrationMetricSettings as GemseoCalibrationMetricSettings,
+)
 from numpy import abs as np_abs
 from numpy import argsort
 from numpy import array
@@ -37,15 +39,49 @@ from numpy import sum as np_sum
 from numpy import union1d
 from scipy.integrate import trapezoid
 from scipy.interpolate import interp1d
+from strenum import StrEnum
 
 if TYPE_CHECKING:
+    from typing import ClassVar
+
     from gemseo.typing import RealArray
-    from gemseo_calibration.measure import DataType
+    from gemseo_calibration.metrics.base_calibration_metric import DataType
     from numpy import ndarray
 
 LOGGER = logging.getLogger(__name__)
 
 EPSILON = 1e-12
+
+
+class CurveScaling(StrEnum):
+    """The scaling applied to a curve before computing an :class:`.SBPISE` metric."""
+
+    NONE = "NONE"
+    XYRange = "XYRange"
+
+
+class CalibrationMetricSettings(GemseoCalibrationMetricSettings):
+    """vimseo's calibration metric settings.
+
+    Extends gemseo-calibration's own settings with the curve-scaling and
+    abscissa-bound-penalization options used by :class:`.SBPISE`, which are not
+    part of the official package (they used to live in a private gemseo
+    -calibration fork). The official package's own factory only ever
+    constructs a metric as ``SBPISE(output_name=..., mesh_name=...)``, so these
+    extra fields cannot reach the constructor directly; they are relayed
+    through :attr:`.SBPISE._settings_by_output_name` instead, populated by
+    :class:`~vimseo.tools.calibration.calibration_step.CalibrationStep` right
+    before building the calibration scenario.
+    """
+
+    # Stock gemseo-calibration requires ``output_name`` at construction; vimseo
+    # fills it in itself (from the ``control_outputs`` mapping key, namespaced)
+    # once ``CalibrationStep.execute`` runs, so callers only supply it if they
+    # build their settings outside a ``CalibrationStep`` call.
+    output_name: str = ""
+    scaling: CurveScaling = CurveScaling.NONE
+    x_left_penalization_factor: float = 0.0
+    x_right_penalization_factor: float = 0.0
 
 
 def _sort_and_align(x, y):
@@ -64,7 +100,7 @@ def _scale_xy(x, y, x0, y0, factor_x, factor_y):
     return (x - x0) * factor_x, (y - y0) * factor_y
 
 
-class RelativeMSE(MeanMeasure):
+class RelativeMSE(BaseMeanMetric):
     """The mean square error between the model and reference output data."""
 
     @staticmethod
@@ -83,13 +119,74 @@ class RelativeMSE(MeanMeasure):
         return metric
 
 
-class SBPISE(IntegratedMeasure):
+class SBPISE(BaseIntegratedMetric):
     """An Integrated Square Error metric with scaling of the curves and bound
     penalization."""
 
     PLOT = False
 
-    def _evaluate_measure(self, model_dataset: DataType) -> float:  # noqa: D102
+    _settings_by_output_name: ClassVar[dict[str, CalibrationMetricSettings]] = {}
+    """Per-(namespaced)-output-name scaling/penalization settings.
+
+    See :class:`.CalibrationMetricSettings` for why this indirection exists.
+    """
+
+    def __init__(
+        self,
+        output_name: str,
+        # Stock gemseo-calibration's factory only forwards ``mesh_name`` when
+        # it is truthy (see ``Calibrator.__create_metric``), unlike the
+        # private fork this used to depend on; default it here so SBPISE can
+        # still be constructed with no mesh, falling back to an
+        # auto-generated axis (see ``_evaluate_metric``).
+        mesh_name: str = "",
+        # ``scaling``/``x_left_penalization_factor``/``x_right_penalization_factor``
+        # match the private fork's old constructor arguments, for direct
+        # construction. When ``None`` (gemseo-calibration's factory never
+        # passes them: it only ever calls ``SBPISE(output_name=...,
+        # mesh_name=...)``), they are looked up from
+        # ``_settings_by_output_name`` instead, populated by
+        # :class:`~vimseo.tools.calibration.calibration_step.CalibrationStep`.
+        scaling: CurveScaling | None = None,
+        x_left_penalization_factor: float | None = None,
+        x_right_penalization_factor: float | None = None,
+        name: str = "",
+        f_type: BaseIntegratedMetric.FunctionType = BaseIntegratedMetric.FunctionType.NONE,  # ruff: ignore[line-too-long]
+    ) -> None:
+        super().__init__(output_name, mesh_name, name=name, f_type=f_type)
+        settings = self._settings_by_output_name.get(
+            output_name, CalibrationMetricSettings(output_name=output_name)
+        )
+        self._scaling = settings.scaling if scaling is None else scaling
+        self._x_left_penalization_factor = (
+            settings.x_left_penalization_factor
+            if x_left_penalization_factor is None
+            else x_left_penalization_factor
+        )
+        self._x_right_penalization_factor = (
+            settings.x_right_penalization_factor
+            if x_right_penalization_factor is None
+            else x_right_penalization_factor
+        )
+
+    def set_reference_data(self, reference_dataset: DataType) -> None:  # ruff: ignore[undocumented-public-method]
+        if self.mesh_name:
+            super().set_reference_data(reference_dataset)
+            return
+        # ``BaseIntegratedMetric.set_reference_data`` indexes
+        # ``reference_dataset`` by ``self.mesh_name`` directly, which does not
+        # work when there is no explicit mesh (empty string): fall back to an
+        # auto-generated [0, 1] axis, mirroring how ``_evaluate_metric``
+        # handles the model side in that same case. ``__reference_mesh`` is
+        # written under its base-class-mangled name since that is where the
+        # ``reference_mesh`` property (used by ``_evaluate_metric``) reads it
+        # from.
+        self._reference_data = reference_dataset[self.output_name]
+        self._BaseIntegratedMetric__reference_mesh = [
+            linspace(0.0, 1.0, len(sample)) for sample in self._reference_data
+        ]
+
+    def _evaluate_metric(self, model_dataset: DataType) -> float:  # ruff: ignore[undocumented-public-method]
         model_data = model_dataset[self.output_name]
         model_mesh = (
             model_dataset[self.mesh_name]
@@ -147,7 +244,7 @@ class SBPISE(IntegratedMeasure):
             for name, value in [("x_left", delta_x_left), ("x_right", delta_x_right)]:
                 mse = MSE(output_name=name)
                 mse.set_reference_data({name: atleast_1d(0.0)})
-                metric = mse._evaluate_measure({name: atleast_1d(value)})
+                metric = mse._evaluate_metric({name: atleast_1d(value)})
                 if name == "x_left":
                     exceeding_start_metrics.append(metric)
                 else:
@@ -206,7 +303,7 @@ class SBPISE(IntegratedMeasure):
                 f"Area metric: {trapezoid(compared_data[-1], x_ref)}\n"
                 f"(model_support_length - reference_support_length) / model_support_length = "
                 f"{(delta_x_left + delta_x_right) / abs(x_i[-1] - x_i[0])}\n"
-            )  # noqa: T201
+            )  # ruff: ignore[print]
 
         if self.PLOT:
             plt.legend()
@@ -244,7 +341,7 @@ class SBPISE(IntegratedMeasure):
         LOGGER.warning(
             f"{self.__class__.__name__} metric for variable {self.output_name}: {metric}\n"
             f"Weights (left, area, right): ({weights})."
-        )  # noqa: T201
+        )  # ruff: ignore[print]
         return metric
 
     @staticmethod

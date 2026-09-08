@@ -32,7 +32,6 @@ from gemseo.algos.opt.multi_start.settings.multi_start_settings import (
     MultiStart_Settings,
 )
 from gemseo.algos.opt.nlopt.settings.nlopt_cobyla_settings import NLOPT_COBYLA_Settings
-from gemseo_calibration.calibrator import CalibrationMetricSettings
 from matplotlib.image import imread
 from matplotlib.pyplot import imshow
 from numpy import asarray
@@ -44,6 +43,7 @@ from vimseo.api import create_model
 from vimseo.core.model_settings import IntegratedModelSettings
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.storage_management.base_storage_manager import PersistencyPolicy
+from vimseo.tools.calibration.calibration_metrics import CalibrationMetricSettings
 from vimseo.tools.calibration.calibration_step import CalibrationStep
 from vimseo.tools.calibration.calibration_step import CalibrationStepInputs
 from vimseo.tools.calibration.calibration_step import CalibrationStepSettings
@@ -125,7 +125,7 @@ step.execute(
         name_to_models={"Cantilever": deepcopy(model)},
         control_outputs={
             output_name: CalibrationMetricSettings(
-                measure="RelativeMSE",
+                metric_name="RelativeMSE",
             )
         },
         input_names=[
@@ -207,7 +207,7 @@ step.execute(
         name_to_models={"Cantilever": deepcopy(model)},
         control_outputs={
             output_name: CalibrationMetricSettings(
-                measure="RelativeMSE",
+                metric_name="RelativeMSE",
             )
         },
         input_names=[
@@ -243,7 +243,7 @@ step.execute(
         name_to_models={"Cantilever": deepcopy(model)},
         control_outputs={
             output_name: CalibrationMetricSettings(
-                measure="RelativeMSE",
+                metric_name="RelativeMSE",
             )
         },
         input_names=[
@@ -290,7 +290,7 @@ step.execute(
         name_to_models={"Cantilever": deepcopy(model)},
         control_outputs={
             output_name: CalibrationMetricSettings(
-                measure="RelativeMSE",
+                metric_name="RelativeMSE",
             )
         },
         input_names=[

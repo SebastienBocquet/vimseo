@@ -19,10 +19,10 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from json import dumps
 
-from gemseo.third_party.prettytable.prettytable import PrettyTable
 from gemseo.uncertainty.statistics.base_statistics import BaseStatistics
 from gemseo.utils.string_tools import MultiLineString
 from pandas import DataFrame
+from prettytable import PrettyTable
 
 from vimseo.tools.base_result import BaseResult
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder

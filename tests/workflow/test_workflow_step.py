@@ -19,8 +19,8 @@ import json
 
 import pytest
 from gemseo.algos.opt.nlopt.settings.nlopt_cobyla_settings import NLOPT_COBYLA_Settings
-from gemseo_calibration.calibrator import CalibrationMetricSettings
 
+from vimseo.tools.calibration.calibration_metrics import CalibrationMetricSettings
 from vimseo.tools.calibration.calibration_step import CalibrationStep
 from vimseo.tools.calibration.calibration_step import CalibrationStepSettings
 from vimseo.workflow.workflow_step import Input
@@ -39,7 +39,7 @@ from vimseo.workflow.workflow_step import WorkflowStep
             tool_settings=CalibrationStepSettings(
                 name_to_models={"Cantilever": "BendingTestAnalytical"},
                 control_outputs={
-                    "reaction_forces": CalibrationMetricSettings(measure="MSE")
+                    "reaction_forces": CalibrationMetricSettings(metric_name="MSE")
                 },
                 input_names=[
                     "height",
@@ -52,6 +52,11 @@ from vimseo.workflow.workflow_step import WorkflowStep
     ],
 )
 def test_to_serializable_settings(step):
+    # NLOPT_COBYLA_Settings' own field set (names, order, defaults) comes from
+    # stock gemseo and evolves between versions independently of vimseo/gemseo
+    # -calibration; this golden value matches gemseo 6.3.3 and the official
+    # gemseo-calibration 4.0.1 (field names ``output_name``/``metric_name``/
+    # ``mesh_name``, ``mesh_name`` defaulting to ``""`` rather than ``None``).
     assert (
         json.dumps(step.serialized_settings)
         == '{"name": "calibration step", "tool_name": "CalibrationStep", "inputs": '
@@ -60,7 +65,7 @@ def test_to_serializable_settings(step):
         '"tool_constructor_options": {}, "tool_settings": '
         '{"name_to_models": {"Cantilever": "BendingTestAnalytical"}, '
         '"control_outputs": {"reaction_forces": '
-        '{"output": "", "measure": "MSE", "mesh": null, "weight": null, '
+        '{"output_name": "", "metric_name": "MSE", "mesh_name": "", "weight": null, '
         '"scaling": "NONE", "x_left_penalization_factor": 0.0, '
         '"x_right_penalization_factor": 0.0}}, "input_names": '
         '["height", "width", "imposed_dplt"], "parameter_names": '
@@ -69,12 +74,13 @@ def test_to_serializable_settings(step):
         '["gemseo.algos.opt.nlopt.settings.nlopt_cobyla_settings", '
         '"NLOPT_COBYLA_Settings"], "enable_progress_bar": null, "eq_tolerance": 0.01,'
         ' "ineq_tolerance": 0.0001, "log_problem": true, "max_time": 0.0, '
-        '"normalize_design_space": true, "reset_iteration_counters": true, '
-        '"round_ints": true, "use_database": true, "use_one_line_progress_bar": '
-        'false, "store_jacobian": true, "ftol_rel": 1e-08, "ftol_abs": 1e-14, '
+        '"normalize_design_space": true, "progress_bar_data_name": '
+        '"ProgressBarData", "reset_iteration_counters": true, '
+        '"round_ints": true, "store_jacobian": true, "use_database": true, '
+        '"use_one_line_progress_bar": false, "ftol_rel": 1e-08, "ftol_abs": 1e-14, '
         '"max_iter": 1000, "scaling_threshold": null, "stop_crit_n_x": null, '
         '"xtol_rel": 1e-08, "xtol_abs": 1e-14, "stopval": -Infinity, '
-        '"init_step": 0.25}}}'
+        '"init_step": 0.25, "seed": 0}}}'
     )
 
 
@@ -102,4 +108,4 @@ def test_serialized_settings_to_step():
     tool_settings = step.tool_settings
     assert tool_settings.name_to_models == {"Cantilever": "BendingTestAnalytical"}
     assert isinstance(tool_settings.optimizer_settings, NLOPT_COBYLA_Settings)
-    assert tool_settings.optimizer_settings.model_dump()["init_step"] == 0.5  # noqa: RUF069
+    assert tool_settings.optimizer_settings.model_dump()["init_step"] == 0.5  # ruff: ignore[float-equality-comparison]

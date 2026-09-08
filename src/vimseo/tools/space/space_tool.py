@@ -23,9 +23,6 @@ from typing import Any
 from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.datasets.dataset import Dataset
 from gemseo.post.dataset.scatter_plot_matrix import ScatterMatrix
-from gemseo.uncertainty.distributions.base_distribution import (
-    InterfacedDistributionSettings,
-)
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from numpy import inf
 from pydantic import Field
@@ -37,13 +34,30 @@ from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.lib.space_builder_factory import SpaceBuilderFactory
+from vimseo.tools.space.random_variable_interface import add_random_variable_interface
 from vimseo.tools.space.space_tool_result import SpaceToolResult
 from vimseo.tools.statistics.statistics_tool import StatisticsResult
+from vimseo.utilities.distribution import InterfacedDistributionSettings
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from plotly.graph_objs import Figure
+
+
+def _get_fitted_distribution_parameters(distribution) -> tuple:
+    """Recover the raw parameters of a distribution fitted by gemseo's statistics.
+
+    ``OTDistributionFitter``/``SPDistributionFitter`` build the fitted
+    ``OTDistribution``/``SPDistribution`` directly (not through vimseo's
+    ``add_random_variable_interface``), so it carries no ``vimseo_settings``.
+    Its underlying OpenTURNS/SciPy object was constructed from this very
+    parameter tuple, so it is read back from there instead.
+    """
+    native_distribution = distribution.distribution
+    if hasattr(native_distribution, "getParameter"):
+        return tuple(native_distribution.getParameter())
+    return tuple(native_distribution.args)
 
 
 def update_space_from_statistics(
@@ -58,12 +72,12 @@ def update_space_from_statistics(
             parameter_space.remove_variable(name)
 
         distribution = statistics_results.analysis.distributions[name]
-        parameter_space.add_random_variable(
+        add_random_variable_interface(
+            parameter_space,
             name,
-            "OTDistribution",
-            settings=InterfacedDistributionSettings(
+            InterfacedDistributionSettings(
                 name=distribution.name,
-                parameters=distribution.value.settings["parameters"],
+                parameters=_get_fitted_distribution_parameters(distribution.value),
                 lower_bound=(
                     max(
                         (model.lower_bounds.get(name, -inf)),

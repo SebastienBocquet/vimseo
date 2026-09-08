@@ -374,13 +374,17 @@ class SurrogateTool(BaseAnalysisTool):
         figures = {}
         for output_name in output_names:
             file_name = f"surrogate_{result.model.name}_learning_{output_name}"
-            figures.update({
-                file_name: viewer.plot_predictions_vs_observations(
-                    output_name,
-                    save=save,
-                    show=show,
-                    file_name=file_name,
-                ).figures[0]
-            })
+            # gemseo's own ``file_name`` is swallowed into the underlying
+            # ScatterMatrix/Scatter constructor's unused extra options rather
+            # than being honored, so it always saves under its own generated
+            # name; save the figure ourselves under vimseo's naming instead.
+            figure = viewer.plot_predictions_vs_observations(
+                output_name,
+                save=False,
+                show=show,
+            ).figures[0]
+            if save:
+                figure.savefig(self.working_directory / f"{file_name}.png")
+            figures[file_name] = figure
 
         return figures
