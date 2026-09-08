@@ -136,9 +136,10 @@ class SpaceToolFileIO(BaseToolFileIO):
                     distribution_parameters[variable_name]["name"] = marginal.settings[
                         "name"
                     ]
-                    # A truncated # distribution round-trips through the JSON.
-                    # See the vector patch
-                    # in random_variable_interface.add_random_variable_interface.
+                    # Truncation bounds are cross-cutting: not part of
+                    # OPTIONS_PER_DISTRIBUTION, forwarded separately here and in
+                    # random_variable_interface.add_random_variable_interface so a
+                    # truncated distribution round-trips through the JSON.
                     for bound in ("lower_bound", "upper_bound"):
                         value = marginal.settings.get(bound)
                         if value is None:
