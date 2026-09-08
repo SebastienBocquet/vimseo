@@ -18,6 +18,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 from dataclasses import field
+from dataclasses import fields
 from json import dumps
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -61,6 +62,9 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
     load: Load = field(default_factory=Load)
     """The load."""
 
+    verbose: bool = False
+    """Whether ``__str__`` includes the full plot-parameters definition."""
+
     @property
     def image_path(self):
         """The fully-qualified path to the image illustrating the load case."""
@@ -89,21 +93,53 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
     def get_load(self) -> Load:
         return Load()
 
-    def _get_multiline(self):
+    def _get_multiline(self, verbose: bool | None = None):
+        """A multiline representation of the load case as a ``MultiLineString``.
+
+        Args:
+            verbose: Whether to include the full plot-parameters definition.
+                If ``None``, use :attr:`.verbose`.
+        """
+        verbose = self.verbose if verbose is None else verbose
+
         text = MultiLineString()
         text.add(f"Load case {self.name}: {self.summary}")
-        text.add("")
-        text.add("Boundary condition variables:")
-        text.add(str(self.bc_variable_names))
-        text.add("")
-        text.add("Plot parameters:")
-        text.add(
-            dumps(
-                self.plot_parameters, sort_keys=True, indent=4, cls=EnhancedJSONEncoder
+        if self.domain:
+            text.add(f"Domain: {self.domain}")
+
+        load_values = {
+            f.name: getattr(self.load, f.name)
+            for f in fields(self.load)
+            if getattr(self.load, f.name) != ""
+        }
+        if load_values:
+            text.add("")
+            text.add("Load:")
+            text.indent()
+            for name, value in load_values.items():
+                text.add(f"{name} = {value}")
+            text.dedent()
+
+        if self.bc_variable_names:
+            text.add("")
+            text.add(
+                f"Boundary condition variables: {', '.join(self.bc_variable_names)}"
             )
-        )
-        text.add("Load:")
-        text.add(str(self.load))
+
+        if verbose:
+            text.add("")
+            text.add("Plot parameters:")
+            text.indent()
+            text.add(
+                dumps(
+                    self.plot_parameters,
+                    sort_keys=True,
+                    indent=4,
+                    cls=EnhancedJSONEncoder,
+                )
+            )
+            text.dedent()
+
         return text
 
     def __str__(self):

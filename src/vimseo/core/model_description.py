@@ -63,8 +63,9 @@ class ModelDescription(BaseDescription):
         text.add("")
         text.add("Load case:")
         text.indent()
-        for line in self.load_case._get_multiline().lines:
-            text.add(line.str_format)
+        indentation = MultiLineString.INDENTATION
+        for line in self.load_case._get_multiline(verbose=self.verbose).lines:
+            text.add(indentation * line.level + line.str_format)
         text.dedent()
 
         text.add("")

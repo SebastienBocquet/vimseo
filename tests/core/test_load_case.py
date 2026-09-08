@@ -35,3 +35,21 @@ def test_load_case_with_domain():
     lc = LoadCaseFactory().create("LC1", domain="Metallic")
     assert lc.domain == "Metallic"
     assert lc.name == "LC1"
+
+
+def test_load_case_description():
+    """The default rendering is compact; verbose adds the plot parameters."""
+    lc = LoadCaseFactory().create("Beam_Cantilever")
+
+    default_text = str(lc)
+    assert default_text.startswith("Load case Beam_Cantilever:")
+    assert (
+        "Boundary condition variables: imposed_dplt, relative_dplt_location"
+        in default_text
+    )
+    assert "Plot parameters:" not in default_text
+    assert "[" not in default_text  # no Python list repr
+
+    lc.verbose = True
+    assert "Plot parameters:" in str(lc)
+    assert str(lc) == str(lc._get_multiline(verbose=True))
