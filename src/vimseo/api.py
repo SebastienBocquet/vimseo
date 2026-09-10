@@ -26,11 +26,20 @@ warnings.filterwarnings(
     category=UserWarning,
 )
 
-from logging import _nameToLevel  # noqa: E402
-from typing import TYPE_CHECKING  # noqa: E402
+# isort: off
+# These imports must stay below ``warnings.filterwarnings`` so the "No runtime
+# found" UserWarning they trigger at import time is suppressed.
+from logging import _nameToLevel  # ruff: ignore[module-import-not-at-top-of-file]
+from typing import TYPE_CHECKING  # ruff: ignore[module-import-not-at-top-of-file]
 
-from vimseo.core.components.component_factory import ComponentFactory  # noqa: E402
-from vimseo.core.pre_run_post_model import PreRunPostModel  # noqa: E402
+from vimseo.core.components.component_factory import (  # ruff: ignore[module-import-not-at-top-of-file]
+    ComponentFactory,
+)
+from vimseo.core.pre_run_post_model import (  # ruff: ignore[module-import-not-at-top-of-file]
+    PreRunPostModel,
+)
+
+# isort: on
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -43,14 +52,28 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def activate_logger(level: int | None = None):
+def activate_logger(
+    level: int | None = None,
+    filename: str | Path = "",
+    filemode: str = "a",
+):
+    """Configure the VIMSEO (root) logger.
+
+    Args:
+        level: The logging level. If not provided, the level from the VIMSEO
+            configuration is used.
+        filename: The path to a log file. If provided, log records are also written
+            to this file, in addition to the console.
+        filemode: The file opening mode, either ``"a"`` (append) or ``"w"``
+            (overwrite). Only used when ``filename`` is provided.
+    """
     from gemseo import configure_logger
 
     if not level:
         from vimseo.config.global_configuration import _configuration as configuration
 
         level = _nameToLevel[configuration.logging.upper()]
-    configure_logger(level=level)
+    configure_logger(level=level, filename=filename, filemode=filemode)
 
 
 def create_model(
@@ -66,6 +89,8 @@ def create_model(
         model_name: string, name of the model to create
             (see :meth:`~vimseo.api.get_available_models` for valid names)
         load_case_name: The name of the load case that the model will execute.
+        model_options: A pre-built :class:`.IntegratedModelSettings`. Any model option
+            also passed as a keyword argument overrides the corresponding field.
         material: The material to build the model with, overriding the one its class
             declares in ``MATERIAL_FILE``. Either a material name
             (see :meth:`~vimseo.api.get_available_materials`), the path to a material
@@ -77,11 +102,8 @@ def create_model(
     """
     from vimseo.core.model_factory import ModelFactory
 
-    if model_options:
-        if options:
-            msg = "Cannot specify both model_options and options"
-            raise ValueError(msg)
-        options.update(model_options.model_dump())
+    if model_options is not None:
+        options = {**model_options.model_dump(), **options}
     # Passed as a constructor keyword rather than through ``IntegratedModelSettings``:
     # that settings model is ``extra="forbid"`` and is round-tripped through
     # ``model_dump()``, which would flatten a ``Material`` instance into a plain dict.

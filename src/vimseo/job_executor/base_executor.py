@@ -23,6 +23,7 @@ import signal
 import subprocess
 import sys
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -31,11 +32,13 @@ import jinja2
 from docstring_inheritance import GoogleDocstringInheritanceMeta
 
 from vimseo.job_executor.base_user_job_options import BaseUserJobSettings
+from vimseo.job_executor.convergence_log import format_convergence_line
+from vimseo.job_executor.convergence_log import is_significant_msg_line
+from vimseo.job_executor.convergence_log import tail_new_lines
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from collections.abc import Sequence
-    from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
 
@@ -58,8 +61,8 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
     _job_directory: str | Path
     """The job directory."""
 
-    _convergence_log_length: int
-    """The current number of lines of the convergence log."""
+    _convergence_cursors: dict[str, int]
+    """Per convergence-file line cursors, for incremental reads."""
 
     _job_options: dict | None
     """The full job options.
@@ -82,6 +85,13 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
     _USER_JOB_OPTIONS_MODEL: ClassVar[BaseUserJobSettings] = BaseUserJobSettings
     """The pydantic model of the user job options."""
 
+    _CONVERGENCE_SOURCES: ClassVar[tuple[str, ...]] = ()
+    """The extensions of the ``<job_name>.<ext>`` solver files whose new lines are
+    surfaced into the log by :meth:`_fetch_convergence`. Empty means no-op."""
+
+    _CONVERGENCE_POLL_INTERVAL: ClassVar[float] = 2.0
+    """The minimum number of seconds between two convergence reads during a solve."""
+
     def __init__(self, command_template: str):
         self._command_line = ""
         self._n_used_tokens = 0
@@ -93,6 +103,7 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
         self._job_directory = ""
         self._job_options = None
         self._user_job_options = self._USER_JOB_OPTIONS_MODEL().model_dump()
+        self._convergence_cursors = {}
 
     def execute(
         self,
@@ -166,7 +177,42 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
         )
 
     def _fetch_convergence(self) -> None:
-        """Fetch the log of simulation convergence."""
+        """Surface the new lines of the solver convergence files into the log.
+
+        Reads the ``<job_name>.<ext>`` files (for every ``ext`` in the user option
+        ``convergence_sources``, defaulting to :attr:`_CONVERGENCE_SOURCES`) located
+        in the job directory, and logs the lines written since the previous call.
+        Missing, empty or unreadable files are ignored. Any failure is swallowed so
+        that convergence fetching can never break a running job.
+        """
+        sources = self._user_job_options.get(
+            "convergence_sources", self._CONVERGENCE_SOURCES
+        )
+        msg_filter = self._user_job_options.get("convergence_msg_filter", False)
+        for ext in sources:
+            try:
+                path = Path(self._job_directory) / f"{self._job_name}.{ext}"
+                new_lines, self._convergence_cursors[ext] = tail_new_lines(
+                    path, self._convergence_cursors.get(ext, 0)
+                )
+                if ext == "msg" and msg_filter:
+                    new_lines = [
+                        line for line in new_lines if is_significant_msg_line(line)
+                    ]
+                for line in new_lines:
+                    if line.strip():
+                        LOGGER.info("%s", format_convergence_line(ext, line))
+            except Exception:  # ruff: ignore[blind-except]
+                LOGGER.debug(
+                    "Convergence fetching failed for '.%s'", ext, exc_info=True
+                )
+
+    def _fetch_convergence_safely(self) -> None:
+        """Call :meth:`_fetch_convergence`, swallowing any error it may raise."""
+        try:
+            self._fetch_convergence()
+        except Exception:  # ruff: ignore[blind-except]
+            LOGGER.debug("Convergence fetching failed", exc_info=True)
 
     def _execute_external_software(
         self,
@@ -192,6 +238,12 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
             text=True,
             start_new_session=True,
         )
+
+        self._convergence_cursors = {}
+        live_tail = activate_convergence_fetching and self._user_job_options.get(
+            "convergence_live_tail", False
+        )
+        next_convergence_fetch = 0.0
 
         # Save the original signal handler and install our own to handle SIGINT (Ctrl+C)
         # gracefully
@@ -224,9 +276,15 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
                             for val in line.splitlines():
                                 LOGGER.error(val)
 
+                if live_tail and time.monotonic() >= next_convergence_fetch:
+                    self._fetch_convergence_safely()
+                    next_convergence_fetch = (
+                        time.monotonic() + self._CONVERGENCE_POLL_INTERVAL
+                    )
+
                 if proc.poll() is not None:
                     if activate_convergence_fetching:
-                        self._fetch_convergence()
+                        self._fetch_convergence_safely()
                     time.sleep(1)
                     break
 

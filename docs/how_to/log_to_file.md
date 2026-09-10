@@ -9,13 +9,14 @@
 
 ## How to write logs to a file with VIMSEO
 
-To redirect VIMSEO logs to a file, use `activate_logger` with a timestamped filename to avoid overwriting previous runs.
+To redirect VIMSEO logs to a file, call `vimseo.api.activate_logger` with a `filename`.
+A timestamped file name avoids overwriting previous runs.
 
 ```python
 import logging
 from datetime import datetime
 from pathlib import Path
-from vimseo.utilities.logger import activate_logger
+from vimseo.api import activate_logger
 
 # Define your working directory
 working_directory = Path("path/to/output")
@@ -39,11 +40,13 @@ This will create a log file such as `log_2026-06-11_14-32-45-123.txt` in the spe
 
 | Parameter | Description | Default |
 |---|---|---|
-| `logger_name` | Name of the logger to configure. If empty, configures the root logger | `""` |
-| `level` | Logging verbosity: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"` | `logging.INFO` |
-| `date_format` | Format of the date in log messages | `DEFAULT_DATE_FORMAT` |
-| `message_format` | Format of log messages | `DEFAULT_MESSAGE_FORMAT` |
-| `filename` | Path to the log file. If empty, logs to the console only | `""` |
+| `level` | Logging verbosity as a `logging` level value. If not provided, the level from the VIMSEO configuration is used | `None` |
+| `filename` | Path to the log file. If empty, logs go to the console only | `""` |
 | `filemode` | `"w"` to overwrite, `"a"` to append | `"a"` |
 
-> **Note:** By default (`filename=""`), logs are printed to the console only. Providing a `filename` redirects output to the specified file.
+> **Note:** By default (`filename=""`), logs are printed to the console only. Providing a
+> `filename` adds a file handler; the console output is kept as well. When an Abaqus job
+> runs, its convergence files (`.sta`, `.msg`) are surfaced through the same logger, so
+> they end up in this file too. The `.sta` progress lines are prefixed with
+> `▓▓ SOLVER[sta] ▓▓` so they pop out of the solver's stdout (and are easy to `grep`);
+> the more verbose `.msg` lines carry a plain `[solver msg]` tag.
