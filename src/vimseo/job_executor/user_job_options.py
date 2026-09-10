@@ -28,6 +28,22 @@ class InteractiveAbaqusUserJobSettings(BaseUserJobSettings):
     is_implicit: bool = True
     subroutine_names: list[str] = Field(default_factory=lambda: [""])
     abaqus_script: str = ""
+    convergence_sources: list[str] = Field(
+        default_factory=lambda: ["sta", "msg"],
+        description="The extensions of the '<job_name>.<ext>' solver files whose new "
+        "lines are surfaced into the log (e.g. 'sta', 'msg', 'dat').",
+    )
+    convergence_live_tail: bool = Field(
+        default=True,
+        description="Whether to surface convergence lines during the solve (throttled), "
+        "and not only once the solver has exited.",
+    )
+    convergence_msg_filter: bool = Field(
+        default=True,
+        description="Whether to keep only the significant lines of the '.msg' file "
+        "(warnings, errors, non-convergence, cut-backs, attempts) rather than its "
+        "whole content.",
+    )
 
 
 class SlurmAbaqusUserJobSettings(BaseUserJobSettings):

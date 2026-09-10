@@ -47,6 +47,8 @@ class InteractiveAbaqus(BaseInteractiveExecutor):
 
     _USER_JOB_OPTIONS_MODEL = InteractiveAbaqusUserJobSettings
 
+    _CONVERGENCE_SOURCES = ("sta", "msg")
+
     def __init__(self, command_template: str):
         super().__init__(command_template)
 
