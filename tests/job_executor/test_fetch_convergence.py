@@ -104,3 +104,8 @@ def test_msg_filter_keeps_only_significant_lines(executor, tmp_path, caplog):
 def test_live_tail_is_on_by_default_for_abaqus():
     """``InteractiveAbaqus`` surfaces convergence during the solve by default."""
     assert InteractiveAbaqus("cmd")._user_job_options["convergence_live_tail"] is True
+
+
+def test_convergence_source_directory_defaults_to_job_directory(executor, tmp_path):
+    """Convergence is read from the job directory unless a subclass overrides it."""
+    assert executor._convergence_source_directory() == tmp_path

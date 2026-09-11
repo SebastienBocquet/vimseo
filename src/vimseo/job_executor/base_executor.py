@@ -176,6 +176,16 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
             self._job_options,
         )
 
+    def _convergence_source_directory(self) -> Path:
+        """The directory :meth:`_fetch_convergence` reads ``<job_name>.<ext>`` files from.
+
+        Defaults to the job directory. Job-scheduler executors override this to
+        point at the (possibly remote) scheduler-side directory while the job is
+        still running there, since output files are only copied back to
+        ``_job_directory`` once the job finishes.
+        """
+        return Path(self._job_directory)
+
     def _fetch_convergence(self) -> None:
         """Surface the new lines of the solver convergence files into the log.
 
@@ -191,7 +201,7 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
         msg_filter = self._user_job_options.get("convergence_msg_filter", False)
         for ext in sources:
             try:
-                path = Path(self._job_directory) / f"{self._job_name}.{ext}"
+                path = self._convergence_source_directory() / f"{self._job_name}.{ext}"
                 new_lines, self._convergence_cursors[ext] = tail_new_lines(
                     path, self._convergence_cursors.get(ext, 0)
                 )
