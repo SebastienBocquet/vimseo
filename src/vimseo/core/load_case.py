@@ -22,6 +22,7 @@ from dataclasses import fields
 from json import dumps
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from docstring_inheritance import GoogleDocstringInheritanceMeta
 from gemseo.utils.string_tools import MultiLineString
@@ -30,11 +31,13 @@ from matplotlib.pyplot import imshow
 from numpy import asarray
 
 from vimseo.core.load import Load
-from vimseo.tools.post_tools.plot_parameters import PlotParameters
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Sequence
+
+    from vimseo.tools.post_tools.plot_parameters import Plot
 
 
 @dataclass
@@ -53,8 +56,13 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
     summary: str = ""
     """A brief description of the load case ."""
 
-    plot_parameters: PlotParameters = field(default_factory=PlotParameters)
-    """The parameters of the plot."""
+    PLOTS: ClassVar[Sequence[Plot | tuple[str, ...]]] = []
+    """The load-case-specific figures.
+
+    Each entry either overrides the model's corresponding :attr:`.IntegratedModel.PLOTS`
+    entry (same abscissa and first ordinate — see :meth:`.Plot.get_key`) or is added as
+    an extra, load-case-specific figure. See :func:`.merge_plots`.
+    """
 
     bc_variable_names: list[str] = field(default_factory=list)
     """The names of the variables defining the boundary conditions."""
@@ -86,9 +94,6 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
     def get_bc_variable_names(self) -> Iterable[str]:
         """The name of the boundary condition variables."""
         return []
-
-    def get_plot_parameters(self) -> PlotParameters:
-        return PlotParameters()
 
     def get_load(self) -> Load:
         return Load()
@@ -128,11 +133,11 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
 
         if verbose:
             text.add("")
-            text.add("Plot parameters:")
+            text.add("Plots:")
             text.indent()
             text.add(
                 dumps(
-                    self.plot_parameters,
+                    self.PLOTS,
                     sort_keys=True,
                     indent=4,
                     cls=EnhancedJSONEncoder,

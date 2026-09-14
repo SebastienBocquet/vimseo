@@ -16,10 +16,27 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from vimseo.core.load_case import LoadCase
+from vimseo.tools.post_tools.plot_parameters import Plot
+from vimseo.tools.post_tools.plot_parameters import Trace
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 @dataclass
 class Dummy(LoadCase):
     """A dummy load case."""
+
+
+@dataclass
+class DummyOverride(LoadCase):
+    """A dummy load case overriding/completing a model's PLOTS."""
+
+    PLOTS: ClassVar[Sequence[Plot | tuple[str, ...]]] = [
+        Plot(x="y_axis", traces=[Trace(y="y")], title="Overridden plot"),
+        ("y_axis", "y_2"),
+    ]

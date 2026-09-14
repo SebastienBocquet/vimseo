@@ -62,7 +62,7 @@ from vimseo.material.material_registry import resolve_material
 from vimseo.storage_management import get_archive_class
 from vimseo.storage_management.scratch_storage import DirectoryScratch
 from vimseo.tools.post_tools.plot_parameters import Plot
-from vimseo.tools.post_tools.plot_parameters import create_plot
+from vimseo.tools.post_tools.plot_parameters import merge_plots
 from vimseo.utilities.json_grammar_utils import load_input_bounds
 from vimseo.utilities.plotting_utils import superpose_curves
 
@@ -185,13 +185,17 @@ class IntegratedModel(GemseoDisciplineWrapper):
     """The path to the json file defining the material values."""
 
     PLOTS: ClassVar[Sequence[Plot | tuple[str, ...]]] = []
-    """The figures to plot from the model data. It can be load case independent or
-    dependent.
+    """The figures to plot from the model data.
 
     A figure is defined either by a tuple of variable names, the first one being the
     abscissa and the following ones the ordinates, or by a :class:`.Plot` when the
     lines shall be styled, drawn against a secondary ordinate axis or completed with
     horizontal reference lines.
+
+    A load case can override or extend these figures by declaring its own ``PLOTS``
+    class attribute. A load-case entry whose abscissa and first ordinate match a
+    model entry replaces it in place; any other entry is appended. See
+    :class:`.LoadCase` and :func:`.merge_plots`.
 
     Examples:
         >>> # A single line, and two lines sharing an abscissa.
@@ -621,15 +625,15 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
     @property
     def plots(self) -> list[Plot]:
-        """The definitions of the figures, from the load case and from the model.
+        """The definitions of the figures, from the model, overridden or completed by
+        the load case.
 
-        The figures declared as tuples of variable names are normalised to
-        :class:`.Plot` objects.
+        A load-case ``PLOTS`` entry whose abscissa and first ordinate match a model
+        ``PLOTS`` entry replaces it (keeping the model's position in the list); any
+        other load-case entry is added as an extra, load-case-specific figure. See
+        :func:`.merge_plots`.
         """
-        return [
-            create_plot(plot)
-            for plot in list(self._load_case.plot_parameters.plots) + list(self.PLOTS)
-        ]
+        return merge_plots(self.PLOTS, self._load_case.PLOTS)
 
     def _plot_curves(self, figures, result, directory_path, save, show):
         for curve_set in result.plots:

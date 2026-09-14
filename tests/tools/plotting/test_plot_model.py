@@ -41,13 +41,11 @@ def test_plot_model(tmp_wd, model, load_case):
     model.execute()
     figures = model.plot_results()
 
-    expected_plots = [
-        create_plot(plot)
-        for plot in list(model.load_case.plot_parameters.plots) + list(model.PLOTS)
-    ]
-    assert model.plots == expected_plots
+    model_keys = {create_plot(p).get_key() for p in model.PLOTS}
+    load_case_keys = {create_plot(p).get_key() for p in model.load_case.PLOTS}
+    assert {plot.get_key() for plot in model.plots} == model_keys | load_case_keys
 
-    for plot in expected_plots:
+    for plot in model.plots:
         assert plot.get_name() in figures
         assert Path(
             model.archive_manager.job_directory
@@ -101,6 +99,17 @@ def test_plot_model_select_variables(tmp_wd):
         variable_names=["energy_strain_history"], show=False, save=False
     )
     assert [trace.name for trace in fig.data] == ["energy_strain_history"]
+
+
+def test_plot_model_plots_override(tmp_wd):
+    """Check that a load case PLOTS overrides/extends the model PLOTS end-to-end."""
+    model = create_model("MockCurvesOverride", "DummyOverride")
+    model.execute()
+    plots = model.plots
+
+    keys = [p.get_key() for p in plots]
+    assert keys == [("y_axis", "y"), ("y_axis", "y_2")]
+    assert plots[0].title == "Overridden plot"
 
 
 def test_curves_attribute_raises():

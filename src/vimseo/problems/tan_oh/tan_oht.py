@@ -63,6 +63,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from vimseo.core.load_case import LoadCase
+    from vimseo.tools.post_tools.plot_parameters import Plot
 
 LOGGER = logging.getLogger(__name__)
 
@@ -477,7 +478,9 @@ class TanOpenHole(IntegratedModel):
     :meth:`.IntegratedModel.show_image`.
     """
 
-    PLOTS: ClassVar[Sequence[tuple[str]]] = [("line_center_y", "line_center_sigma_xx")]
+    PLOTS: ClassVar[Sequence[Plot | tuple[str, ...]]] = [
+        ("line_center_y", "line_center_sigma_xx")
+    ]
 
     FIELDS_FROM_FILE: ClassVar[Mapping[str, str]] = {
         "flux": r"^flux.vtk$",

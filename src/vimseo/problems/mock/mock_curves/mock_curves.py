@@ -78,6 +78,17 @@ class MockCurves(BaseDisciplineModel):
     _EXPECTED_LOAD_CASE = "Dummy"
 
 
+class MockCurvesOverride(BaseDisciplineModel):
+    """A mock model whose PLOTS are partly overridden/completed by its load case."""
+
+    PLOTS: ClassVar[Sequence[Plot | tuple[str, ...]]] = [
+        ("y_axis", "y"),  # overridden in place by DummyOverride's plot
+    ]
+
+    _DISCIPLINE: ClassVar[Discipline] = MockCurvesDiscipline()
+    _EXPECTED_LOAD_CASE = "DummyOverride"
+
+
 class MockCurvesXRangeDiscipline(Discipline):
     """A discipline returning curves whose abscissa range is controlled by its inputs."""
 

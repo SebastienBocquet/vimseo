@@ -15,15 +15,11 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import pathlib
 
 from gemseo.core.base_factory import BaseFactory
 
 from vimseo.core.load_case import LoadCase
-from vimseo.tools.post_tools.plot_parameters import PlotParameters
-from vimseo.tools.post_tools.plot_parameters import create_plot
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,30 +46,19 @@ class LoadCaseFactory(BaseFactory):
         class_name = f"{domain}_{load_case_name}" if domain != "" else load_case_name
         dummy_lc = super().create(class_name)
         json_path = dummy_lc.auto_get_file(".json", raise_error=False)
-
-        lc_options = {}
         if json_path:
-            with pathlib.Path(json_path[0]).open(encoding="utf-8") as f:
-                lc_options = json.load(f)
+            msg = (
+                f"The JSON file {json_path[0]} configuring load case {load_case_name} "
+                f"is no longer supported: declare its plots as a PLOTS class attribute "
+                f'on the load case instead, e.g. PLOTS = [("x", "y")]. See '
+                f"vimseo.core.base_integrated_model.IntegratedModel.PLOTS for reference."
+            )
+            raise ValueError(msg)
 
-            if "plot_parameters" in lc_options:
-                plot_parameters = lc_options["plot_parameters"]
-                if "curves" in plot_parameters:
-                    msg = (
-                        f"The plot_parameters entry curves of the JSON file of load "
-                        f"case {load_case_name} has been replaced by plots: rename "
-                        f"it. A list of variable names remains a valid plot "
-                        f"definition, and can now hold more than one ordinate name."
-                    )
-                    raise ValueError(msg)
-                lc_options["plot_parameters"] = PlotParameters(
-                    plots=[
-                        create_plot(plot) for plot in plot_parameters.get("plots", [])
-                    ]
-                )
-        lc_options["name"] = load_case_name
+        lc_options = {"name": load_case_name}
         if domain != "":
             lc_options["domain"] = domain
+        lc_options.update(options)
 
         cls = self.get_class(class_name)
         try:

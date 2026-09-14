@@ -17,14 +17,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
+
+import vimseo.problems.load_cases.mock as _mock_mod
 from vimseo.core.load import Load
 from vimseo.core.load import LoadDirectionLiteral
 from vimseo.core.load import LoadSign
 from vimseo.core.load import LoadType
 from vimseo.core.load_case import LoadCase
 from vimseo.core.load_case_factory import LoadCaseFactory
-from vimseo.tools.post_tools.plot_parameters import Plot
-from vimseo.tools.post_tools.plot_parameters import PlotParameters
+
+_LC1_JSON = _mock_mod.__file__.replace("mock.py", "LC1.json")
 
 
 def test_load_case():
@@ -32,8 +35,7 @@ def test_load_case():
     lc = LoadCaseFactory().create("LC2")
     assert lc.name == "LC2"
     assert lc.summary == "A second mock load case."
-    assert isinstance(lc.plot_parameters, PlotParameters)
-    assert lc.plot_parameters.plots == [Plot.from_variable_names(("y1", "y1_2"))]
+    assert lc.PLOTS == [("y1", "y1_2")]
     assert lc.image_path is None
 
 
@@ -54,11 +56,11 @@ def test_load_case_description():
         "Boundary condition variables: imposed_dplt, relative_dplt_location"
         in default_text
     )
-    assert "Plot parameters:" not in default_text
+    assert "Plots:" not in default_text
     assert "[" not in default_text  # no Python list repr
 
     lc.verbose = True
-    assert "Plot parameters:" in str(lc)
+    assert "Plots:" in str(lc)
     assert str(lc) == str(lc._get_multiline(verbose=True))
 
 
@@ -89,3 +91,16 @@ def test_load_case_description_includes_load_when_set():
     assert "direction = LL" in text
     assert "sign = positive" in text
     assert "type = stress" in text
+
+
+def test_stray_json_rejected():
+    """A stray JSON file next to a load case class raises ValueError mentioning PLOTS."""
+    from pathlib import Path
+
+    stray = Path(_LC1_JSON)
+    stray.write_text('{"plot_parameters": {"plots": []}}')
+    try:
+        with pytest.raises(ValueError, match="PLOTS"):
+            LoadCaseFactory().create("LC1")
+    finally:
+        stray.unlink()

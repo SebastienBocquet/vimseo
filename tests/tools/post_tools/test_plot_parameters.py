@@ -23,6 +23,7 @@ from vimseo.tools.post_tools.plot_parameters import Plot
 from vimseo.tools.post_tools.plot_parameters import Trace
 from vimseo.tools.post_tools.plot_parameters import create_plot
 from vimseo.tools.post_tools.plot_parameters import create_trace
+from vimseo.tools.post_tools.plot_parameters import merge_plots
 
 pytestmark = pytest.mark.fast
 
@@ -159,3 +160,76 @@ def test_create_plot_from_mapping():
 
 def test_create_plot_from_mapping_without_traces_key():
     assert create_plot({"x": "x"}) == Plot(x="x")
+
+
+def _plot(x, y, title=""):
+    return Plot(x=x, traces=[Trace(y=y)], title=title)
+
+
+def test_get_key_uses_abscissa_and_first_ordinate():
+    """get_key returns (x, first-ordinate-y), ignoring title and extra traces."""
+    p = Plot(x="time", traces=[Trace(y="force"), Trace(y="displacement")], title="F-D")
+    assert p.get_key() == ("time", "force")
+
+
+def test_get_key_ignores_title():
+    """Two plots differing only by title share the same key."""
+    p1 = _plot("time", "force", title="Version A")
+    p2 = _plot("time", "force", title="Version B")
+    assert p1.get_key() == p2.get_key()
+
+
+def test_get_key_constant_trace_only():
+    """A plot with only constant traces returns an empty ordinate in the key."""
+    p = Plot(x="time", traces=[ConstantTrace(value=1.0)])
+    assert p.get_key() == ("time", "")
+
+
+def test_merge_plots_override_in_place():
+    """A load-case plot matching a model plot replaces it without moving its position."""
+    base = [_plot("x", "a"), _plot("x", "b"), _plot("x", "c")]
+    override = [_plot("x", "b", title="new b")]
+    result = merge_plots(base, override)
+    assert [p.get_key() for p in result] == [("x", "a"), ("x", "b"), ("x", "c")]
+    assert result[1].title == "new b"
+
+
+def test_merge_plots_append_when_no_match():
+    """A load-case plot with a new key is appended after the base plots."""
+    base = [_plot("x", "a")]
+    override = [_plot("x", "z")]
+    result = merge_plots(base, override)
+    assert [p.get_key() for p in result] == [("x", "a"), ("x", "z")]
+
+
+def test_merge_plots_model_order_preserved():
+    """Model plots keep their declared order when no load-case override is present."""
+    base = [_plot("x", "a"), _plot("x", "b"), _plot("x", "c")]
+    result = merge_plots(base, [])
+    assert [p.get_key() for p in result] == [("x", "a"), ("x", "b"), ("x", "c")]
+
+
+def test_merge_plots_empty_base():
+    """When base is empty, the result is just the load-case plots (OpfmPlate scenario)."""
+    overrides = [_plot("x", "a"), _plot("x", "b")]
+    result = merge_plots([], overrides)
+    assert [p.get_key() for p in result] == [("x", "a"), ("x", "b")]
+
+
+def test_merge_plots_raw_tuples_normalised():
+    """Tuple and mapping definitions are normalised via create_plot before merging."""
+    base = [("x", "a")]
+    override = [("x", "a")]
+    result = merge_plots(base, override)
+    assert len(result) == 1
+    assert isinstance(result[0], Plot)
+    assert result[0].get_key() == ("x", "a")
+
+
+def test_merge_plots_mapping_normalised():
+    """A mapping definition in overrides is normalised and merged correctly."""
+    base = [("x", "a")]
+    override = [{"x": "x", "traces": [{"y": "a"}], "title": "via mapping"}]
+    result = merge_plots(base, override)
+    assert len(result) == 1
+    assert result[0].title == "via mapping"

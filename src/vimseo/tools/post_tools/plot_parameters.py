@@ -120,8 +120,8 @@ class Plot(metaclass=GoogleDocstringInheritanceMeta):
     """The declarative definition of a figure holding one or several lines.
 
     This is a specification: it holds variable *names*, not data. It is therefore
-    serialisable, and can be declared either as the class attribute ``PLOTS`` of a
-    model or in the JSON file of a load case.
+    serialisable, and can be declared as the class attribute ``PLOTS`` of a model
+    or a load case.
 
     Examples:
         >>> Plot(
@@ -229,6 +229,19 @@ class Plot(metaclass=GoogleDocstringInheritanceMeta):
         """Return the name of the file to save the figure to."""
         return self.file_name or f"{self.get_name()}.{extension}"
 
+    def get_key(self) -> tuple[str, str]:
+        """Return the identity key used to match a load-case plot against a model plot.
+
+        Two plots are considered "the same figure" when they share this key, regardless
+        of styling or title differences: the abscissa name and the name of the first
+        ordinate (variable) trace, i.e. the same information :meth:`get_name` falls back
+        to when there is no title. A plot with no variable trace (only constant traces)
+        returns an empty string for the ordinate part, so all such plots sharing the
+        same abscissa collide on the same key — a known, currently unused edge case.
+        """
+        ordinates = self.variable_traces
+        return (self.x, ordinates[0].y if ordinates else "")
+
 
 def create_trace(definition: TraceType | Mapping[str, Any]) -> TraceType:
     """Create a trace from its definition.
@@ -257,8 +270,7 @@ def create_plot(definition: Plot | Sequence[str] | Mapping[str, Any]) -> Plot:
 
     Args:
         definition: Either a plot, a sequence of variable names whose first one is
-            the abscissa, or a mapping of the plot attributes, e.g. read from the
-            JSON file of a load case.
+            the abscissa, or a mapping of the plot attributes.
 
     Returns:
         The plot.
@@ -272,9 +284,29 @@ def create_plot(definition: Plot | Sequence[str] | Mapping[str, Any]) -> Plot:
     return Plot(traces=traces, **definition)
 
 
-@dataclass
-class PlotParameters(metaclass=GoogleDocstringInheritanceMeta):
-    """The parameters of a model plot."""
+def merge_plots(
+    base: Sequence[Plot | Sequence[str] | Mapping[str, Any]],
+    overrides: Sequence[Plot | Sequence[str] | Mapping[str, Any]],
+) -> list[Plot]:
+    """Merge a base list of plots with overriding/additional plots.
 
-    plots: list[Plot] = field(default_factory=list)
-    """The definitions of the figures."""
+    Each item of both sequences is normalised with :func:`create_plot`. An item of
+    ``overrides`` whose :meth:`.Plot.get_key` matches an item of ``base`` replaces it
+    in place, preserving the position established by ``base``. An item of
+    ``overrides`` with no matching key in ``base`` is appended, in the order given.
+
+    Args:
+        base: The base plots (typically a model's ``PLOTS``), establishing the
+            default content and order.
+        overrides: The overriding/additional plots (typically a load case's
+            ``PLOTS``), applied on top of ``base``.
+
+    Returns:
+        The merged, normalised list of plots.
+    """
+    merged: dict[tuple[str, str], Plot] = {
+        plot.get_key(): plot for plot in (create_plot(p) for p in base)
+    }
+    for plot in (create_plot(p) for p in overrides):
+        merged[plot.get_key()] = plot
+    return list(merged.values())
