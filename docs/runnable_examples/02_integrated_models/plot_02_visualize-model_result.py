@@ -108,22 +108,22 @@ print(result)
 # %%
 # Two model results can be compared. We first generate a second result:
 model.execute({"young_modulus": atleast_1d(1.95e5), "imposed_dplt": atleast_1d(-10.0)})
-result_1 = ModelResult.from_data({
+result_2 = ModelResult.from_data({
     "inputs": model.get_input_data(),
     "outputs": model.get_output_data(),
 })
-result_1
+result_2
 
 # %%
 # The scalars can be compared in a scatter matrix:
 variable_names = ["young_modulus", "reaction_forces"]
 df = DataFrame([
     result.get_numeric_scalars(variable_names=variable_names),
-    result_1.get_numeric_scalars(variable_names=variable_names),
+    result_2.get_numeric_scalars(variable_names=variable_names),
 ])
 df["color"] = range(len(df))
 plot = ScatterMatrix(Dataset.from_dataframe(df), coloring_variable="color")
-plot.labels = ["result", "result 1"]
+plot.labels = ["result", "result 2"]
 fig = plot.execute(
     save=False,
     show=True,
@@ -142,9 +142,9 @@ fig
 superpose_curves(
     [
         result.get_curve(("dplt_grid", "dplt")),
-        result_1.get_curve(("dplt_grid", "dplt")),
+        result_2.get_curve(("dplt_grid", "dplt")),
     ],
-    labels=["result", "result 1"],
+    labels=["result", "result 2"],
 )
 
 # %%
@@ -438,7 +438,7 @@ superpose_curves(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # A second result is generated with a larger imposed displacement:
 multi_curve_model.execute({"max_displacement": atleast_1d(15.0)})
-multi_result_1 = ModelResult.from_data(
+multi_result_2 = ModelResult.from_data(
     {
         "inputs": multi_curve_model.get_input_data(),
         "outputs": multi_curve_model.get_output_data(),
@@ -453,9 +453,9 @@ curve_name = ("displacement_history", "force_history")
 superpose_curves(
     [
         multi_result.get_curve(curve_name),
-        multi_result_1.get_curve(curve_name),
+        multi_result_2.get_curve(curve_name),
     ],
-    labels=["result", "result 1"],
+    labels=["result", "result 2"],
     show=True,
     save=False,
 )
@@ -465,8 +465,8 @@ superpose_curves(
 # result and the dash pattern identifies the variable, so that a given energy
 # stays comparable from one result to the other:
 superpose_curves(
-    [multi_result.plots[0], multi_result_1.plots[0]],
-    labels=["result", "result 1"],
+    [multi_result.plots[0], multi_result_2.plots[0]],
+    labels=["result", "result 2"],
     show=True,
     save=False,
 )
