@@ -145,6 +145,9 @@ class Plot(metaclass=GoogleDocstringInheritanceMeta):
     x: str
     """The name of the abscissa variable shared by the traces."""
 
+    x_label: str = ""
+    """The label of the abscissa axis. Defaults to the abscissa variable name."""
+
     traces: list[TraceType] = field(default_factory=list)
     """The lines of the figure."""
 

@@ -380,7 +380,7 @@ superpose_curves(
 # tuple of variable names whose first one is the abscissa, or as a ``Plot`` object
 # when the lines shall be styled, drawn against a secondary ordinate axis or
 # completed with horizontal reference lines.
-# The ``MockMultiCurves`` model declares one figure of each kind:
+# The ``MockMultiCurves`` model declares two such figures:
 multi_curve_model = create_model(
     "MockMultiCurves",
     "Dummy",
@@ -398,10 +398,9 @@ for spec in multi_curve_model.plots:
 # Comparing variables within a result
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Several ordinates sharing an abscissa are drawn on a single figure. Here the
-# three energies are declared as the plain tuple
-# ``("displacement_history", "energy_strain_history", ...)``, and the colours are
-# taken from the default palette. Since the axis holds several lines, it is
-# labelled with the variable names and drawn in black:
+# three energies are declared as a ``Plot`` object without any custom style, so the
+# colours are taken from the default palette. Since the axis holds several lines, it
+# is labelled with the variable names and drawn in black:
 multi_curve_model.execute()
 multi_figs = multi_curve_model.plot_results(show=True, save=False)
 multi_figs["energy_strain_history_and_2_more_vs_displacement_history"]
@@ -410,7 +409,8 @@ multi_figs["energy_strain_history_and_2_more_vs_displacement_history"]
 # When the quantities have different magnitudes, a line can be drawn against a
 # secondary ordinate axis. This second figure is declared as a ``Plot`` object: the
 # force keeps the left axis, the crack position moves to the right one, and a
-# horizontal reference line shows the critical energy prescribed as a model input.
+# horizontal reference line shows the critical crack position prescribed as a model
+# input.
 # Each axis takes the colour of its line when it holds a single one:
 multi_figs["crack_propagation"]
 

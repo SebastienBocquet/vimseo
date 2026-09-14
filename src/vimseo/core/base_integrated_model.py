@@ -200,10 +200,12 @@ class IntegratedModel(GemseoDisciplineWrapper):
         ...     ("time", "energy_strain_history", "energy_damage_history"),
         ... ]
 
-        >>> # A styled figure with a secondary ordinate axis.
+        >>> # A styled figure with a secondary ordinate axis and a custom abscissa
+        >>> # label.
         >>> PLOTS = [
         ...     Plot(
         ...         x="displacement_history",
+        ...         x_label="Displacement",
         ...         traces=[
         ...             Trace("force_history", style=LineStyle(color="blue")),
         ...             Trace(

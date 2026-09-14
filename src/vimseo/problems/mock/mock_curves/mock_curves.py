@@ -137,7 +137,7 @@ class MockMultiCurvesDiscipline(Discipline):
         super().__init__()
         self.input_grammar.update_from_data({
             "max_displacement": atleast_1d(0.0),
-            "critical_energy": atleast_1d(0.0),
+            "critical_crack_position": atleast_1d(0.0),
         })
         self.output_grammar.update_from_data({
             "displacement_history": atleast_1d(0.0),
@@ -147,11 +147,11 @@ class MockMultiCurvesDiscipline(Discipline):
             "energy_work_history": atleast_1d(0.0),
             "force_history": atleast_1d(0.0),
             "crack_position_history": atleast_1d(0.0),
-            "critical_energy": atleast_1d(0.0),
+            "critical_crack_position": atleast_1d(0.0),
         })
         self.default_input_data = {
             "max_displacement": atleast_1d(10.0),
-            "critical_energy": atleast_1d(0.5),
+            "critical_crack_position": atleast_1d(35.0),
         }
 
     def _run(self, input_data):
@@ -169,7 +169,7 @@ class MockMultiCurvesDiscipline(Discipline):
             "energy_work_history": strain + damage + viscous,
             "force_history": displacement * exp(-0.2 * displacement),
             "crack_position_history": 20.0 + 3.0 * displacement,
-            "critical_energy": input_data["critical_energy"],
+            "critical_crack_position": input_data["critical_crack_position"],
         }
 
 
@@ -183,12 +183,15 @@ class MockMultiCurves(BaseDisciplineModel):
     )
 
     PLOTS: ClassVar[Sequence[Plot | tuple[str, ...]]] = [
-        # Several ordinates sharing an axis, declared as a plain tuple.
-        (
-            "displacement_history",
-            "energy_strain_history",
-            "energy_damage_history",
-            "energy_viscous_history",
+        # Several ordinates sharing an axis.
+        Plot(
+            x="displacement_history",
+            traces=[
+                Trace("energy_strain_history"),
+                Trace("energy_damage_history"),
+                Trace("energy_viscous_history"),
+            ],
+            x_label="Displacement",
         ),
         # A styled figure with a secondary ordinate axis and a reference line.
         Plot(
@@ -206,13 +209,14 @@ class MockMultiCurves(BaseDisciplineModel):
                     style=LineStyle(color="red", dash="dash"),
                 ),
                 ConstantTrace(
-                    value="critical_energy",
-                    label="critical energy",
+                    value="critical_crack_position",
+                    label="critical crack position",
                     secondary_y=True,
                     style=LineStyle(color="black", dash="dot"),
                 ),
             ],
             title="Crack propagation",
+            x_label="Displacement",
             y_label="Force",
             y_label_secondary="Crack position",
         ),

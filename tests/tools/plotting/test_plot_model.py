@@ -74,7 +74,7 @@ def test_plot_model_multi_curves(tmp_wd):
     assert [trace.name for trace in crack.data] == [
         "force",
         "crack position",
-        "critical energy",
+        "critical crack position",
     ]
     # The force is drawn against the primary axis, the two others against the
     # secondary one.
@@ -83,7 +83,7 @@ def test_plot_model_multi_curves(tmp_wd):
     assert crack.layout.yaxis.title.font.color == "blue"
     assert crack.layout.yaxis2.title.font.color == DEFAULT_AXIS_COLOR
     # The constant line is resolved from the value of the model variable.
-    assert list(crack.data[2].y) == [0.5, 0.5]
+    assert list(crack.data[2].y) == [35.0, 35.0]
     # The markers and the dash patterns are those prescribed by the styles.
     assert crack.data[0].mode == "lines+markers"
     assert crack.data[1].line.dash == "dash"

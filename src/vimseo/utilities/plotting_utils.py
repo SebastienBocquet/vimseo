@@ -286,7 +286,7 @@ def superpose_curves(
                 names_by_axis[trace.secondary_y].append(ordinate_name)
 
     if spec is not None:
-        fig.update_xaxes(title_text=spec.x)
+        fig.update_xaxes(title_text=spec.x_label or spec.x)
         _set_ordinate_axis(
             fig,
             spec.y_label or ", ".join(names_by_axis[False]),
