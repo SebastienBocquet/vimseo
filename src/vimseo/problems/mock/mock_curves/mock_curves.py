@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
 
 class MockCurvesDiscipline(Discipline):
-    """A mock model that outputs a curve depending on an input."""
+    """A mock discipline, constituting the main component of the `MockCurves` model."""
 
     CURVE_NB_POINTS: ClassVar[int] = 100
     """The length of the x and y curve."""
@@ -68,6 +68,9 @@ class MockCurvesDiscipline(Discipline):
 
 
 class MockCurves(BaseDisciplineModel):
+    """A toy model whose outputs illustrate the definition of figures holding a single
+    line."""
+
     PLOTS: ClassVar[Sequence[tuple[str, ...]]] = [("y_axis", "y")]
 
     _DISCIPLINE: ClassVar[Discipline] = MockCurvesDiscipline()
@@ -122,11 +125,9 @@ class MockCurvesXRange(BaseDisciplineModel):
 
 
 class MockMultiCurvesDiscipline(Discipline):
-    """A mock model outputting the histories of a fictitious crack propagation.
+    """A mock discipline, constituting the main component of the `MockMultiCurves` model.
 
-    The outputs are shaped to exercise the figures holding several lines: energies
-    sharing a single ordinate axis, and quantities of different magnitudes
-    requiring a secondary ordinate axis.
+    It outputs the histories of a fictitious crack propagation.
     """
 
     CURVE_NB_POINTS: ClassVar[int] = 50
@@ -173,12 +174,12 @@ class MockMultiCurvesDiscipline(Discipline):
 
 
 class MockMultiCurves(BaseDisciplineModel):
-    """A mock model exercising the figures holding several lines."""
+    """A toy model whose outputs illustrate the definition of figures holding several
+    lines."""
 
     SUMMARY = (
-        "A toy model whose outputs illustrate the definition of figures holding "
-        "several lines, styled lines, a secondary ordinate axis and horizontal "
-        "reference lines."
+        "A toy model whose outputs illustrate figures with several lines, "
+        "custom line styles, a secondary y-axis and horizontal reference lines."
     )
 
     PLOTS: ClassVar[Sequence[Plot | tuple[str, ...]]] = [
