@@ -17,15 +17,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from json import dumps
-from typing import TYPE_CHECKING
 
+from gemseo.datasets.dataset import Dataset
 from gemseo.utils.string_tools import MultiLineString
 
 from vimseo.tools.base_tool import BaseResult
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
-
-if TYPE_CHECKING:
-    from gemseo.datasets.dataset import Dataset
 
 
 @dataclass

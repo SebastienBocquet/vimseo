@@ -17,16 +17,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from gemseo.utils.string_tools import MultiLineString
+from numpy import ndarray
+from openturns import DeconditionedDistribution
 from prettytable import PrettyTable
 
 from vimseo.tools.base_tool import BaseResult
-
-if TYPE_CHECKING:
-    from numpy import ndarray
-    from openturns import DeconditionedDistribution
 
 LOGGER = logging.getLogger(__name__)
 

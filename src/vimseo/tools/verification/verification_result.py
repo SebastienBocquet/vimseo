@@ -24,13 +24,13 @@ from json import dumps
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
+from gemseo.datasets.dataset import Dataset
+from pandas import DataFrame
+
 from vimseo.tools.base_tool import BaseResult
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
 if TYPE_CHECKING:
-    from gemseo.datasets.dataset import Dataset
-    from pandas import DataFrame
-
     from vimseo.core.model_description import ModelDescription
 
 CASE_DESCRIPTION_TYPE = Mapping[str, str | list[str]]

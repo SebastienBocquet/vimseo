@@ -152,6 +152,7 @@ runtime-evaluated-base-classes = [
     "vimseo.tools.base_settings.BaseSettings",
     "vimseo.tools.base_settings.BaseInputs",
     "vimseo.tools.base_result.BaseResult",
+    "vimseo.tools.base_tool.BaseResult",
     "vimseo.core.model_description.BaseDescription",
     "vimseo.tools.base_metadata.BaseMetadata",
     "vimseo.tools.io.reader_file_dataframe.ReaderFileDataFrameSettings",
@@ -162,7 +163,7 @@ runtime-evaluated-base-classes = [
     "vimseo.tools.doe.custom_doe.CustomDOESettings",
     "vimseo.tools.verification.verification_result.VerificationResult",
     "vimseo.tools.verification.verification_result.SolutionVerificationResult",
-    "vimseo.material.material_property.MaterialProperty",
+    "vimseo.utilities.json_grammar_utils.BaseJsonIO",
 ]
 
 [lint.isort]

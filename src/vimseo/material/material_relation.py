@@ -22,15 +22,12 @@ https://emmo-repo.github.io/versions/1.0.0-beta/emmo.html
 from __future__ import annotations
 
 from operator import call
-from typing import TYPE_CHECKING
 
 from pydantic import Field
 
+from vimseo.material.material_property import MaterialProperty
 from vimseo.material.metadata import MaterialMetadata
 from vimseo.utilities.json_grammar_utils import BaseJsonIO
-
-if TYPE_CHECKING:
-    from vimseo.material.material_property import MaterialProperty
 
 
 class MaterialRelation(BaseJsonIO):

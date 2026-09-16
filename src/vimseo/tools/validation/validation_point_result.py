@@ -16,21 +16,17 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field
 from json import dumps
-from typing import TYPE_CHECKING
 
+from gemseo.datasets.dataset import Dataset
 from gemseo.utils.string_tools import MultiLineString
+from numpy import ndarray
 
 from vimseo.tools.base_tool import BaseResult
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from gemseo.datasets.dataset import Dataset
-    from numpy import ndarray
 
 LOGGER = logging.getLogger(__name__)
 

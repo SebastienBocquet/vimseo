@@ -124,7 +124,7 @@ def iter_materials() -> Iterator[MaterialInfo]:
             try:
                 data = json.loads(file_path.read_text())
                 name = data["name"]
-            except Exception:  # noqa: BLE001 - one bad file must not hide the others
+            except Exception:  # ruff: ignore[blind-except] - one bad file must not hide the others
                 LOGGER.warning("Skipping unreadable material file %s.", file_path)
                 continue
             yield MaterialInfo(
@@ -143,7 +143,7 @@ def available_materials(refresh: bool = False) -> list[MaterialInfo]:
     are long-lived processes (the |v| worker behind the GUI) asking for this list on
     every model change. Pass ``refresh=True`` after adding a material file at runtime.
     """
-    global _MATERIALS_CACHE  # noqa: PLW0603
+    global _MATERIALS_CACHE  # ruff: ignore[global-statement]
     if refresh or _MATERIALS_CACHE is None:
         _MATERIALS_CACHE = list(iter_materials())
     return list(_MATERIALS_CACHE)
@@ -159,7 +159,7 @@ def grammar_name_of(grammar_file: Path | str) -> str:
         return ""
     try:
         return json.loads(Path(grammar_file).read_text()).get("name", "")
-    except Exception:  # noqa: BLE001
+    except Exception:  # ruff: ignore[blind-except]
         LOGGER.warning("Cannot read the material grammar %s.", grammar_file)
         return ""
 
@@ -184,7 +184,7 @@ def default_material_name(model_name: str) -> str:
         return ""
     try:
         return json.loads(Path(material_file).read_text())["name"]
-    except Exception:  # noqa: BLE001
+    except Exception:  # ruff: ignore[blind-except]
         LOGGER.warning("Cannot read the material file %s.", material_file)
         return ""
 
