@@ -74,10 +74,29 @@ class CalibrationMetricSettings(GemseoCalibrationMetricSettings):
     before building the calibration scenario.
     """
 
-    # Stock gemseo-calibration requires ``output_name`` at construction; vimseo
-    # fills it in itself (from the ``control_outputs`` mapping key, namespaced)
-    # once ``CalibrationStep.execute`` runs, so callers only supply it if they
-    # build their settings outside a ``CalibrationStep`` call.
+    # The problem: the external library gemseo-calibration (in its standard/official
+    # version, "stock") requires the output's name (output_name) to be given right
+    # when the metric object is created (e.g. SBPISE(...)). That's a constraint
+    # imposed by the external code, not by vimseo.
+    #
+    # But in vimseo, at the point where the calibration settings are built, that name
+    # isn't necessarily known yet -- it only becomes available a bit later, from the
+    # control_outputs mapping (which associates output names with what's being
+    # calibrated).
+    #
+    # The fix: rather than forcing the caller to know and supply that name upfront,
+    # vimseo fills it in itself, later, once CalibrationStep.execute() runs --
+    # pulling it from the key of the control_outputs dictionary (with a namespace
+    # added, i.e. a prefix to avoid name collisions).
+    #
+    # What this means for developers: the output_name field defaults to an empty
+    # string ("") and doesn't need to be set manually in the normal case (via
+    # CalibrationStep). You only need to supply it yourself if you're building these
+    # settings by hand, outside the usual CalibrationStep flow.
+    #
+    # In short: it's a field vimseo fills in automatically for you in the standard
+    # case, because of a constraint in the external library's API -- you only need
+    # to worry about it if you bypass the usual path.
     output_name: str = ""
     scaling: CurveScaling = CurveScaling.NONE
     x_left_penalization_factor: float = 0.0
