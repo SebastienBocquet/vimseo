@@ -122,7 +122,7 @@ df = DataFrame([
     result_2.get_numeric_scalars(variable_names=variable_names),
 ])
 df["color"] = range(len(df))
-plot = ScatterMatrix(Dataset.from_dataframe(df), coloring_variable="color")
+plot = ScatterMatrix(Dataset.from_dataframe(df), classifier="color")
 plot.labels = ["result", "result 2"]
 fig = plot.execute(
     save=False,
@@ -182,7 +182,7 @@ fig
 # For a small number of data to compare (two here), it is less relevant than the bar plot,
 # It may become more interesting for a larger number of data to compare:
 df["color"] = range(len(df))
-plot = ScatterMatrix(Dataset.from_dataframe(df), coloring_variable="color")
+plot = ScatterMatrix(Dataset.from_dataframe(df), classifier="color")
 plot.labels = ["data", "model result"]
 fig = plot.execute(
     save=False,

@@ -555,7 +555,8 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for discipline in self._chain.disciplines:
             discipline._job_directory = self._scratch_manager.job_directory
 
-        output_data = self._chain.execute(input_data)
+        self._chain.execute(input_data)
+        output_data = self._chain.get_output_data()
 
         end_time = time()
         self._run_time = end_time - start_time
