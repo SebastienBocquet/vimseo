@@ -143,6 +143,16 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
     def command_line(self):
         return self._command_line
 
+    @property
+    def _convergence_source_directory(self) -> Path:
+        """The directory :meth:`_fetch_convergence` looks the solver files up in.
+
+        Defaults to the job directory. Job-scheduler executors override this to
+        point at the scheduler-side run directory while the job is still
+        executing there, before its output files are copied back.
+        """
+        return Path(self._job_directory)
+
     def _terminate_external_software(self):
         """Terminate the external software if it is still running."""
 
@@ -192,7 +202,7 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
         msg_filter = self._user_job_options.get("convergence_msg_filter", False)
         for ext in sources:
             try:
-                path = Path(self._job_directory) / f"{self._job_name}.{ext}"
+                path = self._convergence_source_directory / f"{self._job_name}.{ext}"
                 new_lines, self._convergence_cursors[ext] = tail_new_lines(
                     path, self._convergence_cursors.get(ext, 0)
                 )
