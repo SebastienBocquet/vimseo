@@ -23,10 +23,17 @@ import pytest
 
 from vimseo.api import create_model
 from vimseo.api import get_available_materials
+from vimseo.material import material_registry
 from vimseo.material.material import Material
+from vimseo.material.material_registry import GRAMMAR_FILE_SUFFIX
+from vimseo.material.material_registry import MaterialInfo
+from vimseo.material.material_registry import _package_of
+from vimseo.material.material_registry import available_materials
 from vimseo.material.material_registry import compatible_materials
 from vimseo.material.material_registry import default_material_name
+from vimseo.material.material_registry import find_material
 from vimseo.material.material_registry import grammar_name_of
+from vimseo.material.material_registry import iter_materials
 from vimseo.material.material_registry import material_lib_directories
 from vimseo.material.material_registry import model_grammar_name
 from vimseo.material.material_registry import resolve_material
@@ -129,3 +136,109 @@ def test_create_model_with_a_material_instance():
     material.update_from_dict({"young_modulus": 195000.0})
     model = create_model("BendingTestAnalytical", "Cantilever", material=material)
     assert model.default_input_data["young_modulus"] == pytest.approx(195000.0)
+
+
+def test_iter_materials_matches_the_material_lib_files():
+    """Every non-grammar JSON file across the material_lib directories is yielded."""
+    expected_names = set()
+    for directory in material_lib_directories():
+        for file_path in directory.glob("*.json"):
+            if not file_path.name.endswith(GRAMMAR_FILE_SUFFIX):
+                expected_names.add(json.loads(file_path.read_text())["name"])
+    materials = list(iter_materials())
+    assert {info.name for info in materials} == expected_names
+    assert all(info.package == "vimseo" for info in materials if info.name == "Ta6v")
+
+
+def test_iter_materials_skips_unreadable_file(tmp_path, monkeypatch, caplog):
+    """One malformed material file is skipped, not fatal to the whole scan."""
+    (tmp_path / "Good.json").write_text(json.dumps({"name": "Good"}))
+    (tmp_path / "Bad.json").write_text("not valid json")
+    monkeypatch.setattr(
+        material_registry, "material_lib_directories", lambda: [tmp_path]
+    )
+    with caplog.at_level("WARNING"):
+        materials = list(iter_materials())
+    assert [info.name for info in materials] == ["Good"]
+    assert "Skipping unreadable material file" in caplog.text
+
+
+def test_package_of():
+    """The package is the parent of the ``material_lib`` directory."""
+    assert _package_of(MATERIAL_LIB_DIR) == "vimseo"
+    assert _package_of(MATERIAL_LIB_DIR.parent / "plugin_x" / "material_lib") == (
+        "plugin_x"
+    )
+
+
+def test_available_materials_is_memoized(reset_material_cache, monkeypatch):
+    """The scan runs once; later calls reuse the cached result."""
+    calls = []
+
+    def fake_iter_materials():
+        calls.append(1)
+        return iter([MaterialInfo(name="A")])
+
+    monkeypatch.setattr(material_registry, "iter_materials", fake_iter_materials)
+    available_materials()
+    available_materials()
+    assert len(calls) == 1
+
+
+def test_available_materials_refresh_rescans(reset_material_cache, monkeypatch):
+    """``refresh=True`` forces a new scan, picking up materials added meanwhile."""
+    results = [
+        [MaterialInfo(name="A")],
+        [MaterialInfo(name="A"), MaterialInfo(name="B")],
+    ]
+    monkeypatch.setattr(
+        material_registry, "iter_materials", lambda: iter(results.pop(0))
+    )
+    first = available_materials()
+    assert [info.name for info in first] == ["A"]
+    second = available_materials(refresh=True)
+    assert [info.name for info in second] == ["A", "B"]
+
+
+def test_available_materials_returns_a_copy(reset_material_cache, monkeypatch):
+    """Mutating the returned list must not corrupt the cache."""
+    monkeypatch.setattr(
+        material_registry, "iter_materials", lambda: iter([MaterialInfo(name="A")])
+    )
+    result = available_materials()
+    result.append(MaterialInfo(name="Injected"))
+    assert [info.name for info in available_materials()] == ["A"]
+
+
+def test_find_material_ambiguous_raises(reset_material_cache, monkeypatch):
+    """Two packages shipping the same material name cannot be picked silently."""
+    duplicates = [
+        MaterialInfo(name="Dup", package="vimseo_composites"),
+        MaterialInfo(name="Dup", package="vimseo"),
+    ]
+    monkeypatch.setattr(material_registry, "available_materials", lambda: duplicates)
+    msg = (
+        "The material name 'Dup' is ambiguous: it is shipped by "
+        "vimseo, vimseo_composites"
+    )
+    with pytest.raises(ValueError, match=msg):
+        find_material("Dup")
+
+
+def test_find_material_found_when_unique():
+    assert find_material("Ta6v").name == "Ta6v"
+
+
+def test_material_lib_directories_skips_missing_plugin(monkeypatch):
+    """A plugin without an importable ``material_lib`` package is skipped."""
+
+    class FakeEntryPoint:
+        def __init__(self, value):
+            self.value = value
+
+    monkeypatch.setattr(
+        material_registry,
+        "entry_points",
+        lambda group: [FakeEntryPoint("vimseo"), FakeEntryPoint("not_a_real_package")],
+    )
+    assert material_lib_directories() == [MATERIAL_LIB_DIR]
