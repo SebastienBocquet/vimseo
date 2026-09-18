@@ -23,6 +23,8 @@ from gemseo.utils.directory_creator import DirectoryNamingMethod
 from numpy import array
 from numpy import atleast_1d
 from numpy import empty
+from numpy import isfinite
+from numpy import isnan
 from numpy import ones
 from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
@@ -248,7 +250,6 @@ def test_fit_power_law_recovers_converged_value():
 
 def test_cross_validated_mad_ignores_non_finite():
     """The cross-validation spread uses only the finite fold estimates."""
-    from numpy import isnan
     from numpy import nan
 
     from vimseo.tools.verification.solution_verification_indicators import (
@@ -266,9 +267,6 @@ def test_cross_validated_mad_ignores_non_finite():
 
 def test_estimators_survive_sawtooth():
     """Both estimators stay finite on sawtooth data, where Richardson fails."""
-    from numpy import isfinite
-    from numpy import isnan
-
     from vimseo.tools.verification.solution_verification_indicators import (
         compute_richardson,
     )
@@ -296,9 +294,6 @@ def test_estimators_survive_sawtooth():
 
 def test_converged_estimates_populated_when_richardson_fails(tmp_wd):
     """The tool exposes the converged-value estimates even when Richardson is nan."""
-    from numpy import isfinite
-    from numpy import isnan
-
     df = DataFrame.from_dict({
         ("inputs", "h", 0): _SAWTOOTH_H,
         ("outputs", "a_h", 0): _SAWTOOTH_Q,

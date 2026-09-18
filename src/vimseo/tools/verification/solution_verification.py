@@ -101,11 +101,13 @@ from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.doe.custom_doe import CustomDOESettings
 from vimseo.tools.doe.custom_doe import CustomDOETool
-from vimseo.tools.post_tools.verification_plots import ConvergenceCrossValidation
-from vimseo.tools.post_tools.verification_plots import ConvergenceFit
-from vimseo.tools.post_tools.verification_plots import ErrorVersusElementSize
-from vimseo.tools.post_tools.verification_plots import RelativeErrorVersusCpuTime
-from vimseo.tools.post_tools.verification_plots import RelativeErrorVersusElementSize
+from vimseo.tools.post_tools.verification_plots import ConvergenceCrossValidationPlotter
+from vimseo.tools.post_tools.verification_plots import ConvergenceFitPlotter
+from vimseo.tools.post_tools.verification_plots import ErrorVersusElementSizePlotter
+from vimseo.tools.post_tools.verification_plots import RelativeErrorVersusCpuTimePlotter
+from vimseo.tools.post_tools.verification_plots import (
+    RelativeErrorVersusElementSizePlotter,
+)
 from vimseo.tools.verification.base_verification import BaseVerification
 from vimseo.tools.verification.solution_verification_indicators import compute_gci
 from vimseo.tools.verification.solution_verification_indicators import compute_median
@@ -551,15 +553,15 @@ class DiscretizationSolutionVerification(BaseVerification):
         """
         figs = {}
         plots = [
-            ConvergenceCrossValidation(),
-            ConvergenceFit(),
-            ErrorVersusElementSize(),
-            RelativeErrorVersusElementSize(),
+            ConvergenceCrossValidationPlotter(),
+            ConvergenceFitPlotter(),
+            ErrorVersusElementSizePlotter(),
+            RelativeErrorVersusElementSizePlotter(),
         ]
         if MetaDataNames.cpu_time in result.simulation_and_reference.get_variable_names(
             group_name=IODataset.OUTPUT_GROUP
         ):
-            plots.append(RelativeErrorVersusCpuTime())
+            plots.append(RelativeErrorVersusCpuTimePlotter())
 
         for plot in plots:
             plot.working_directory = (

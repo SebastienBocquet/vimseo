@@ -28,11 +28,6 @@ from vimseo.material.metadata import MaterialMetadata
 from vimseo.utilities.json_grammar_utils import BaseJsonIO
 
 
-def _call(obj, /, *args, **kwargs):
-    """Backport of operator.call (Python 3.11+) for Python 3.10 compatibility."""
-    return obj(*args, **kwargs)
-
-
 class MaterialRelation(BaseJsonIO):
     """A material relation."""
 
@@ -45,9 +40,9 @@ class MaterialRelation(BaseJsonIO):
         return {prop.name: prop.value for prop in self.properties}
 
     def get_card(self) -> str:
-        """Return a card for a mechanical solver."""
-        return ""
+        """Return a card for a mechanical solver.
 
-    def get_relation(self) -> callable:
-        """Return the type of the material relation."""
-        return _call
+        Overriding this method is optional: a material relation with no known
+        mechanical solver card simply keeps the empty default.
+        """
+        return ""
