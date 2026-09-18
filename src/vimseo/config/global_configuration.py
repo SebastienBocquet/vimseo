@@ -72,5 +72,5 @@ _configuration = type("AllSettings", tuple(plugin_config_classes[::-1]), {})(
 """The global VIMSEO configuration.
 
 The feature is described
-on the page [TODO] of the documentation.
+on the page docs/how_to/configuration.md of the documentation.
 """
