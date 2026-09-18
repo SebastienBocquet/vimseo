@@ -67,7 +67,17 @@ def __to_dataframe(value: pd.DataFrame, key: str, group: h5py.Group, type_name: 
             )
             cols_group.attrs[f"__type__{col_key}"] = "json_col"
         else:
-            cols_group.create_dataset(col_key, data=col_data.values)
+            # Pandas masked dtypes (Int64, Float64, boolean, ...) cannot be
+            # written as-is to HDF5: store them as float + NaN, which
+            # losslessly round-trips through `pd.array(..., dtype=...)`, and
+            # remember the original dtype to restore it on read.
+            if hasattr(col_data.dtype, "numpy_dtype"):
+                data = col_data.to_numpy(dtype=float, na_value=np.nan)
+            else:
+                data = col_data.values
+            cols_group.create_dataset(col_key, data=data)
+            if hasattr(col_data.dtype, "numpy_dtype"):
+                cols_group[col_key].attrs["dtype"] = str(col_data.dtype)
             # Add human-readable column name as attribute
             cols_group[col_key].attrs["column_name"] = (
                 json.dumps(list(col)) if is_multiindex else str(col)
@@ -95,7 +105,9 @@ def __from_dataframe(item: h5py.Group) -> pd.DataFrame:
         if f"__type__{col_key}" in cols_group.attrs:
             data[col] = json.loads(cols_group.attrs[col_key])
         else:
-            data[col] = cols_group[col_key][()]
+            raw = cols_group[col_key][()]
+            dtype_attr = cols_group[col_key].attrs.get("dtype")
+            data[col] = pd.array(raw, dtype=dtype_attr) if dtype_attr else raw
 
     df = pd.DataFrame(data, columns=columns)
     if index is not None:
