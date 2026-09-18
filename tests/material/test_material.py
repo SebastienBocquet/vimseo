@@ -221,7 +221,8 @@ def test_update_uniform_distribution_keeps_parameters():
         distribution=DistributionParameters(name="Uniform"),
     )
     material = Material(
-        name="m", material_relations=[MaterialRelation(name="r", properties=[prop])]
+        name="m",
+        material_relations=[MaterialRelation(name="r", properties=[prop])],
     )
     material.update_from_dict({"x": 1.5})
     assert prop.value == 1.5  # ruff: ignore[float-equality-comparison]

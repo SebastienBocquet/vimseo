@@ -21,16 +21,11 @@ https://emmo-repo.github.io/versions/1.0.0-beta/emmo.html
 
 from __future__ import annotations
 
-from operator import call
-from typing import TYPE_CHECKING
-
 from pydantic import Field
 
+from vimseo.material.material_property import MaterialProperty
 from vimseo.material.metadata import MaterialMetadata
 from vimseo.utilities.json_grammar_utils import BaseJsonIO
-
-if TYPE_CHECKING:
-    from vimseo.material.material_property import MaterialProperty
 
 
 class MaterialRelation(BaseJsonIO):
@@ -45,9 +40,9 @@ class MaterialRelation(BaseJsonIO):
         return {prop.name: prop.value for prop in self.properties}
 
     def get_card(self) -> str:
-        """Return a card for a mechanical solver."""
-        return ""
+        """Return a card for a mechanical solver.
 
-    def get_relation(self) -> callable:
-        """Return the type of the material relation."""
-        return call
+        Overriding this method is optional: a material relation with no known
+        mechanical solver card simply keeps the empty default.
+        """
+        return ""

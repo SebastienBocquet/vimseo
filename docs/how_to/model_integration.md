@@ -29,14 +29,14 @@ class attribute:
 --8<-- "src/vimseo/problems/mock/mock_convergence/mock_convergence.py"
 ```
 
-If you have a model defined as a Python code, the integration process to **VIMSEO** can be:
+If you have a model implemented in a Python script, you may integrate the process to **VIMSEO** by:
 
-- wrap this model in a **GEMSEO** discipline
-- use the above procedure to convert it as a **VIMSEO** model
+- wrapping this model in a **GEMSEO** discipline
+- using the above procedure to convert it as a **VIMSEO** model
 
 ## Integration of a pure Python model as a pre-run-post component model
 
-If you have a model defined from Python code, and want to integrate it as a three-step pre-processing, run-processing and post-processing:
+If you have a model implemented in a Python script, and want to integrate it as a three-step pre-processing, run-processing and post-processing:
 
 ```python
 --8<-- "src/vimseo/problems/mock/mock_pre_run_post/mock_main.py"

@@ -163,6 +163,7 @@ runtime-evaluated-base-classes = [
     "vimseo.tools.verification.verification_result.VerificationResult",
     "vimseo.tools.verification.verification_result.SolutionVerificationResult",
     "vimseo.material.material_property.MaterialProperty",
+    "vimseo.utilities.json_grammar_utils.BaseJsonIO",
 ]
 
 [lint.isort]

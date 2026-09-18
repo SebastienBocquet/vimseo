@@ -93,17 +93,12 @@ def toy_vtu(tmp_path_factory) -> Path:
 
 
 # =============================================================================
-# IMPORT of the function under test
-# =============================================================================
-
-
-# =============================================================================
 # TESTS
 # =============================================================================
 
 
 def test_returns_expected_keys(toy_vtu):
-    """Result contains the expected keys."""
+    """Result contains the expected keys, with values matching the analytical fields."""
     result = extract_line(
         str(toy_vtu),
         point_a=(0.0, 0.5, 0.0),
@@ -113,6 +108,13 @@ def test_returns_expected_keys(toy_vtu):
     assert "dist" in result
     assert "p" in result
     assert "u" in result
+
+    # p(x, y) = x + y and u(x, y) = (x, y, 0); sanity-check against the line endpoints.
+    x_coords = result["coords"][:, 0]
+    assert result["p"][0] == pytest.approx(0.5, abs=1e-6)
+    assert result["p"][-1] == pytest.approx(1.5, abs=1e-6)
+    np.testing.assert_allclose(result["u"][:, 0], x_coords, atol=1e-6)
+    np.testing.assert_allclose(result["u"][:, 1], 0.5, atol=1e-6)
 
 
 def test_coords_shape(toy_vtu):

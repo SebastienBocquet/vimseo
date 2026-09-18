@@ -34,7 +34,7 @@ from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.doe.custom_doe import CustomDOESettings
-from vimseo.tools.post_tools.verification_plots import ErrorMetricHistogram
+from vimseo.tools.post_tools.verification_plots import ErrorMetricHistogramPlotter
 from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
 from vimseo.tools.verification.verification_result import VerificationResult
 from vimseo.utilities.datasets import get_nb_input_variables
@@ -332,7 +332,7 @@ class BaseVerification(BaseAnalysisTool):
             )[0]
             figures["input_scatter_matrix"] = fig
 
-        histogram = ErrorMetricHistogram()
+        histogram = ErrorMetricHistogramPlotter()
         histogram.working_directory = (
             working_directory if directory_path == "" else Path(directory_path)
         )
