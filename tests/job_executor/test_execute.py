@@ -60,9 +60,9 @@ def test_fetch_convergence_safely_swallows_errors():
 @pytest.mark.skip_under_windows
 def test_execute_runs_a_real_subprocess(tmp_path):
     """End-to-end smoke test: ``execute`` actually runs the rendered command."""
-    executor = _TemplateExecutor("")
+    executor = _TemplateExecutor("sh -c '{{ executable }}'")
     executor._job_options = {"executable": f"echo hi > {tmp_path / 'out.txt'}"}
-    executor._COMMAND_TEMPLATE = "sh -c '{{ executable }}'"
+    executor._job_directory = tmp_path
 
     executor.execute(check_subprocess=True)
 
