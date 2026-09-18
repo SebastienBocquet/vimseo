@@ -15,6 +15,13 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
+from vimseo.core.load import Load
+from vimseo.core.load import LoadDirectionLiteral
+from vimseo.core.load import LoadSign
+from vimseo.core.load import LoadType
+from vimseo.core.load_case import LoadCase
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.tools.post_tools.plot_parameters import Plot
 from vimseo.tools.post_tools.plot_parameters import PlotParameters
@@ -53,3 +60,32 @@ def test_load_case_description():
     lc.verbose = True
     assert "Plot parameters:" in str(lc)
     assert str(lc) == str(lc._get_multiline(verbose=True))
+
+
+def test_load_case_description_includes_domain_when_set():
+    """The domain line only appears in the description when a domain is set."""
+    lc = LoadCase(name="Test")
+    assert "Domain:" not in str(lc)
+
+    lc_with_domain = LoadCase(name="Test", domain="Metallic")
+    assert "Domain: Metallic" in str(lc_with_domain)
+
+
+def test_load_case_description_includes_load_when_set():
+    """The load block only appears in the description when the load is non-empty."""
+
+    @dataclass
+    class _LoadedCase(LoadCase):
+        def get_load(self) -> Load:
+            return Load(
+                direction=LoadDirectionLiteral.LL,
+                sign=LoadSign.POSITIVE,
+                type=LoadType.STRESS,
+            )
+
+    lc = _LoadedCase(name="Test")
+    text = str(lc)
+    assert "Load:" in text
+    assert "direction = LL" in text
+    assert "sign = positive" in text
+    assert "type = stress" in text

@@ -79,6 +79,18 @@ def test_space_from_statistics(tmp_wd, distribution_name, distribution_options):
     )
 
 
+def test_get_fitted_distribution_parameters_scipy_fallback():
+    """A distribution with no ``getParameter`` (SciPy) falls back to ``.args``."""
+
+    class _FakeNativeDistribution:
+        args = (1.0, 2.0)
+
+    class _FakeDistribution:
+        distribution = _FakeNativeDistribution()
+
+    assert _get_fitted_distribution_parameters(_FakeDistribution()) == (1.0, 2.0)
+
+
 def test_save_and_load_json(tmp_wd):
     """Check that a space analysis can be saved and that a new instance can be created
     and loaded from saved data.

@@ -126,6 +126,15 @@ def test_random_variable_interface_with_gemseo(
         )
 
 
+def test_interfaced_distribution_settings_reject_vector_size():
+    """An ``InterfacedDistributionSettings`` only handles scalar variables."""
+    parameter_space = ParameterSpace()
+    settings = InterfacedDistributionSettings(name="Normal", parameters=(1.0, 0.05))
+
+    with pytest.raises(ValueError, match="Only scalars are handled"):
+        add_random_variable_interface(parameter_space, "x1", settings, size=2)
+
+
 @pytest.mark.parametrize(
     "distribution_name",
     [
