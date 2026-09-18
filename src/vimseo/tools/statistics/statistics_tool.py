@@ -25,6 +25,7 @@ from gemseo.datasets.dataset import Dataset
 from gemseo.uncertainty import create_statistics
 from gemseo.uncertainty.statistics.parametric_statistics import ParametricStatistics
 from gemseo.utils.directory_creator import DirectoryNamingMethod
+from gemseo.utils.matplotlib_figure import save_show_figure
 from numpy import random
 from numpy import vstack
 from pydantic import Field
@@ -288,16 +289,28 @@ class StatisticsTool(BaseAnalysisTool):
         Args:
             variable: The name of the variable whose statistics are shown.
         """
-        return result.analysis.plot_criteria(
+        # Stock gemseo always saves to a fixed "criteria.pdf", overwriting the
+        # previous variable's plot; save it ourselves under a name that
+        # distinguishes the variable and its selected distribution instead.
+        directory = (
+            self.working_directory if directory_path == "" else Path(directory_path)
+        )
+        figure = result.analysis.plot_criteria(
             variable=variable,
             title="Criteria of statistics.",
-            save=save,
-            show=show,
-            directory=(
-                self.working_directory if directory_path == "" else Path(directory_path)
-            ),
+            save=False,
+            show=False,
+            directory=directory,
             fig_size=(12.0, 6.0),
         )
+        file_path = (
+            directory
+            / f"{variable}_{result.analysis.distributions[variable].name}_criteria.png"
+            if save
+            else ""
+        )
+        save_show_figure(figure, show, file_path)
+        return figure
 
 
 def compute_ecdf(input_data: Dataset, prefix: str = "") -> Dataset:

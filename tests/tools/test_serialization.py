@@ -192,6 +192,43 @@ class TestDataFrames:
 
 
 # ---------------------------------------------------------------------------
+# Tests — pandas nullable (masked) dtypes
+# ---------------------------------------------------------------------------
+
+
+class TestNullableDtypes:
+    """Pandas masked dtypes (e.g. gemseo's Database.to_dataset() casts integer
+    outputs to "Int64" so that NaN can coexist with valid integers) must survive
+    an HDF5 round-trip with their original dtype, not silently degrade to a
+    plain numpy dtype.
+    """
+
+    def test_int64_no_na(self, tmp_hdf5):
+        df = pd.DataFrame({"a": pd.array([1, 2, 3], dtype="Int64")})
+        result = ValidationPointResult(measured_data=df)
+        rt = roundtrip(result, tmp_hdf5)
+        pd.testing.assert_frame_equal(rt.measured_data, df)
+
+    def test_int64_with_na(self, tmp_hdf5):
+        df = pd.DataFrame({"a": pd.array([1, None, 3], dtype="Int64")})
+        result = ValidationPointResult(measured_data=df)
+        rt = roundtrip(result, tmp_hdf5)
+        pd.testing.assert_frame_equal(rt.measured_data, df)
+
+    def test_float64_with_na(self, tmp_hdf5):
+        df = pd.DataFrame({"a": pd.array([1.5, None, 3.5], dtype="Float64")})
+        result = ValidationPointResult(measured_data=df)
+        rt = roundtrip(result, tmp_hdf5)
+        pd.testing.assert_frame_equal(rt.measured_data, df)
+
+    def test_boolean_with_na(self, tmp_hdf5):
+        df = pd.DataFrame({"a": pd.array([True, False, None], dtype="boolean")})
+        result = ValidationPointResult(measured_data=df)
+        rt = roundtrip(result, tmp_hdf5)
+        pd.testing.assert_frame_equal(rt.measured_data, df)
+
+
+# ---------------------------------------------------------------------------
 # Tests — dicts and nested structures
 # ---------------------------------------------------------------------------
 

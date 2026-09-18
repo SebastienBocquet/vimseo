@@ -22,9 +22,9 @@ from json import dumps
 
 from gemseo.disciplines.surrogate import SurrogateDiscipline
 from gemseo.mlearning.core.quality.base_ml_algo_quality import BaseMLAlgoQuality
-from gemseo.third_party.prettytable.prettytable import PrettyTable
 from gemseo.utils.string_tools import MultiLineString
 from numpy import ndarray
+from prettytable import PrettyTable
 
 from vimseo.tools.base_result import BaseResult
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder

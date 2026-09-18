@@ -23,6 +23,7 @@ from gemseo.datasets.dataset import Dataset
 
 import vimseo.tools as tools
 from vimseo.tools.space.space_tool import SpaceTool
+from vimseo.tools.space.space_tool import _get_fitted_distribution_parameters
 from vimseo.tools.space.space_tool import update_space_from_statistics
 from vimseo.tools.statistics.statistics_tool import StatisticsTool
 
@@ -64,10 +65,30 @@ def test_space_from_statistics(tmp_wd, distribution_name, distribution_options):
 
     parameter_space = ParameterSpace()
     update_space_from_statistics(parameter_space, statistics_tool.result)
+    fitted_distribution = statistics_tool.result.analysis.distributions[
+        variable_name
+    ].value
     assert (
-        parameter_space.distributions[variable_name].marginals[0].settings
-        == statistics_tool.result.analysis.distributions[variable_name].value.settings
+        parameter_space.distributions[variable_name].marginals[0].vimseo_settings.name
+        == distribution_name
     )
+    assert parameter_space.distributions[variable_name].marginals[
+        0
+    ].vimseo_settings.parameters == _get_fitted_distribution_parameters(
+        fitted_distribution
+    )
+
+
+def test_get_fitted_distribution_parameters_scipy_fallback():
+    """A distribution with no ``getParameter`` (SciPy) falls back to ``.args``."""
+
+    class _FakeNativeDistribution:
+        args = (1.0, 2.0)
+
+    class _FakeDistribution:
+        distribution = _FakeNativeDistribution()
+
+    assert _get_fitted_distribution_parameters(_FakeDistribution()) == (1.0, 2.0)
 
 
 def test_save_and_load_json(tmp_wd):

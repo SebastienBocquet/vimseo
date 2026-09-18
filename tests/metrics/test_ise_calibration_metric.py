@@ -125,7 +125,7 @@ def test_ise(
     )
 
     metric.set_reference_data(reference_data.to_dict_of_arrays(False))
-    result = metric._evaluate_measure(model_dataset.to_dict_of_arrays(False))
+    result = metric._evaluate_metric(model_dataset.to_dict_of_arrays(False))
 
     common_support = min(x_right - x_left, X_RIGHT - X_LEFT)
     if weight_left == 0.0 and weight_right == 0.0:  # ruff: ignore[float-equality-comparison]
@@ -195,4 +195,4 @@ def test_ise_disjoint_supports(x_left, x_right):
     metric.set_reference_data(reference_data.to_dict_of_arrays(False))
 
     with pytest.raises(ValueError):
-        metric._evaluate_measure(model_dataset.to_dict_of_arrays(False))
+        metric._evaluate_metric(model_dataset.to_dict_of_arrays(False))

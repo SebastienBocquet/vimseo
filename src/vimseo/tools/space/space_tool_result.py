@@ -23,12 +23,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+
+from gemseo.algos.parameter_space import ParameterSpace
 
 from vimseo.tools.base_tool import BaseResult
-
-if TYPE_CHECKING:
-    from gemseo.algos.parameter_space import ParameterSpace
 
 
 @dataclass

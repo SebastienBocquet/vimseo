@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
-from gemseo.uncertainty.distributions.base_distribution import DistributionSettings
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from numpy import inf
 from numpy import maximum as np_maximum
@@ -41,6 +40,7 @@ from vimseo.config.global_configuration import _configuration as config
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.space.random_variable_interface import OPTIONS_PER_DISTRIBUTION
 from vimseo.tools.space.random_variable_interface import add_random_variable_interface
+from vimseo.utilities.distribution import DistributionSettings
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

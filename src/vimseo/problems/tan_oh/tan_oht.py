@@ -477,7 +477,7 @@ class TanOpenHole(IntegratedModel):
     :meth:`.IntegratedModel.show_image`.
     """
 
-    CURVES: ClassVar[Sequence[tuple[str]]] = [("line_center_y", "line_center_sigma_xx")]
+    PLOTS: ClassVar[Sequence[tuple[str]]] = [("line_center_y", "line_center_sigma_xx")]
 
     FIELDS_FROM_FILE: ClassVar[Mapping[str, str]] = {
         "flux": r"^flux.vtk$",

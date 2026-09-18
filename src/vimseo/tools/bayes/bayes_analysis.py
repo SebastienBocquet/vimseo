@@ -108,12 +108,10 @@ class BayesSettings(BaseSettings):
     )
     prior_dist: Annotated[
         ComposedDistribution | list[DistributionImplementation], SkipValidation
-    ] = (
-        Field(
-            default=[],
-            description="The prior distribution. Either a list of openturns distribution "
-            "or a composed distribution.",
-        )
+    ] = Field(
+        default=[],
+        description="The prior distribution. Either a list of openturns distribution "
+        "or a composed distribution.",
     )
     frozen_variables: dict[str, list[int | float]] = Field(
         default={},

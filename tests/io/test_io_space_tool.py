@@ -19,9 +19,6 @@ import json
 
 import pytest
 from gemseo.algos.parameter_space import ParameterSpace
-from gemseo.uncertainty.distributions.base_distribution import (
-    InterfacedDistributionSettings,
-)
 from numpy import array
 
 from vimseo.api import create_model
@@ -31,6 +28,7 @@ from vimseo.tools.space.random_variable_interface import add_random_variable_int
 from vimseo.tools.space.space_tool import SpaceTool
 from vimseo.tools.space.space_tool_result import SpaceToolResult
 from vimseo.utilities.distribution import DistributionParameters
+from vimseo.utilities.distribution import InterfacedDistributionSettings
 from vimseo.utilities.distribution_utils import check_distribution
 
 
@@ -110,7 +108,7 @@ def test_write_for_interfaced_distribution(tmp_wd):
         SpaceToolFileIO().read(file_name=f"{file_base_name}.json").parameter_space
     )
     marginal = read_parameter_space.distributions["x"].marginals[0]
-    assert marginal.settings["name"] == "Normal"
+    assert marginal.vimseo_settings.name == "Normal"
     assert marginal.mean == 1.0  # ruff: ignore[float-equality-comparison]
     assert marginal.standard_deviation == 0.05  # ruff: ignore[float-equality-comparison]
 

@@ -24,6 +24,7 @@ from numpy import array
 
 from vimseo.api import create_model
 from vimseo.config.global_configuration import _configuration as config
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseSettings
@@ -31,8 +32,6 @@ from vimseo.tools.base_tool import BaseResult
 
 if TYPE_CHECKING:
     from plotly.graph_objs import Figure
-
-    from vimseo.core.base_integrated_model import IntegratedModel
 
 
 class ModelCreationSettings(BaseSettings):

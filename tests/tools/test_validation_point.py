@@ -146,12 +146,12 @@ def test_input_space(tmp_wd, distribution, is_measured):
     )
     if distribution.name == "Weibull":
         assert (
-            input_space.distributions["x1"].marginals[0].settings["name"]
+            input_space.distributions["x1"].marginals[0].vimseo_settings.name
             == "WeibullMin"
         )
     else:
         assert (
-            input_space.distributions["x1"].marginals[0].settings["name"]
+            input_space.distributions["x1"].marginals[0].vimseo_settings.name
             == distribution.name
         )
     assert input_space.uncertain_variables == ["x1"]

@@ -18,8 +18,12 @@ from __future__ import annotations
 from importlib.metadata import version
 from pathlib import Path
 
+from vimseo import _gemseo_grammar_compat
+
 __version__ = version("vimseo")
 
 EXAMPLE_RUNS_DIR = (
     Path(__file__).parent.parent.parent / "docs" / "runnable_examples" / "model_runs"
 )
+
+_gemseo_grammar_compat.apply()

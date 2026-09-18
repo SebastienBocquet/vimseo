@@ -250,6 +250,15 @@ def test_cache_from_archive(tmp_wd):
     assert len(model.archive_manager.get_archived_results()) == 1
 
 
+def test_archived_outputs_exclude_removed_disciplines(tmp_wd):
+    """Internal chain-coupling variables must not leak into the archive."""
+    model = create_model("MockModel", "LC1")
+    model.execute()
+    archived_outputs = model.archive_manager.get_archived_results()[0]["outputs"]
+    assert "x2" not in archived_outputs
+    model.create_cache_from_archive()  # used to KeyError before the fix
+
+
 def test_persistent_file_names(tmp_wd):
     """Check that storage archive correctly stores the filenames to be persisted."""
 

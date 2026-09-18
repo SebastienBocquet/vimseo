@@ -27,7 +27,6 @@ from __future__ import annotations
 import logging
 
 from gemseo.algos.opt.nlopt.settings.nlopt_cobyla_settings import NLOPT_COBYLA_Settings
-from gemseo_calibration.calibrator import CalibrationMetricSettings
 from numpy import atleast_1d
 
 from vimseo import EXAMPLE_RUNS_DIR
@@ -36,6 +35,7 @@ from vimseo.api import create_model
 from vimseo.core.model_settings import IntegratedModelSettings
 from vimseo.io.space_io import SpaceToolFileIO
 from vimseo.storage_management.base_storage_manager import PersistencyPolicy
+from vimseo.tools.calibration.calibration_metrics import CalibrationMetricSettings
 from vimseo.tools.calibration.calibration_step import CalibrationStep
 from vimseo.tools.calibration.calibration_step import CalibrationStepInputs
 from vimseo.tools.calibration.calibration_step import CalibrationStepSettings
@@ -172,7 +172,9 @@ step.execute(
             "Cantilever": model_cantilever,
             "ThreePoints": model_three_points,
         },
-        control_outputs={output_name: CalibrationMetricSettings(measure="RelativeMSE")},
+        control_outputs={
+            output_name: CalibrationMetricSettings(metric_name="RelativeMSE")
+        },
         input_names=[
             "height",
             "width",

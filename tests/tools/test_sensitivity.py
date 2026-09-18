@@ -34,10 +34,10 @@ from vimseo.tools.sensitivity.sensitivity_result import SensitivityResult
 def parameter_space():
     parameter_space = ParameterSpace()
     parameter_space.add_random_variable(
-        "x1", "OTUniformDistribution", size=1, lower=-1.0, upper=1.0
+        "x1", "OTUniformDistribution", size=1, minimum=-1.0, maximum=1.0
     )
     parameter_space.add_random_variable(
-        "x1_maximum_only", "OTUniformDistribution", size=1, lower=-1.0, upper=1.0
+        "x1_maximum_only", "OTUniformDistribution", size=1, minimum=-1.0, maximum=1.0
     )
     return parameter_space
 
@@ -147,7 +147,7 @@ def test_sensitivity_vector_input(tmp_wd, sensitivity_algo, settings, expected_i
         sigma=[0.2],
     )
     parameter_space.add_random_variable(
-        "x1", "OTUniformDistribution", lower=0.0, upper=2.0
+        "x1", "OTUniformDistribution", minimum=0.0, maximum=2.0
     )
     sensitivity_tool = SensitivityTool()
     sensitivity_tool.execute(

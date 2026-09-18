@@ -51,7 +51,7 @@ class MockSleepPre_LC1(MockSleepPre):
     def _run(self, input_data):
         time.sleep(float(input_data["pre_duration"][0]))
         x2 = input_data["x1"] + 2
-        return {"x2": x2}
+        return {"x2": x2, "error_code": 0}
 
 
 class MockSleepRun(ExternalSoftwareComponent):
@@ -64,7 +64,11 @@ class MockSleepRun(ExternalSoftwareComponent):
     def _run(self, input_data):
         time.sleep(float(input_data["run_duration"][0]))
         y0 = input_data["x2"] * 2
-        return {"y0": y0, "post_duration": input_data["post_duration"]}
+        return {
+            "y0": y0,
+            "post_duration": input_data["post_duration"],
+            "error_code": 0,
+        }
 
 
 class MockSleepPost(PostProcessor):

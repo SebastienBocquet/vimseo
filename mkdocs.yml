@@ -109,6 +109,7 @@ nav:
   - Run a study: how_to/run_a_study.md
   - Integrate new models: how_to/model_integration.md
   - Define a Space of Parameters: how_to/parameter_space/parameter_space.md
+  - Configure VIMSEO with a .env file: how_to/configuration.md
 - API: reference/vimseo/
 - Reference guides:
    - Available Models: generated/runnable_examples/01_models

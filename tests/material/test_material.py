@@ -30,6 +30,7 @@ from vimseo.material.metadata import MaterialMetadata
 from vimseo.material.test_references import MATERIAL_TEST_REFERENCES
 from vimseo.material_lib import MATERIAL_LIB_DIR
 from vimseo.utilities.distribution import DistributionParameters
+from vimseo.utilities.distribution_utils import check_distribution
 
 
 @pytest.mark.parametrize(
@@ -78,7 +79,8 @@ def test_material_relation(tmp_wd, metadata, distribution):
 
 
 def test_material(tmp_wd):
-    """Check that a material can be serialized to a JSON file and reloaded."""
+    """Check that a material can be serialized to a JSON file and reloaded, and that the
+    serialized distribution (including truncation bounds) matches what was declared."""
     mat_rel_1 = MaterialRelation(
         tag="Ta6v_v1",
         name="Ta6v_elastic_iso",
@@ -103,6 +105,18 @@ def test_material(tmp_wd):
 
     file_name = "material.json"
     material.to_json(file_name=file_name)
+
+    with Path(file_name).open() as f:
+        serialized = json.load(f)
+    young_modulus_distribution = serialized["material_relations"][0]["properties"][0][
+        "distribution"
+    ]
+    assert young_modulus_distribution["name"] == "Normal"
+    assert young_modulus_distribution["mu"] == 2.1e5  # ruff: ignore[float-equality-comparison]
+    assert young_modulus_distribution["sigma"] == 1e2  # ruff: ignore[float-equality-comparison]
+    assert young_modulus_distribution["lower_bound"] == 1.9e5  # ruff: ignore[float-equality-comparison]
+    assert young_modulus_distribution["upper_bound"] == 2.3e5  # ruff: ignore[float-equality-comparison]
+
     material_loaded = Material.from_json(file_name)
 
     assert material == material_loaded
@@ -119,8 +133,9 @@ def test_material(tmp_wd):
 
 
 def test_uncertain_variables():
-    """Check that a material with uncertain properties can return its property names and
-    can be exported as a parameter space."""
+    """Check that a material with uncertain properties can return its property names,
+    can be exported as a parameter space, and that the property's bounds truncate the
+    resulting distribution."""
     mat_rel_1 = MaterialRelation(
         tag="Ta6v_v1",
         name="Ta6v_elastic_iso",
@@ -143,6 +158,14 @@ def test_uncertain_variables():
 
     parameter_space = material.to_parameter_space()
     assert parameter_space.variable_names == ["young_modulus"]
+    check_distribution(
+        parameter_space,
+        "young_modulus",
+        mu=2.1e5,
+        sigma=1e2,
+        lower_bound=1.9e5,
+        upper_bound=2.3e5,
+    )
 
 
 def test_update_from_parameter_space():
@@ -155,7 +178,7 @@ def test_update_from_parameter_space():
     )
     material.update_from_parameter_space(parameter_space)
     assert material.name_to_property["E1"].distribution == DistributionParameters(
-        **parameter_space.distributions["E1"].marginals[0].settings
+        **parameter_space.distributions["E1"].marginals[0].vimseo_settings.model_dump()
     )
 
 
@@ -207,7 +230,11 @@ def test_to_json_schema(tmp_wd):
     assert schema_file.is_file()
 
     schema = json.loads(schema_file.read_text())
-    assert schema == material.model_json_schema()
+    # ``model_json_schema()`` returns a fresh dict on every call (unlike the pydantic
+    # version this test was written against, which cached and returned the same dict,
+    # so a previous stamping happened to leak into it); stamp a fresh one here to
+    # compare like for like instead of relying on that incidental caching behavior.
+    assert schema == material._stamp_grammar_name(material.model_json_schema())
 
 
 def test_update_uniform_distribution_keeps_parameters():

@@ -21,16 +21,16 @@ https://emmo-repo.github.io/versions/1.0.0-beta/emmo.html
 
 from __future__ import annotations
 
-from operator import call
-from typing import TYPE_CHECKING
-
 from pydantic import Field
 
+from vimseo.material.material_property import MaterialProperty
 from vimseo.material.metadata import MaterialMetadata
 from vimseo.utilities.json_grammar_utils import BaseJsonIO
 
-if TYPE_CHECKING:
-    from vimseo.material.material_property import MaterialProperty
+
+def _call(obj, /, *args, **kwargs):
+    """Backport of operator.call (Python 3.11+) for Python 3.10 compatibility."""
+    return obj(*args, **kwargs)
 
 
 class MaterialRelation(BaseJsonIO):
@@ -50,4 +50,4 @@ class MaterialRelation(BaseJsonIO):
 
     def get_relation(self) -> callable:
         """Return the type of the material relation."""
-        return call
+        return _call

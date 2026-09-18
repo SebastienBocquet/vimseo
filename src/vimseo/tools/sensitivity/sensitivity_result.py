@@ -16,22 +16,18 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field
 from json import dumps
-from typing import TYPE_CHECKING
 
+from gemseo.uncertainty.sensitivity.base_sensitivity_analysis import (
+    BaseSensitivityAnalysis,
+)
 from gemseo.utils.string_tools import MultiLineString
 
 from vimseo.tools.base_tool import BaseResult
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from gemseo.uncertainty.sensitivity.base_sensitivity_analysis import (
-        BaseSensitivityAnalysis,
-    )
 
 LOGGER = logging.getLogger(__name__)
 

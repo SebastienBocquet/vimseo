@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import logging
 import select
+import shlex
 import signal
 import subprocess
 import sys
@@ -115,7 +116,7 @@ class JobExecutor(metaclass=GoogleDocstringInheritanceMeta):
             check_subprocess: Whether to raise an error in case of subprocess failure.
         """
         self._command_line = self._replace_in_command_line(self._command_template)
-        cmd = self._command_line.split()
+        cmd = shlex.split(self._command_line)
         LOGGER.info(f"Executing command: {self._command_line}")
         return self._execute_external_software(cmd, check_subprocess)
 
