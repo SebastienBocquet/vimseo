@@ -120,7 +120,7 @@ def test_result_metadata(tmp_wd, reference_data):
 
 def test_error_metric_histogram(tmp_wd, verificator):
     """Check the verification plots."""
-    plot = PlotFactory().create("ErrorMetricHistogram")
+    plot = PlotFactory().create("ErrorMetricHistogramPlotter")
     plot.working_directory = verificator.working_directory
     plot.execute(
         verificator.result.element_wise_metrics,

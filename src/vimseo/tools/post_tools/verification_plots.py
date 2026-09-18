@@ -41,7 +41,7 @@ _DOF_ABSCISSA_NAME = "N_dof_coarsest / N_dof"
 ELEMENT_SIZE_PRECISION = 4
 
 
-class ErrorMetricHistogram(Plotter):
+class ErrorMetricHistogramPlotter(Plotter):
     """An histogram plot where the abscissa is the error value and the ordinate the
     number of verification points corresponding to this error."""
 
@@ -72,7 +72,7 @@ class ErrorMetricHistogram(Plotter):
         self.result.figure = fig
 
 
-class ConvergenceCrossValidation(Plotter):
+class ConvergenceCrossValidationPlotter(Plotter):
     """A line plot showing the output values versus the element size.
 
     All folds (of three values among the original four values) from the cross validation
@@ -186,7 +186,7 @@ class ConvergenceCrossValidation(Plotter):
         return fig
 
 
-class ConvergenceFit(Plotter):
+class ConvergenceFitPlotter(Plotter):
     """A line plot of the output versus the element size, gathering every estimate of
     the converged value at a null element size.
 
@@ -322,7 +322,7 @@ class ConvergenceFit(Plotter):
         return fig
 
 
-class ErrorVersusElementSize(Plotter):
+class ErrorVersusElementSizePlotter(Plotter):
     """A line plot showing the error between the output values and the Richardson
     extrapolation, versus the element size."""
 
@@ -406,7 +406,7 @@ class ErrorVersusElementSize(Plotter):
         return fig
 
 
-class RelativeErrorVersusCpuTime(Plotter):
+class RelativeErrorVersusCpuTimePlotter(Plotter):
     """A line plot showing the relative error between the output values and the
     Richardson extrapolation, versus the element size."""
 
@@ -456,7 +456,7 @@ class RelativeErrorVersusCpuTime(Plotter):
         return fig
 
 
-class RelativeErrorVersusElementSize(Plotter):
+class RelativeErrorVersusElementSizePlotter(Plotter):
     r"""A line plot showing the element size versus the relative error
     :math:`\frac{q - q_{extrap}}{q_{extrap}}`."""
 
