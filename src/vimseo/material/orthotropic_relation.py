@@ -21,8 +21,6 @@ https://emmo-repo.github.io/versions/1.0.0-beta/emmo.html
 
 from __future__ import annotations
 
-from composipy import OrthotropicMaterial
-
 from vimseo.material.material_property import MaterialProperty
 from vimseo.material.material_relation import MaterialRelation
 
@@ -32,22 +30,6 @@ class OrthotropicRelation(MaterialRelation):
 
     name: str = "orthotropic"
     thickness: float = 1.0
-
-    def get_relation(self) -> OrthotropicMaterial:
-        """Return the type of the material relation."""
-        properties = self.get_values_as_dict()
-        return OrthotropicMaterial(
-            e1=properties["E1"],
-            e2=properties["E2"],
-            g12=properties["G12"],
-            v12=properties["nu12"],
-            thickness=self.thickness,
-            t1=properties["Xt"],
-            c1=properties["Xc"],
-            t2=properties["Yt"],
-            c2=properties["Yc"],
-            s=properties["S12"],
-        )
 
     def model_post_init(self, __context):
         """Post-initialization checks."""
