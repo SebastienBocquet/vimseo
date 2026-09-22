@@ -15,6 +15,68 @@
 
 from __future__ import annotations
 
+import subprocess
+from pathlib import Path
+
 from vimseo.utilities.pytest_conftest import *  # ruff: ignore[unused-import, undefined-local-with-import-star]
+from vimseo.utilities.pytest_conftest import (
+    pytest_sessionfinish as _fortran_sessionfinish,
+)
+from vimseo.utilities.pytest_conftest import (
+    pytest_sessionstart as _fortran_sessionstart,
+)
 
 # os.environ["VIMS_PROJECT_DIRECTORY"] = os.path.dirname(__file__)
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_baseline_untracked: set[str] = set()
+
+
+def _untracked_files() -> set[str]:
+    """Return the paths git reports as untracked ("??"), or an empty set if git is
+    unusable (no git binary, or the tree is not a git checkout)."""
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=all"],
+            cwd=_REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return set()
+    return {line[3:] for line in result.stdout.splitlines() if line.startswith("??")}
+
+
+def pytest_sessionstart(session):
+    """Snapshot the untracked files before the run, in addition to the fortran
+    stdout/stderr workaround from ``pytest_conftest``."""
+    _fortran_sessionstart(session)
+    if not hasattr(session.config, "workerinput"):
+        global _baseline_untracked
+        _baseline_untracked = _untracked_files()
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Fail the run if the test suite left untracked files in the repository.
+
+    This catches tests that write to a cwd-relative path instead of using the
+    ``tmp_wd`` fixture. Only the xdist controller (or a non-parallel run) does the
+    comparison, once, after every worker has finished.
+    """
+    _fortran_sessionfinish(session)
+    if hasattr(session.config, "workerinput"):
+        return
+    new_files = _untracked_files() - _baseline_untracked
+    if new_files:
+        message = (
+            "The test suite left untracked files in the repository -- a test wrote "
+            "to a cwd-relative path instead of using the `tmp_wd` fixture:\n"
+            + "\n".join(f"  {f}" for f in sorted(new_files))
+        )
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporter is not None:
+            reporter.write_line(message, red=True, bold=True)
+        else:
+            print(message)
+        session.exitstatus = 1
