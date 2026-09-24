@@ -31,9 +31,15 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from gemseo.algos.design_space import DesignSpace
+from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.datasets.dataset import Dataset
 from pydantic import BaseModel
 
+from vimseo.tools.space.random_variable_interface import add_deterministic_from_dict
+from vimseo.tools.space.random_variable_interface import add_distributions_from_dict
+from vimseo.tools.space.random_variable_interface import deterministic_to_dict
+from vimseo.tools.space.random_variable_interface import distributions_to_dict
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
 if TYPE_CHECKING:
@@ -198,6 +204,57 @@ def _decode_dict_key(type_name: str, value: Any) -> Any:
     return value
 
 
+def _pickle_fallback(group: h5py.Group, key: str, value: Any) -> None:
+    """Serialize a value as a pickle blob, the last-resort fallback."""
+    try:
+        data = np.frombuffer(pickle.dumps(value), dtype=np.uint8)
+        LOGGER.info(f"PICKLE fallback: key='{key}', type={type(value)}, value={value}")
+        group.create_dataset(key, data=data)
+        group[key].attrs["__type__"] = "pickle"
+    except (pickle.PicklingError, TypeError) as e:
+        # Non serializable, store None
+        LOGGER.warning(f"Cannot pickle key='{key}', type={type(value)}: {e}")
+        group.attrs[key] = "__null__"
+        group.attrs[f"__type__{key}"] = "null"
+
+
+def _serialize_space(group: h5py.Group, key: str, space: DesignSpace) -> None:
+    """Serialize a ``DesignSpace``/``ParameterSpace`` in clear.
+
+    Deterministic variables are described through their bounds/type/size/
+    current value (:func:`deterministic_to_dict`); for a ``ParameterSpace``,
+    uncertain variables are described through the ``vimseo_settings``
+    attached to their marginals by :func:`add_random_variable_interface`
+    (:func:`distributions_to_dict`).
+
+    If the space contains a variable that was not built through vimseo's own
+    API -- so it carries no ``vimseo_settings`` -- or an unsupported
+    ``InterfacedDistribution`` vector, the *whole* space falls back to a
+    single pickle blob rather than a partial, fragile reconstruction: gemseo
+    does not expose a public API to graft one already-built random variable
+    back into a space without replaying its own (private) bookkeeping.
+    """
+    is_parameter_space = isinstance(space, ParameterSpace)
+    uncertain = None
+    if is_parameter_space:
+        try:
+            uncertain = distributions_to_dict(space)
+        except (AttributeError, ValueError) as e:
+            LOGGER.info(
+                f"PICKLE fallback: key='{key}', type={type(space).__name__}: "
+                f"its distributions could not be described in clear ({e})."
+            )
+            _pickle_fallback(group, key, space)
+            return
+
+    sub = group.require_group(key)
+    sub.attrs["__type__"] = "parameter_space" if is_parameter_space else "design_space"
+    sub.attrs["__class__"] = _class_path(type(space))
+    serialize_value(sub, "deterministic", deterministic_to_dict(space))
+    if is_parameter_space:
+        serialize_value(sub, "uncertain", uncertain)
+
+
 def serialize_value(group: h5py.Group, key: str, value: Any) -> None:
     """Recurcively serialize a value in an HDF5 group."""
 
@@ -311,20 +368,13 @@ def serialize_value(group: h5py.Group, key: str, value: Any) -> None:
         for name in type(value).model_fields:
             serialize_value(sub, name, getattr(value, name))
 
+    elif isinstance(value, DesignSpace):
+        # ParameterSpace is a DesignSpace subclass; checked after BaseModel
+        # (it is neither) and before the pickle fallback.
+        _serialize_space(group, key, value)
+
     else:
-        try:
-            # Fallback pickle
-            data = np.frombuffer(pickle.dumps(value), dtype=np.uint8)
-            LOGGER.info(
-                f"PICKLE fallback: key='{key}', type={type(value)}, value={value}"
-            )
-            group.create_dataset(key, data=data)
-            group[key].attrs["__type__"] = "pickle"
-        except (pickle.PicklingError, TypeError) as e:
-            # Non serializable, store None
-            LOGGER.warning(f"Cannot pickle key='{key}', type={type(value)}: {e}")
-            group.attrs[key] = "__null__"
-            group.attrs[f"__type__{key}"] = "null"
+        _pickle_fallback(group, key, value)
 
 
 def deserialize_value(node: h5py.Group | h5py.Dataset, key: str) -> Any:
@@ -471,6 +521,18 @@ def deserialize_value(node: h5py.Group | h5py.Dataset, key: str) -> Any:
         # ``model_construct`` skips validation and defaults/validators, so a
         # result read back is not re-validated against the current grammar.
         return cls.model_construct(**kwargs)
+
+    if type_ in ("parameter_space", "design_space"):
+        cls = _import_class(item.attrs["__class__"])
+        space = cls()
+        add_deterministic_from_dict(
+            space, deserialize_value(item, "deterministic") or {}
+        )
+        if type_ == "parameter_space":
+            add_distributions_from_dict(
+                space, deserialize_value(item, "uncertain") or {}
+            )
+        return space
 
     if type_ == "pickle":
         return pickle.loads(item[()].tobytes())

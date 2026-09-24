@@ -28,23 +28,34 @@ import h5py
 import numpy as np
 import pandas as pd
 import pytest
+from gemseo.algos.design_space import DesignSpace
+from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.datasets.dataset import Dataset
 from gemseo.datasets.io_dataset import IODataset
 from pydantic import BaseModel
 
 from vimseo.core.load_case import LoadCase
 from vimseo.core.model_description import ModelDescription
+from vimseo.material.material import Material
+from vimseo.material.material_property import MaterialProperty
+from vimseo.material.material_relation import MaterialRelation
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.base_result import assert_results_equal
 from vimseo.tools.bayes.bayes_analysis_result import BayesAnalysisResult
+from vimseo.tools.io.material_result import MaterialResult
 from vimseo.tools.metadata import ToolResultMetadata
 from vimseo.tools.sensitivity.sensitivity_result import SensitivityResult
 from vimseo.tools.serializer import deserialize_value
 from vimseo.tools.serializer import serialize_value
+from vimseo.tools.space.random_variable_interface import add_random_variable_interface
+from vimseo.tools.space.space_tool_result import SpaceToolResult
 from vimseo.tools.statistics.statistics_result import StatisticsResult
 from vimseo.tools.validation.validation_point_result import ValidationPointResult
 from vimseo.tools.validation_case.validation_case_result import ValidationCaseResult
 from vimseo.utilities.datasets import assert_frame_equal_unordered
+from vimseo.utilities.distribution import DistributionParameters
+from vimseo.utilities.distribution import DistributionSettings
+from vimseo.utilities.distribution import InterfacedDistributionSettings
 
 
 @pytest.fixture
@@ -528,6 +539,191 @@ class TestClearCodecs:
         assert rt.outer.name == "x"
         assert isinstance(rt.outer.inner, _InnerModel)
         assert rt.outer.inner.value == pytest.approx(3.5)
+
+
+# ---------------------------------------------------------------------------
+# Tests — ParameterSpace / DesignSpace, via the DistributionSettings attached
+# to each marginal (the concrete case that motivated this codec: "I don't see
+# the Distributions serialized").
+# ---------------------------------------------------------------------------
+
+
+def _settings_dumps(space: ParameterSpace) -> dict[str, dict]:
+    """Return, per uncertain variable, the ``model_dump()`` of its settings.
+
+    Comparing dumps rather than the settings objects themselves sidesteps a
+    pre-existing (unrelated to this codec) design choice of
+    ``add_distributions_from_dict``: it always reconstructs a
+    ``DistributionParameters`` instance, even when the original settings
+    were a plain ``DistributionSettings`` -- the same normalization already
+    happens on the deprecated JSON round-trip and in
+    ``Material.update_from_parameter_space``. The two classes share the same
+    fields, so comparing field values is the meaningful check.
+    """
+    return {
+        name: space.distributions[name].marginals[0].vimseo_settings.model_dump()
+        for name in space.uncertain_variables
+    }
+
+
+class TestParameterSpaceCodec:
+    def test_uncertain_only_roundtrip(self, tmp_hdf5):
+        """Several distribution kinds, including the DistributionSettings case
+        that was reported as missing."""
+        space = ParameterSpace()
+        add_random_variable_interface(
+            space, "x", DistributionSettings(name="Normal", mu=1.0, sigma=0.05)
+        )
+        add_random_variable_interface(
+            space, "y", DistributionSettings(name="Uniform", lower=-1.0, upper=2.0)
+        )
+        add_random_variable_interface(
+            space,
+            "t",
+            DistributionSettings(name="Triangular", lower=-1.0, upper=1.0, mode=0.0),
+        )
+        add_random_variable_interface(
+            space,
+            "w",
+            DistributionSettings(name="Weibull", location=0.0, scale=1.0, shape=2.0),
+        )
+        add_random_variable_interface(
+            space, "e", DistributionSettings(name="Exponential", loc=0.0, rate=1.5)
+        )
+        add_random_variable_interface(
+            space,
+            "b",
+            InterfacedDistributionSettings(name="Exponential", parameters=(1.0, 0.0)),
+        )
+
+        with h5py.File(tmp_hdf5, "w") as f:
+            serialize_value(f, "space", space)
+            # It must be described in clear, not pickled.
+            assert f["space"].attrs["__type__"] == "parameter_space"
+        with h5py.File(tmp_hdf5, "r") as f:
+            rt = deserialize_value(f, "space")
+
+        assert isinstance(rt, ParameterSpace)
+        assert set(rt.uncertain_variables) == set(space.uncertain_variables)
+        assert _settings_dumps(rt) == _settings_dumps(space)
+
+        # The reconstructed distributions are functional (correct parameters),
+        # not just labels: sample and compare against the original.
+        for name in space.uncertain_variables:
+            original = space.distributions[name].marginals[0]
+            rebuilt = rt.distributions[name].marginals[0]
+            np.testing.assert_allclose(
+                original.mean, rebuilt.mean, rtol=1e-8, atol=1e-12
+            )
+
+    def test_mixed_deterministic_and_uncertain_roundtrip(self, tmp_hdf5):
+        """The real-world mixed case: Material.to_parameter_space()."""
+        material = Material(
+            name="m",
+            material_relations=[
+                MaterialRelation(
+                    name="r",
+                    properties=[
+                        MaterialProperty(
+                            name="young_modulus",
+                            value=2.1e5,
+                            lower_bound=1.9e5,
+                            upper_bound=2.3e5,
+                            distribution=DistributionParameters(
+                                name="Normal", mu=2.1e5, sigma=1e2
+                            ),
+                        ),
+                        MaterialProperty(
+                            name="nu_p", value=0.3, lower_bound=0.2, upper_bound=0.4
+                        ),
+                    ],
+                )
+            ],
+        )
+        space = material.to_parameter_space(variable_names=["young_modulus", "nu_p"])
+
+        with h5py.File(tmp_hdf5, "w") as f:
+            serialize_value(f, "space", space)
+        with h5py.File(tmp_hdf5, "r") as f:
+            rt = deserialize_value(f, "space")
+
+        assert set(rt.variable_names) == {"young_modulus", "nu_p"}
+        assert rt.uncertain_variables == ["young_modulus"]
+        np.testing.assert_allclose(rt.get_current_value(["nu_p"]), [0.3])
+        np.testing.assert_allclose(rt.get_lower_bound("nu_p"), [0.2])
+        np.testing.assert_allclose(rt.get_upper_bound("nu_p"), [0.4])
+        assert _settings_dumps(rt) == _settings_dumps(space)
+
+    def test_design_space_roundtrip(self, tmp_hdf5):
+        """A plain DesignSpace (e.g. CalibrationStepResult.design_space)."""
+        space = DesignSpace()
+        space.add_variable(
+            "a", size=2, lower_bound=-1.0, upper_bound=1.0, value=[0.1, 0.2]
+        )
+        space.add_variable("b", lower_bound=0.0)
+
+        with h5py.File(tmp_hdf5, "w") as f:
+            serialize_value(f, "space", space)
+            assert f["space"].attrs["__type__"] == "design_space"
+        with h5py.File(tmp_hdf5, "r") as f:
+            rt = deserialize_value(f, "space")
+
+        assert type(rt) is DesignSpace
+        assert rt == space
+
+    def test_variable_without_vimseo_settings_falls_back_to_pickle(self, tmp_hdf5):
+        """A space built by bypassing vimseo's own API has no vimseo_settings.
+
+        The whole space falls back to a single pickle blob (gemseo does not
+        expose a public API to graft an already-built random variable back
+        into a space), and it must still round-trip exactly.
+        """
+        space = ParameterSpace()
+        space.add_random_variable("r", "OTNormalDistribution", mu=0.0, sigma=1.0)
+        space.add_variable("z", value=3.0)
+
+        with h5py.File(tmp_hdf5, "w") as f:
+            serialize_value(f, "space", space)
+            assert f["space"].attrs["__type__"] == "pickle"
+        with h5py.File(tmp_hdf5, "r") as f:
+            rt = deserialize_value(f, "space")
+
+        assert rt == space
+
+    def test_space_tool_result_full_roundtrip(self, tmp_hdf5):
+        space = ParameterSpace()
+        add_random_variable_interface(
+            space, "x", DistributionSettings(name="Normal", mu=1.0, sigma=0.05)
+        )
+        result = SpaceToolResult(parameter_space=space)
+        rt = roundtrip(result, tmp_hdf5)
+        assert isinstance(rt.parameter_space, ParameterSpace)
+        assert _settings_dumps(rt.parameter_space) == _settings_dumps(space)
+
+    def test_material_result_full_roundtrip(self, tmp_hdf5):
+        material = Material(
+            name="m",
+            material_relations=[
+                MaterialRelation(
+                    name="r",
+                    properties=[
+                        MaterialProperty(
+                            name="young_modulus",
+                            value=2.1e5,
+                            distribution=DistributionParameters(
+                                name="Normal", mu=2.1e5, sigma=1e2
+                            ),
+                        ),
+                    ],
+                )
+            ],
+        )
+        space = material.to_parameter_space()
+        result = MaterialResult(material=material, parameter_space=space)
+        rt = roundtrip(result, tmp_hdf5)
+
+        assert rt.material.name == "m"
+        assert _settings_dumps(rt.parameter_space) == _settings_dumps(space)
 
 
 # ---------------------------------------------------------------------------
