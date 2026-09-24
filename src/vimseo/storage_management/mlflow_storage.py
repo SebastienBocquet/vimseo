@@ -117,14 +117,12 @@ class MlflowArchive(BaseArchiveManager):
             raise ValueError(msg)
 
         # This archive only relies on a client bound to its own tracking uri, and
-        # never on the fluent API of MLflow (``mlflow.search_runs``,
-        # ``mlflow.set_experiment``...), which reads a state shared by the whole
-        # process: another archive with another uri would overwrite it.
+        # never on the fluent API of MLflow (``mlflow.set_tracking_uri``,
+        # ``mlflow.search_runs``, ``mlflow.set_experiment``...), which reads a state
+        # shared by the whole process: another archive with another uri would
+        # overwrite it. A script which queries the database with the fluent API must
+        # set the uri itself: ``mlflow.set_tracking_uri(archive_manager.uri)``.
         self._mlflow_client = mlflow.tracking.MlflowClient(tracking_uri=self._uri)
-        # Only a convenience for user scripts that query the database with the
-        # fluent API, as done in the documentation. Nothing in this class reads it.
-        # With several archives, the last one created wins.
-        mlflow.set_tracking_uri(self._uri)
         self._experiment_name = (
             config.database.experiment_name
             if config.database.experiment_name != ""

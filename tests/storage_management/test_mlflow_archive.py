@@ -243,3 +243,24 @@ def test_archives_with_different_uris_do_not_interfere(tmp_wd):
         assert len(artifacts) > 0
     assert "archive_A" in str(model_a.archive_manager.job_directory)
     assert "archive_B" in str(model_b.archive_manager.job_directory)
+
+
+def test_archive_does_not_change_the_global_tracking_uri(tmp_wd):
+    """Check that creating an archive leaves the tracking uri of the process alone.
+
+    A script which uses the MLflow API directly must set the uri itself, with
+    ``mlflow.set_tracking_uri(archive_manager.uri)``.
+    """
+    uri_before = mlflow.get_tracking_uri()
+    model = create_model(
+        "MockModelPersistent",
+        "LC1",
+        model_options=IntegratedModelSettings(archive_manager="MlflowArchive"),
+    )
+    model.cache = None
+    model.execute()
+    assert mlflow.get_tracking_uri() == uri_before
+
+    mlflow.set_tracking_uri(model.archive_manager.uri)
+    experiment = mlflow.get_experiment_by_name(model.archive_manager.experiment_name)
+    assert len(mlflow.search_runs(experiment_ids=[experiment.experiment_id])) == 1

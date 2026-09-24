@@ -39,7 +39,23 @@ and this project adheres to
 - Renamed the `TanOpenHole` model input `grid_size` to `grid_resolution` (same
   meaning: number of grid points per direction) to remove the ambiguity with a
   grid spacing.
+- `MlflowArchive` no longer calls `mlflow.set_tracking_uri()` and
+  `mlflow.set_experiment()`: it queries the database with its own MLflow client,
+  so that several archives with different uris can coexist in the same process.
+  A script which uses the MLflow API directly (`mlflow.search_runs()`,
+  `mlflow.delete_run()`...) must now call
+  `mlflow.set_tracking_uri(model.archive_manager.uri)` first, otherwise it
+  queries the default `./mlruns` database without any error.
+- `MlflowArchive` creates the MLflow run when the job starts instead of when its
+  results are published. Runs which are still running or failed are not returned
+  by `get_archived_results()`.
 
 ## Fixed
 
-- None
+- The `directory_archive_job` metadata was empty in the outputs and in the cache of
+  a model archived with `MlflowArchive`, and an invalid path on Windows.
+- A persistency policy deleting the job with `MlflowArchive` deleted the previous
+  run instead of the current one.
+- A model whose job raised left its `MlflowArchive` run in the running state; it is
+  now marked as failed.
+- Two `MlflowArchive` with different uris in the same process disturbed each other.
