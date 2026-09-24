@@ -26,8 +26,8 @@ from itertools import starmap
 from numbers import Number
 from pathlib import Path
 from typing import TYPE_CHECKING
-from urllib.parse import unquote
 from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 import mlflow
 import numpy as np
@@ -116,14 +116,21 @@ class MlflowArchive(BaseArchiveManager):
             msg = f"Wrong value for config.database.mode: {config.database.mode}"
             raise ValueError(msg)
 
+        # This archive only relies on a client bound to its own tracking uri, and
+        # never on the fluent API of MLflow (``mlflow.search_runs``,
+        # ``mlflow.set_experiment``...), which reads a state shared by the whole
+        # process: another archive with another uri would overwrite it.
+        self._mlflow_client = mlflow.tracking.MlflowClient(tracking_uri=self._uri)
+        # Only a convenience for user scripts that query the database with the
+        # fluent API, as done in the documentation. Nothing in this class reads it.
+        # With several archives, the last one created wins.
         mlflow.set_tracking_uri(self._uri)
         self._experiment_name = (
             config.database.experiment_name
             if config.database.experiment_name != ""
             else f"{self._model_name}_{self._load_case_name}"
         )
-        self._mlflow_client = mlflow.tracking.MlflowClient(tracking_uri=self._uri)
-        mlflow.set_experiment(self._experiment_name)
+        self._get_or_create_experiment_id(self._experiment_name)
         self._run_is_open = False
 
     @property
@@ -136,27 +143,45 @@ class MlflowArchive(BaseArchiveManager):
         """The database uri."""
         return f"{self._uri}"
 
+    def _get_or_create_experiment_id(self, experiment_name: str) -> str:
+        """Return the id of an experiment, that is created if it does not exist."""
+        experiment = self._mlflow_client.get_experiment_by_name(experiment_name)
+        if experiment is None:
+            return self._mlflow_client.create_experiment(experiment_name)
+        return experiment.experiment_id
+
     def set_experiment(
         self, experiment_name: str, tags: Mapping[str, str] | None = None
     ):
         tags = {} if tags is None else tags
-        mlflow.set_experiment(experiment_name)
+        experiment_id = self._get_or_create_experiment_id(experiment_name)
         self._experiment_name = experiment_name
-        mlflow.set_experiment_tags(tags)
+        for name, value in tags.items():
+            self._mlflow_client.set_experiment_tag(experiment_id, name, value)
 
-    def get_archived_results(self, run_ids: Sequence[str] = ()):
-
-        run_ids = (
-            run_ids
-            if len(run_ids) > 0
-            else mlflow.search_runs(
-                experiment_names=[self._experiment_name],
+    def _search_finished_run_ids(self) -> list[str]:
+        """Return the ids of the finished runs of the current experiment."""
+        experiment_id = self._get_or_create_experiment_id(self._experiment_name)
+        run_ids = []
+        page_token = None
+        while True:
+            runs = self._mlflow_client.search_runs(
+                [experiment_id],
                 # A run is created at the beginning of the job (see
                 # ``create_job_directory``): skip the ones that are still running,
                 # were aborted, or have no results.
                 filter_string="attributes.status = 'FINISHED'",
-            )["run_id"]
-        )
+                max_results=1000,
+                page_token=page_token,
+            )
+            run_ids.extend(run.info.run_id for run in runs)
+            page_token = runs.token
+            if not page_token:
+                return run_ids
+
+    def get_archived_results(self, run_ids: Sequence[str] = ()):
+
+        run_ids = run_ids if len(run_ids) > 0 else self._search_finished_run_ids()
 
         if len(run_ids) == 0:
             LOGGER.info(
@@ -176,7 +201,9 @@ class MlflowArchive(BaseArchiveManager):
     @staticmethod
     def _artifact_directory(run) -> Path:
         """The local path of the artifact directory of a run."""
-        return Path(unquote(urlparse(run.info.artifact_uri).path))
+        # ``url2pathname`` handles the drive letter of Windows paths: a plain
+        # ``unquote`` of the url path gives an invalid ``\C:\...``.
+        return Path(url2pathname(urlparse(run.info.artifact_uri).path))
 
     def _terminate_run(self, status: str) -> None:
         """Terminate the current run with the given status."""
@@ -187,9 +214,16 @@ class MlflowArchive(BaseArchiveManager):
         """Create the MLflow run of the current job.
 
         The run is created before the job is executed, and not when its results
-        are published, so that the job can know where its artifacts are stored:
-        ``job_directory`` is then correct in the metadata of the results, and the
-        run to delete under a persistency policy is the current one.
+        are published, for two independent reasons:
+
+        - ``job_directory``, the directory of the artifacts of the run (the persistent
+          files such as fields, which are files and not database entries), is known
+          when the metadata is generated. The metadata ``directory_archive_job`` is
+          then correct in the outputs returned by ``execute``, in the model cache and
+          in the run, and not only when the run is read back with ``get_result``.
+          It is the local path of the machine which ran the job.
+        - A run exists when a persistency policy asks to delete the job, so the run
+          deleted is the current one, and not the previous one.
         """
         if self._run_is_open:
             LOGGER.warning(
@@ -198,14 +232,9 @@ class MlflowArchive(BaseArchiveManager):
             )
             self._terminate_run("FAILED")
 
-        experiment = self._mlflow_client.get_experiment_by_name(self._experiment_name)
-        experiment_id = (
-            self._mlflow_client.create_experiment(self._experiment_name)
-            if experiment is None
-            else experiment.experiment_id
-        )
         run = self._mlflow_client.create_run(
-            experiment_id, run_name=self._job_name or None
+            self._get_or_create_experiment_id(self._experiment_name),
+            run_name=self._job_name or None,
         )
         self._current_run_id = run.info.run_id
         self._run_is_open = True
@@ -224,7 +253,7 @@ class MlflowArchive(BaseArchiveManager):
         for file_name in self._persistent_file_names:
             target = src_dir / file_name
             if target.is_file():
-                mlflow.log_artifact(target, run_id=self._current_run_id)
+                self._mlflow_client.log_artifact(self._current_run_id, str(target))
             else:
                 LOGGER.warning(
                     f"The file {target} was meant to be stored to "

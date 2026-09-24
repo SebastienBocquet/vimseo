@@ -182,11 +182,11 @@ def test_delete_policy_deletes_the_current_run(tmp_wd):
         kept.archive_manager._mlflow_client.get_run(kept_run_id).info.lifecycle_stage
         == "active"
     )
-    runs = mlflow.search_runs(
-        experiment_names=[kept.archive_manager.experiment_name],
-        run_view_type=mlflow.entities.ViewType.ACTIVE_ONLY,
-    )
-    assert len(runs) == 1
+    client = kept.archive_manager._mlflow_client
+    experiment_id = client.get_experiment_by_name(
+        kept.archive_manager.experiment_name
+    ).experiment_id
+    assert len(client.search_runs([experiment_id])) == 1
 
 
 def test_failed_execution_marks_the_run_as_failed(tmp_wd):
@@ -211,3 +211,35 @@ def test_failed_execution_marks_the_run_as_failed(tmp_wd):
     assert model.archive_manager._mlflow_client.get_run(run_id).info.status == "FAILED"
     # A failed run has no results: it must not be returned by the archive.
     assert len(model.archive_manager.get_archived_results()) == 0
+
+
+def test_archives_with_different_uris_do_not_interfere(tmp_wd):
+    """Check that an archive is not disturbed by another one created after it.
+
+    Each archive must only rely on its own tracking uri, and not on a state of
+    MLflow shared by the whole process (the last created archive would win).
+    """
+    models = []
+    for root in ["archive_A", "archive_B"]:
+        model = create_model(
+            "MockModelFields",
+            "LC1",
+            model_options=IntegratedModelSettings(
+                archive_manager="MlflowArchive", directory_archive_root=root
+            ),
+        )
+        model.cache = None
+        models.append(model)
+    model_a, model_b = models
+    assert model_a.archive_manager.uri != model_b.archive_manager.uri
+
+    # Persistent files are copied as artifacts, and results are read back, in the
+    # store of the archive of the model, whichever archive was created last.
+    model_a.execute()
+    model_b.execute()
+    for model in models:
+        assert len(model.archive_manager.get_archived_results()) == 1
+        artifacts = list(model.archive_manager.job_directory.iterdir())
+        assert len(artifacts) > 0
+    assert "archive_A" in str(model_a.archive_manager.job_directory)
+    assert "archive_B" in str(model_b.archive_manager.job_directory)
