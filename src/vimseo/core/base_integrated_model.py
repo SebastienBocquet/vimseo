@@ -560,15 +560,19 @@ class IntegratedModel(GemseoDisciplineWrapper):
         for discipline in self._chain.disciplines:
             discipline._job_directory = self._scratch_manager.job_directory
 
-        self._chain.execute(input_data)
-        output_data = self._chain.get_output_data()
+        try:
+            self._chain.execute(input_data)
+            output_data = self._chain.get_output_data()
 
-        end_time = time()
-        self._run_time = end_time - start_time
+            end_time = time()
+            self._run_time = end_time - start_time
 
-        # Collect field files, generate metadata and write the archive (results
-        # + persistent files); then enforce the scratch-persistency policy.
-        self.archive_outputs(output_data)
+            # Collect field files, generate metadata and write the archive (results
+            # + persistent files); then enforce the scratch-persistency policy.
+            self.archive_outputs(output_data)
+        except BaseException:
+            self._archive_manager.abort_job()
+            raise
         self._manage_persistency(output_data)
 
         return output_data

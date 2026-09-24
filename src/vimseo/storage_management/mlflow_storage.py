@@ -19,8 +19,10 @@ import collections
 import json
 import logging
 import os
+import time
 from collections.abc import Mapping
 from copy import deepcopy
+from itertools import starmap
 from numbers import Number
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -30,7 +32,9 @@ from urllib.parse import urlparse
 import mlflow
 import numpy as np
 import urllib3
-from mlflow import delete_run
+from mlflow.entities import Metric
+from mlflow.entities import Param
+from mlflow.entities import RunTag
 from numpy import atleast_1d
 from numpy import ndarray
 
@@ -41,6 +45,7 @@ from vimseo.storage_management.directory_storage import BaseArchiveManager
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from collections.abc import Sequence
 
     from vimseo.storage_management.base_storage_manager import PersistencyPolicy
@@ -52,6 +57,16 @@ LOGGER = logging.getLogger(__name__)
 INPUT_PREFIX = "inputs."
 
 MlflowArchiveResultType = Mapping[str, Mapping[str, ndarray | Number | str]]
+
+# Limits of a single ``MlflowClient.log_batch`` call.
+_MAX_PARAMS_OR_TAGS_PER_BATCH = 100
+_MAX_METRICS_PER_BATCH = 1000
+
+
+def _chunks(items: Sequence, size: int) -> Iterable[Sequence]:
+    """Split a sequence in consecutive chunks of at most ``size`` items."""
+    for start in range(0, len(items), size):
+        yield items[start : start + size]
 
 
 class MlflowArchive(BaseArchiveManager):
@@ -107,8 +122,9 @@ class MlflowArchive(BaseArchiveManager):
             if config.database.experiment_name != ""
             else f"{self._model_name}_{self._load_case_name}"
         )
-        self._mlflow_client = mlflow.tracking.MlflowClient()
+        self._mlflow_client = mlflow.tracking.MlflowClient(tracking_uri=self._uri)
         mlflow.set_experiment(self._experiment_name)
+        self._run_is_open = False
 
     @property
     def uri(self) -> str:
@@ -133,7 +149,13 @@ class MlflowArchive(BaseArchiveManager):
         run_ids = (
             run_ids
             if len(run_ids) > 0
-            else mlflow.search_runs(experiment_names=[self._experiment_name])["run_id"]
+            else mlflow.search_runs(
+                experiment_names=[self._experiment_name],
+                # A run is created at the beginning of the job (see
+                # ``create_job_directory``): skip the ones that are still running,
+                # were aborted, or have no results.
+                filter_string="attributes.status = 'FINISHED'",
+            )["run_id"]
         )
 
         if len(run_ids) == 0:
@@ -151,8 +173,52 @@ class MlflowArchive(BaseArchiveManager):
             for i, run_id in enumerate(run_ids)
         ]
 
+    @staticmethod
+    def _artifact_directory(run) -> Path:
+        """The local path of the artifact directory of a run."""
+        return Path(unquote(urlparse(run.info.artifact_uri).path))
+
+    def _terminate_run(self, status: str) -> None:
+        """Terminate the current run with the given status."""
+        self._mlflow_client.set_terminated(self._current_run_id, status)
+        self._run_is_open = False
+
+    def create_job_directory(self):
+        """Create the MLflow run of the current job.
+
+        The run is created before the job is executed, and not when its results
+        are published, so that the job can know where its artifacts are stored:
+        ``job_directory`` is then correct in the metadata of the results, and the
+        run to delete under a persistency policy is the current one.
+        """
+        if self._run_is_open:
+            LOGGER.warning(
+                f"Run {self._current_run_id} is still open: it has neither been "
+                "published nor deleted. Marking it as failed."
+            )
+            self._terminate_run("FAILED")
+
+        experiment = self._mlflow_client.get_experiment_by_name(self._experiment_name)
+        experiment_id = (
+            self._mlflow_client.create_experiment(self._experiment_name)
+            if experiment is None
+            else experiment.experiment_id
+        )
+        run = self._mlflow_client.create_run(
+            experiment_id, run_name=self._job_name or None
+        )
+        self._current_run_id = run.info.run_id
+        self._run_is_open = True
+        self._job_directory = self._artifact_directory(run)
+
+    def abort_job(self):
+        if self._run_is_open:
+            self._terminate_run("FAILED")
+
     def copy_persistent_files(self, src_dir):
-        if src_dir == "":
+        # No run when the job was deleted under the persistency policy. An empty
+        # run id must not reach MLflow, which would create a new run.
+        if src_dir == "" or self._current_run_id == "":
             return
 
         for file_name in self._persistent_file_names:
@@ -210,30 +276,48 @@ class MlflowArchive(BaseArchiveManager):
                 for name, v in data.items()
             }
 
-        with mlflow.start_run(run_name=self._job_name) as run:
-            self._current_run_id = run.info.run_id
-            mlflow.set_tags(tags)
-            mlflow.log_params(
+        def key(name: str) -> str:
+            return name if name in archive_result["outputs"] else f"inputs.{name}"
+
+        if not self._run_is_open:
+            # ``publish`` called without a previous ``create_job_directory``.
+            self.create_job_directory()
+
+        timestamp = int(time.time() * 1000)
+        run_tags = [RunTag(name, str(value)) for name, value in tags.items()]
+        run_params = list(
+            starmap(
+                Param,
                 prepare_data(
                     dict(arrays_real, **arrays_non_real, **strings_), jsonify=True
-                )
+                ).items(),
             )
-            mlflow.log_metrics(prepare_data(floats))
-            mlflow.log_metric(
+        )
+        run_metrics = [
+            Metric(name, float(value), timestamp, 0)
+            for name, value in prepare_data(floats).items()
+        ]
+        run_metrics.append(
+            Metric(
                 MetaDataNames.cpu_time,
-                archive_result["metadata"][MetaDataNames.cpu_time],
+                float(archive_result["metadata"][MetaDataNames.cpu_time]),
+                timestamp,
+                0,
             )
-            for name, value in arrays_real.items():
-                for i, v in enumerate(value):
-                    mlflow.log_metric(
-                        (
-                            name
-                            if name in archive_result["outputs"]
-                            else f"inputs.{name}"
-                        ),
-                        v,
-                        step=i,
-                    )
+        )
+        for name, value in arrays_real.items():
+            run_metrics.extend(
+                Metric(key(name), float(v), timestamp, i) for i, v in enumerate(value)
+            )
+
+        run_id = self._current_run_id
+        for chunk in _chunks(run_tags, _MAX_PARAMS_OR_TAGS_PER_BATCH):
+            self._mlflow_client.log_batch(run_id, tags=chunk)
+        for chunk in _chunks(run_params, _MAX_PARAMS_OR_TAGS_PER_BATCH):
+            self._mlflow_client.log_batch(run_id, params=chunk)
+        for chunk in _chunks(run_metrics, _MAX_METRICS_PER_BATCH):
+            self._mlflow_client.log_batch(run_id, metrics=chunk)
+        self._terminate_run("FINISHED")
 
     def _decode_result(self, results_archive: ArchiveResultType) -> ModelDataType:
         """Decode an archived result to a ModelResult format."""
@@ -280,7 +364,7 @@ class MlflowArchive(BaseArchiveManager):
         run = self._mlflow_client.get_run(
             run_id if run_id != "" else self._current_run_id
         )
-        self._job_directory = Path(unquote(urlparse(run.info.artifact_uri).path))
+        self._job_directory = self._artifact_directory(run)
 
         result = self._decode_result(run.data.to_dictionary())
         result["outputs"][MetaDataNames.directory_archive_job] = atleast_1d(
@@ -289,4 +373,8 @@ class MlflowArchive(BaseArchiveManager):
         return result
 
     def delete_job_directory(self):
-        delete_run(self._current_run_id)
+        if self._current_run_id == "":
+            return
+        self._mlflow_client.delete_run(self._current_run_id)
+        self._current_run_id = ""
+        self._run_is_open = False

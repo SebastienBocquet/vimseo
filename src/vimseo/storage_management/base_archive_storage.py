@@ -132,6 +132,13 @@ class BaseArchiveManager(BaseStorageManager):
     def get_result(self, archive_id: str | Path) -> ModelDataType:
         """Get an archived result."""
 
+    def abort_job(self):
+        """Release what :meth:`create_job_directory` allocated, after a job failure.
+
+        Called when the job raised before its results could be published. Does
+        nothing by default: the job directory of a directory archive is left as is.
+        """
+
     def set_experiment(self, experiment_name: str):
         """Set an experiment."""
 
