@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -40,6 +41,7 @@ class ModelCreationSettings(BaseSettings):
     default_inputs: Mapping[str, list[float]] = {}
 
 
+@dataclass
 class ModelResult(BaseResult):
     model: IntegratedModel | None = None
 

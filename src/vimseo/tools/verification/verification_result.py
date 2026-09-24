@@ -133,6 +133,7 @@ class SolutionVerificationResult(VerificationResult):
         return str(text)
 
 
+@dataclass
 class SolutionVerificationCaseResult(BaseResult):
     """A result from a solution verification case."""
 

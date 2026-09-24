@@ -21,6 +21,7 @@ import json
 from collections import OrderedDict
 from dataclasses import dataclass
 from dataclasses import field
+from enum import Enum
 from pathlib import Path
 
 import h5py
@@ -29,6 +30,7 @@ import pandas as pd
 import pytest
 from gemseo.datasets.dataset import Dataset
 from gemseo.datasets.io_dataset import IODataset
+from pydantic import BaseModel
 
 from vimseo.core.load_case import LoadCase
 from vimseo.core.model_description import ModelDescription
@@ -293,6 +295,239 @@ class TestDictsAndNestedStructures:
         assert rt.nominal_data["temperature"] == pytest.approx(300.0)
         assert rt.nominal_data["pressure"] == 101325
         np.testing.assert_array_equal(rt.nominal_data["field"], arr)
+
+
+# ---------------------------------------------------------------------------
+# Tests — types that used to fall back to pickle, now serialized in clear
+# ---------------------------------------------------------------------------
+
+
+class _Color(str, Enum):
+    """A str-subclassing enum, like the ``StrEnum`` classes used in vimseo."""
+
+    RED = "red"
+    BLUE = "blue"
+
+
+class _Status(Enum):
+    """A plain (non-str) enum."""
+
+    OK = 1
+    FAILED = 2
+
+
+class _InnerModel(BaseModel):
+    """A pydantic model nested inside another one, for codec tests below."""
+
+    value: float = 0.0
+
+
+class _OuterModel(BaseModel):
+    """A pydantic model whose field holds another pydantic model."""
+
+    name: str = ""
+    inner: _InnerModel = _InnerModel()
+
+
+class TestClearCodecs:
+    def test_str_enum_roundtrip(self, tmp_hdf5):
+        @dataclass
+        class ResultWithEnum(BaseResult):
+            color: _Color | None = None
+
+        result = ResultWithEnum(color=_Color.BLUE)
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.color is _Color.BLUE
+        assert isinstance(rt.color, _Color)
+
+    def test_plain_enum_roundtrip(self, tmp_hdf5):
+        @dataclass
+        class ResultWithEnum(BaseResult):
+            status: _Status | None = None
+
+        result = ResultWithEnum(status=_Status.FAILED)
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.status is _Status.FAILED
+
+    def test_path_roundtrip(self, tmp_hdf5):
+        @dataclass
+        class ResultWithPath(BaseResult):
+            path: Path | None = None
+
+        result = ResultWithPath(path=Path("some") / "nested" / "file.txt")
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.path == Path("some") / "nested" / "file.txt"
+        assert isinstance(rt.path, Path)
+
+    def test_datetime_roundtrip(self, tmp_hdf5):
+        from datetime import datetime
+
+        @dataclass
+        class ResultWithDatetime(BaseResult):
+            timestamp: datetime | None = None
+
+        ts = datetime(2026, 1, 2, 3, 4, 5)
+        result = ResultWithDatetime(timestamp=ts)
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.timestamp == ts
+
+    def test_date_roundtrip(self, tmp_hdf5):
+        from datetime import date
+
+        @dataclass
+        class ResultWithDate(BaseResult):
+            day: date | None = None
+
+        result = ResultWithDate(day=date(2026, 1, 2))
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.day == date(2026, 1, 2)
+
+    def test_complex_roundtrip(self, tmp_hdf5):
+        @dataclass
+        class ResultWithComplex(BaseResult):
+            value: complex | None = None
+
+        result = ResultWithComplex(value=1.5 - 2.5j)
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.value == pytest.approx(1.5 - 2.5j)
+
+    def test_bytes_roundtrip(self, tmp_hdf5):
+        @dataclass
+        class ResultWithBytes(BaseResult):
+            data: bytes | None = None
+
+        result = ResultWithBytes(data=b"\x00\x01\xffvimseo")
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.data == b"\x00\x01\xffvimseo"
+
+    def test_set_roundtrip(self, tmp_hdf5):
+        @dataclass
+        class ResultWithSet(BaseResult):
+            names: set | None = None
+
+        result = ResultWithSet(names={"a", "b", "c"})
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.names == {"a", "b", "c"}
+        assert isinstance(rt.names, set)
+
+    def test_frozenset_roundtrip(self, tmp_hdf5):
+        @dataclass
+        class ResultWithFrozenset(BaseResult):
+            names: frozenset | None = None
+
+        result = ResultWithFrozenset(names=frozenset({"a", "b"}))
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.names == frozenset({"a", "b"})
+        assert isinstance(rt.names, frozenset)
+
+    def test_ordered_dict_preserves_type_and_order(self, tmp_hdf5):
+        od = OrderedDict([("z", 1.0), ("a", 2.0), ("m", 3.0)])
+
+        @dataclass
+        class ResultWithOrderedDict(BaseResult):
+            data: dict | None = None
+
+        result = ResultWithOrderedDict(data=od)
+        rt = roundtrip(result, tmp_hdf5)
+        assert isinstance(rt.data, OrderedDict)
+        assert list(rt.data.items()) == list(od.items())
+
+    def test_plain_dict_preserves_insertion_order(self, tmp_hdf5):
+        d = {"z": 1.0, "a": 2.0, "m": 3.0}
+
+        @dataclass
+        class ResultWithDict(BaseResult):
+            data: dict | None = None
+
+        result = ResultWithDict(data=d)
+        rt = roundtrip(result, tmp_hdf5)
+        assert type(rt.data) is dict
+        assert list(rt.data.items()) == list(d.items())
+
+    def test_dict_with_int_keys_roundtrip(self, tmp_hdf5):
+        d = {1: "one", 2: "two"}
+
+        @dataclass
+        class ResultWithIntKeys(BaseResult):
+            data: dict | None = None
+
+        result = ResultWithIntKeys(data=d)
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.data == d
+        assert all(isinstance(k, int) for k in rt.data)
+
+    def test_dict_with_tuple_keys_roundtrip(self, tmp_hdf5):
+        d = {(1, 2): "a", (3, 4): "b"}
+
+        @dataclass
+        class ResultWithTupleKeys(BaseResult):
+            data: dict | None = None
+
+        result = ResultWithTupleKeys(data=d)
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.data == d
+        assert all(isinstance(k, tuple) for k in rt.data)
+
+    def test_pydantic_model_roundtrip_is_not_pickled(self, tmp_hdf5):
+        """The concrete motivating case: DistributionSettings must be clear."""
+        from vimseo.utilities.distribution import DistributionSettings
+
+        settings = DistributionSettings(name="Normal", mu=1.0, sigma=0.05)
+
+        @dataclass
+        class ResultWithDistribution(BaseResult):
+            settings: DistributionSettings | None = None
+
+        result = ResultWithDistribution(settings=settings)
+        result.to_hdf5(tmp_hdf5)
+        with h5py.File(tmp_hdf5, "r") as f:
+            assert f["settings"].attrs["__type__"] == "pydantic"
+        rt = type(result).from_hdf5(tmp_hdf5)
+        assert rt.settings == settings
+        assert isinstance(rt.settings, DistributionSettings)
+
+    def test_interfaced_distribution_settings_roundtrip(self, tmp_hdf5):
+        from vimseo.utilities.distribution import InterfacedDistributionSettings
+
+        settings = InterfacedDistributionSettings(
+            name="Beta", parameters=(2.0, 3.0), lower_bound=0.0, upper_bound=1.0
+        )
+
+        @dataclass
+        class ResultWithInterfaced(BaseResult):
+            settings: InterfacedDistributionSettings | None = None
+
+        result = ResultWithInterfaced(settings=settings)
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.settings == settings
+
+    def test_distribution_parameters_roundtrip(self, tmp_hdf5):
+        from vimseo.utilities.distribution import DistributionParameters
+
+        params = DistributionParameters(name="Normal", mu=2.1e5, sigma=1e2)
+
+        @dataclass
+        class ResultWithParams(BaseResult):
+            distribution: DistributionParameters | None = None
+
+        result = ResultWithParams(distribution=params)
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.distribution == params
+
+    def test_nested_pydantic_model_roundtrip(self, tmp_hdf5):
+        """A BaseModel field holding another BaseModel must not be flattened."""
+
+        @dataclass
+        class ResultWithNestedModel(BaseResult):
+            outer: _OuterModel | None = None
+
+        result = ResultWithNestedModel(
+            outer=_OuterModel(name="x", inner=_InnerModel(value=3.5))
+        )
+        rt = roundtrip(result, tmp_hdf5)
+        assert rt.outer.name == "x"
+        assert isinstance(rt.outer.inner, _InnerModel)
+        assert rt.outer.inner.value == pytest.approx(3.5)
 
 
 # ---------------------------------------------------------------------------
