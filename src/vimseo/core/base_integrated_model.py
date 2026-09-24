@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 
 import numpy as np
+from gemseo import READ_ONLY_EMPTY_DICT
 from gemseo.caches.simple_cache import SimpleCache
 from gemseo.core.chains.chain import MDOChain
 from gemseo.core.discipline.base_discipline import CacheType
@@ -54,9 +55,13 @@ from vimseo.core.gemseo_discipline_wrapper import GemseoDisciplineWrapper
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_description import ModelDescription
 from vimseo.core.model_metadata import DEFAULT_METADATA
+from vimseo.core.model_metadata import OPTIONAL_METADATA_NAMES
 from vimseo.core.model_metadata import MetaData
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.model_settings import IntegratedModelSettings
+from vimseo.core.run_context import current_tool_run
+from vimseo.core.run_context import new_run_id
+from vimseo.core.run_context import record_simulation_from_outputs
 from vimseo.material.material import Material
 from vimseo.material.material_registry import resolve_material
 from vimseo.storage_management import get_archive_class
@@ -72,6 +77,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from gemseo.caches.hdf5_cache import HDF5Cache
+    from gemseo.core.discipline.discipline_data import DisciplineData
+    from gemseo.typing import StrKeyMapping
     from plotly.graph_objs import Figure
 
     from vimseo.core.components.external_software_component import BaseComponent
@@ -315,6 +322,9 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
         self._run_time = np.nan
 
+        self._run_id = ""
+        self._tool_run_id = ""
+
         self._datetime = datetime.today()
 
         self._chain = MDOChain(components)
@@ -387,6 +397,10 @@ class IntegratedModel(GemseoDisciplineWrapper):
         self.output_grammar.update_from_data(DEFAULT_METADATA)
         for name in DEFAULT_METADATA:
             self.output_grammar.required_names.add(name)
+        # Unlike the other metadata, these are missing from the cache of a model
+        # created by a previous version.
+        for name in OPTIONAL_METADATA_NAMES:
+            self.output_grammar.required_names.discard(name)
         for field_name in self.FIELDS_FROM_FILE:
             self.output_grammar.update_from_data({field_name: array(["names"])})
             self.output_grammar.required_names.add(field_name)
@@ -543,8 +557,23 @@ class IntegratedModel(GemseoDisciplineWrapper):
 
         return dataflow
 
+    def execute(
+        self,
+        input_data: StrKeyMapping = READ_ONLY_EMPTY_DICT,
+    ) -> DisciplineData:
+        output_data = super().execute(input_data)
+        # Done here and not in ``_run``, which is skipped when the outputs are
+        # retrieved from the cache: the simulation is used by the tool all the same.
+        record_simulation_from_outputs(output_data)
+        return output_data
+
     def _run(self, input_data):
         start_time = time()
+
+        # A new identifier for each simulation really run (not the cached ones).
+        self._run_id = new_run_id()
+        tool_run = current_tool_run()
+        self._tool_run_id = "" if tool_run is None else tool_run.tool_run_id
 
         if self._whether_use_scratch_dir():
             self._scratch_manager.create_job_directory()
@@ -888,6 +917,8 @@ class IntegratedModel(GemseoDisciplineWrapper):
             MetaDataNames.directory_scratch_job: array([
                 str(self._scratch_manager.job_directory)
             ]),
+            MetaDataNames.run_id: array([self._run_id]),
+            MetaDataNames.tool_run_id: array([self._tool_run_id]),
         })
 
     def create_cache_from_archive(self, run_ids: Iterable[str] = ()) -> HDF5Cache:

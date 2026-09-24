@@ -77,6 +77,18 @@ class MetaData:
     directory_scratch_job: ndarray[str]
     """Relative path to the current scratch folder."""
 
+    run_id: ndarray[str]
+    """Unique identifier of the simulation, generated when the model is run.
+
+    It is the identifier of the simulation for VIMSEO, and not the one of a database
+    like MLflow. A result retrieved from the cache keeps the identifier of the
+    simulation that created it."""
+
+    tool_run_id: ndarray[str]
+    """Unique identifier of the tool run during which the simulation was executed.
+
+    Empty if the model was not executed by a tool."""
+
 
 MetaDataNames = StrEnum("MetaDataNames", [field.name for field in fields(MetaData)])
 
@@ -102,5 +114,13 @@ DEFAULT_METADATA = {
         ]),
         MetaDataNames.directory_scratch_root: array(["my_scratch/"]),
         MetaDataNames.directory_scratch_job: array(["my_scratch/ddc2168sq4c4rr"]),
+        MetaDataNames.run_id: array(["5f0c1c1a2b3d4e6f8a9b0c1d2e3f4a5b"]),
+        MetaDataNames.tool_run_id: array(["a1b2c3d4e5f60718293a4b5c6d7e8f90"]),
     }.items()
 }
+
+OPTIONAL_METADATA_NAMES = (MetaDataNames.run_id, MetaDataNames.tool_run_id)
+"""The metadata which may be missing from a result.
+
+They were added after the others: a model cache or an archive created by a previous
+version does not hold them."""

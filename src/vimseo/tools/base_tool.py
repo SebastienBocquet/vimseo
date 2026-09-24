@@ -36,6 +36,7 @@ from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
 from vimseo.config.global_configuration import _configuration as config
+from vimseo.core.run_context import tool_run
 from vimseo.io.io_factory import IOFactory
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.base_settings import BaseSettings
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
     from plotly.graph_objects import Figure
     from pydantic import BaseModel
 
+    from vimseo.core.run_context import ToolRunContext
     from vimseo.tools.base_settings import BaseInputs
 
 LOGGER = logging.getLogger(__name__)
@@ -375,8 +377,10 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         def decorated(self, *args, **options):
             self._create_working_directory()
             options = self._pre_process_options(**options)
-            f(self, *args, **options)
+            with tool_run(self.name) as run:
+                f(self, *args, **options)
             self._set_options_to_results(options)
+            self._set_run_to_results(run)
             return self.result
 
         return decorated
@@ -431,6 +435,15 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
 
         msg = f"Unknow file format {path.suffix}. Supported formats are {cls._RESULT_FORMATS}"
         raise ValueError(msg)
+
+    def _set_run_to_results(self, run: ToolRunContext):
+        """Set the identifiers of the current run and of its simulations to the
+        metadata of the results."""
+        metadata = self.result.metadata
+        metadata.run_id = run.tool_run_id
+        metadata.parent_run_id = "" if run.parent is None else run.parent.tool_run_id
+        metadata.child_tool_run_ids = tuple(run.child_tool_run_ids)
+        metadata.simulation_run_ids = tuple(run.simulation_run_ids)
 
     def _set_options_to_results(self, options):
         """Set current tool options to the metadata field of the results."""

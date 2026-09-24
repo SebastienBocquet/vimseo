@@ -264,3 +264,29 @@ def test_archive_does_not_change_the_global_tracking_uri(tmp_wd):
     mlflow.set_tracking_uri(model.archive_manager.uri)
     experiment = mlflow.get_experiment_by_name(model.archive_manager.experiment_name)
     assert len(mlflow.search_runs(experiment_ids=[experiment.experiment_id])) == 1
+
+
+def test_run_ids_are_stored_in_the_run(tmp_wd):
+    """Check that the identifiers of the simulation are kept in the MLflow run.
+
+    The ``run_id`` of VIMSEO is not the one of MLflow.
+    """
+    model = create_model(
+        "MockModelPersistent",
+        "LC1",
+        model_options=IntegratedModelSettings(archive_manager="MlflowArchive"),
+    )
+    model.cache = None
+    outputs = model.execute()
+
+    run = model.archive_manager._mlflow_client.get_run(
+        model.archive_manager._current_run_id
+    )
+    assert run.data.tags[MetaDataNames.run_id] == outputs[MetaDataNames.run_id][0]
+    assert run.data.tags[MetaDataNames.run_id] != run.info.run_id
+    assert run.data.tags[MetaDataNames.tool_run_id] == ""
+
+    result = model.archive_manager.get_result()
+    assert (
+        result["outputs"][MetaDataNames.run_id][0] == outputs[MetaDataNames.run_id][0]
+    )

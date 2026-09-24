@@ -33,6 +33,14 @@ and this project adheres to
 ## Added
 
 - Export to disk of analysis results (DOE, Sensitivity etc...) in hd5 format.
+- Unique identifiers linking the simulations and the tool results. A simulation
+  really run has a `run_id` metadata, and a `tool_run_id` metadata which is the
+  run of the tool that executed it (empty otherwise). A tool result has
+  `metadata.run_id`, `metadata.parent_run_id`, `metadata.child_tool_run_ids` and
+  `metadata.simulation_run_ids`, the latter including the simulations retrieved from
+  the model cache. A simulation retrieved from the cache keeps the identifiers of the
+  run which created it. The simulations executed by a thread or a process pool
+  started during a tool run are not recorded.
 
 ## Changed
 
