@@ -33,6 +33,18 @@ and this project adheres to
 ## Added
 
 - Export to disk of analysis results (DOE, Sensitivity etc...) in hd5 format.
+- Archive of the results of the tools. Each time a tool is executed, its result is
+  written under `{archive_root}/tools/{tool_name}/{tool_run_id}/` (`result.hdf5`, and
+  `result_metadata.json`, a readable summary with the status of the run, its settings
+  and the identifiers of its simulations and of its parent and child tool runs). The
+  archive is searched with `DirectoryToolArchive.search_tool_runs()`, a result is read
+  back with `get_tool_result()`, and `find_tool_runs_of_simulation()` gives the tool
+  runs which used a simulation. It is enabled by default with the archive manager of
+  the simulations (`DirectoryArchive`), in `default_archive/`. It is configured
+  by the `archive_manager` and `archive_root` arguments of a tool, or by
+  `tool_archive_manager` in the configuration (`none` disables it). A tool run which
+  raised is archived with the status `FAILED`, and an error of the archive is logged
+  without losing the result.
 - Unique identifiers linking the simulations and the tool results. A simulation
   really run has a `run_id` metadata, and a `tool_run_id` metadata which is the
   run of the tool that executed it (empty otherwise). A tool result has
@@ -60,6 +72,8 @@ and this project adheres to
 
 ## Fixed
 
+- A `DataFrame` with a `RangeIndex` (a DOE dataset for instance) was read back from
+  an HDF5 result with an `Index` of integers, which is a different type.
 - The `directory_archive_job` metadata was empty in the outputs and in the cache of
   a model archived with `MlflowArchive`, and an invalid path on Windows.
 - A persistency policy deleting the job with `MlflowArchive` deleted the previous

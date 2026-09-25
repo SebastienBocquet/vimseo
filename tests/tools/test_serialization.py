@@ -168,6 +168,27 @@ class TestDataFrames:
         rt = roundtrip(result, tmp_hdf5)
         pd.testing.assert_frame_equal(rt.measured_data, df)
 
+    def test_range_index_is_kept(self, tmp_hdf5):
+        """Check that the index is read back with the type it had, in both ways of
+        the comparison: a RangeIndex is not equivalent to an Index of integers."""
+        df = pd.DataFrame({"a": [1.0, 2.0, 3.0]})
+        assert isinstance(df.index, pd.RangeIndex)
+        result = ValidationPointResult(measured_data=df)
+        rt = roundtrip(result, tmp_hdf5)
+        assert isinstance(rt.measured_data.index, pd.RangeIndex)
+        pd.testing.assert_frame_equal(rt.measured_data, df)
+        pd.testing.assert_frame_equal(df, rt.measured_data)
+
+    def test_other_indexes_are_kept(self, tmp_hdf5):
+        df = pd.DataFrame({"a": [1.0, 2.0]}, index=[10, 20])
+        rt = roundtrip(ValidationPointResult(measured_data=df), tmp_hdf5)
+        pd.testing.assert_frame_equal(rt.measured_data, df)
+        pd.testing.assert_frame_equal(df, rt.measured_data)
+
+        df = pd.DataFrame({"a": [1.0, 2.0]}, index=["u", "v"])
+        rt = roundtrip(ValidationPointResult(measured_data=df), tmp_hdf5)
+        pd.testing.assert_frame_equal(rt.measured_data, df)
+
     def test_dataframe_column_names_preserved(self, tmp_hdf5):
         df = pd.DataFrame({"x": [1.0], "y": [2.0], "z": [3.0]})
         result = ValidationPointResult(simulated_data=df)

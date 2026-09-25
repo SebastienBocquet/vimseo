@@ -72,6 +72,13 @@ class VimseoSettings(
         default="DirectoryArchive", description="The archive manager"
     )
 
+    tool_archive_manager: str | None = Field(
+        default=None,
+        description="The archive manager of the results of the tools. If not set, it "
+        "is the ``archive_manager``. Set it to ``none`` to disable the archive of the "
+        "tool results.",
+    )
+
     database: DatabaseConfiguration = Field(
         default=DatabaseConfiguration(), description=""
     )

@@ -1,0 +1,260 @@
+# Copyright 2021 IRT Saint Exupery, https://www.irt-saintexupery.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+"""Tests of the archive of the results of the tools."""
+
+from __future__ import annotations
+
+import json
+import logging
+
+import pytest
+from gemseo.algos.parameter_space import ParameterSpace
+from gemseo.datasets.io_dataset import IODataset
+
+from vimseo.config.global_configuration import _configuration as config
+from vimseo.core.model_metadata import MetaDataNames
+from vimseo.problems.mock.mock_pre_run_post.mock_main import MockModel
+from vimseo.storage_management.tool_archive import create_tool_archive
+from vimseo.storage_management.tool_archive.base_tool_archive import NullToolArchive
+from vimseo.storage_management.tool_archive.directory_tool_archive import (
+    DirectoryToolArchive,
+)
+from vimseo.tools.base_result import assert_results_equal
+from vimseo.tools.base_tool import BaseTool
+from vimseo.tools.doe.custom_doe import CustomDOETool
+from vimseo.tools.doe.doe import DOETool
+from vimseo.tools.doe.doe_result import DOEResult
+from vimseo.tools.mock.mock_tool import MyBaseCompositeTool
+from vimseo.tools.mock.mock_tool import MyTool
+from vimseo.utilities.datasets import Variable
+from vimseo.utilities.datasets import generate_dataset
+
+N_SAMPLES = 3
+
+
+class FailingTool(MyTool):
+    """A tool which raises."""
+
+    @BaseTool.validate
+    def execute(self, inputs=None, settings=None, **options):
+        msg = "boom"
+        raise RuntimeError(msg)
+
+
+@pytest.fixture
+def archive_root(tmp_wd):
+    return tmp_wd / "tool_archive"
+
+
+@pytest.fixture
+def archive(archive_root) -> DirectoryToolArchive:
+    return DirectoryToolArchive(archive_root)
+
+
+@pytest.fixture
+def parameter_space():
+    parameter_space = ParameterSpace()
+    parameter_space.add_random_variable(
+        "x1", "OTUniformDistribution", size=1, minimum=-1.0, maximum=1.0
+    )
+    return parameter_space
+
+
+def execute_doe(archive_root, parameter_space) -> tuple[DOETool, MockModel]:
+    model = MockModel("LC1")
+    model.cache = None
+    tool = DOETool(archive_manager="DirectoryArchive", archive_root=archive_root)
+    tool.execute(
+        model=model,
+        parameter_space=parameter_space,
+        output_names=["y1"],
+        algo="OT_OPT_LHS",
+        n_samples=N_SAMPLES,
+    )
+    return tool, model
+
+
+def test_result_is_archived_after_execution(archive_root, archive, parameter_space):
+    tool, _ = execute_doe(archive_root, parameter_space)
+    run_id = tool.result.metadata.run_id
+
+    directory = archive_root / "tools" / "DOETool" / run_id
+    assert (directory / DirectoryToolArchive.RESULT_FILE_NAME).is_file()
+    summary = json.loads(
+        (directory / DirectoryToolArchive.SUMMARY_FILE_NAME).read_text()
+    )
+    assert summary["status"] == "FINISHED"
+    assert summary["tool_run_id"] == run_id
+    assert summary["tool_name"] == "DOETool"
+    assert summary["result_class"] == "DOEResult"
+    assert summary["simulation_run_ids"] == list(
+        tool.result.metadata.simulation_run_ids
+    )
+    assert summary["settings"]["algo"] == "OT_OPT_LHS"
+
+
+def test_archived_result_is_exactly_the_result(archive_root, archive, parameter_space):
+    tool, _ = execute_doe(archive_root, parameter_space)
+
+    loaded = archive.get_tool_result(tool.result.metadata.run_id)
+
+    assert isinstance(loaded, DOEResult)
+    assert_results_equal(tool.result, loaded)
+
+
+def test_get_tool_result_of_an_unknown_run(archive):
+    with pytest.raises(KeyError, match="No archived tool run"):
+        archive.get_tool_result("unknown_run_id")
+
+
+def test_search_tool_runs(archive_root, archive, parameter_space):
+    first, _ = execute_doe(archive_root, parameter_space)
+    second, _ = execute_doe(archive_root, parameter_space)
+
+    runs = archive.search_tool_runs()
+    assert {run["tool_run_id"] for run in runs} == {
+        first.result.metadata.run_id,
+        second.result.metadata.run_id,
+    }
+    assert archive.search_tool_runs(tool_name="DOETool") == runs
+    assert archive.search_tool_runs(tool_name="AnotherTool") == []
+    assert archive.search_tool_runs(status="FAILED") == []
+
+
+def test_find_the_tool_runs_of_a_simulation(archive_root, archive):
+    """Check the way from a simulation to the tool runs: a simulation retrieved from
+    the cache is found by every tool run which used it."""
+    model = MockModel("LC1")
+    input_dataset = generate_dataset(
+        {IODataset.INPUT_GROUP: [Variable("x1", 0.5, is_constant_value=True)]}, 2
+    )
+    tools = [
+        CustomDOETool(archive_manager="DirectoryArchive", archive_root=archive_root)
+        for _ in range(2)
+    ]
+    for tool in tools:
+        tool.execute(model=model, input_dataset=input_dataset, output_names=["y1"])
+    run_ids = {tool.result.metadata.run_id for tool in tools}
+    (simulation_id,) = tools[0].result.metadata.simulation_run_ids
+
+    assert set(archive.find_tool_runs_of_simulation(simulation_id)) == run_ids
+    assert archive.find_tool_runs_of_simulation("unknown_simulation") == []
+
+
+def test_find_the_simulations_of_a_tool_run(archive_root, archive, parameter_space):
+    """Check the way from a tool run to its simulations, the other way of the link:
+    the summary and the result give the same ones, which are the simulations of
+    the model archive."""
+    tool, model = execute_doe(archive_root, parameter_space)
+    run_id = tool.result.metadata.run_id
+
+    (summary,) = archive.search_tool_runs()
+    from_result = archive.get_tool_result(run_id).metadata.simulation_run_ids
+    archived = {
+        str(r["outputs"][MetaDataNames.run_id][0])
+        for r in model.archive_manager.get_archived_results()
+    }
+
+    assert len(from_result) == N_SAMPLES
+    assert set(summary["simulation_run_ids"]) == set(from_result) == archived
+
+
+def test_failed_tool_run_is_archived_as_failed(archive_root, archive):
+    tool = FailingTool(archive_manager="DirectoryArchive", archive_root=archive_root)
+    with pytest.raises(RuntimeError, match="boom"):
+        tool.execute()
+
+    (summary,) = archive.search_tool_runs()
+    assert summary["status"] == "FAILED"
+    assert summary["error"] == "RuntimeError: boom"
+    assert not (
+        archive_root
+        / "tools"
+        / "FailingTool"
+        / summary["tool_run_id"]
+        / DirectoryToolArchive.RESULT_FILE_NAME
+    ).exists()
+    with pytest.raises(KeyError, match="no result"):
+        archive.get_tool_result(summary["tool_run_id"])
+    assert archive.search_tool_runs(status="FAILED") == [summary]
+
+
+def test_subtools_are_archived_with_their_parent(archive_root, archive):
+    sub_tool = MyTool(archive_manager="DirectoryArchive", archive_root=archive_root)
+    composite = MyBaseCompositeTool(
+        subtools=[sub_tool],
+        archive_manager="DirectoryArchive",
+        archive_root=archive_root,
+    )
+    composite.execute()
+
+    composite_id = composite.result.metadata.run_id
+    sub_id = sub_tool.result.metadata.run_id
+    summaries = {run["tool_run_id"]: run for run in archive.search_tool_runs()}
+
+    assert set(summaries) == {composite_id, sub_id}
+    assert summaries[sub_id]["parent_run_id"] == composite_id
+    assert summaries[composite_id]["child_tool_run_ids"] == [sub_id]
+
+
+def test_an_error_of_the_archive_does_not_lose_the_result(
+    archive_root, parameter_space, monkeypatch, caplog
+):
+    def fail(self, result):
+        msg = "disk full"
+        raise OSError(msg)
+
+    monkeypatch.setattr(DirectoryToolArchive, "publish_tool_result", fail)
+    with caplog.at_level(logging.ERROR):
+        tool, _ = execute_doe(archive_root, parameter_space)
+
+    assert tool.result.dataset is not None
+    assert "could not be archived" in caplog.text
+    assert "disk full" in caplog.text
+
+
+def test_tool_archive_is_disabled_in_the_tests(tmp_wd):
+    """Check the fixture of the tests, which relies on the configuration."""
+    assert isinstance(MyTool()._tool_archive, NullToolArchive)
+    assert not (tmp_wd / "default_archive").exists()
+
+
+def test_archive_manager_comes_from_the_configuration(tmp_wd, monkeypatch):
+    monkeypatch.setattr(config, "tool_archive_manager", "DirectoryArchive")
+    assert isinstance(MyTool()._tool_archive, DirectoryToolArchive)
+
+    # Without ``tool_archive_manager``, it is the one of the simulations.
+    monkeypatch.setattr(config, "tool_archive_manager", None)
+    monkeypatch.setattr(config, "archive_manager", "DirectoryArchive")
+    assert isinstance(MyTool()._tool_archive, DirectoryToolArchive)
+
+    # The setting of the tool takes precedence over the configuration.
+    assert isinstance(MyTool(archive_manager="none")._tool_archive, NullToolArchive)
+
+
+def test_default_archive_root(tmp_wd):
+    archive = MyTool(archive_manager="DirectoryArchive")._tool_archive
+    assert archive.root_directory == str((tmp_wd / "default_archive").absolute())
+
+    archive = MyTool(
+        archive_manager="DirectoryArchive", archive_root=tmp_wd / "other"
+    )._tool_archive
+    assert archive.root_directory == str((tmp_wd / "other").absolute())
+
+
+def test_unknown_archive_manager():
+    with pytest.raises(ValueError, match="Unknown archive manager"):
+        create_tool_archive("Unknown", "root")

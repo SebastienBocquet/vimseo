@@ -38,6 +38,8 @@ from pydantic import Field
 from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.run_context import tool_run
 from vimseo.io.io_factory import IOFactory
+from vimseo.storage_management.archive_settings import DEFAULT_ARCHIVE_ROOT
+from vimseo.storage_management.tool_archive import create_tool_archive
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.metadata import ToolResultMetadata
@@ -76,6 +78,19 @@ class ToolConstructorSettings(BaseSettings):
         "If empty, save the results into the unique generated directory. "
         "Note that the use of a user-defined working_directory or an automatically generated unique directory is exclusive, "
         "and the choice is controlled by using leaving or not working_directory to its default value.",
+    )
+    archive_manager: str | None = Field(
+        default=None,
+        description="The archive manager of the tool results, which are archived "
+        "each time the tool is executed. If not set, it is the "
+        "``tool_archive_manager`` of the configuration, else its ``archive_manager``. "
+        "Use ``none`` to disable the archive.",
+    )
+    archive_root: str | Path = Field(
+        default="",
+        description="The root directory of the archive of the tool results. If empty, "
+        "it is the ``local_uri`` of the database of the configuration, else "
+        "``default_archive/``.",
     )
 
 
@@ -153,6 +168,8 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         directory_naming_method: DirectoryNamingMethod = DirectoryNamingMethod.NUMBERED,
         working_directory: str | Path = config.working_directory,
         name: str = "",
+        archive_manager: str | None = None,
+        archive_root: str | Path = "",
     ):
         """
         # TODO allow passing pydantic model
@@ -168,17 +185,28 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
                 is controlled by using leaving or not working_directory to its default
                 value.
             name: The name of the tool. By default, it is the class name.
+            archive_manager: The archive manager of the tool results. If not set, it
+                is the ``tool_archive_manager`` of the configuration, else its
+                ``archive_manager``. Use ``none`` to disable the archive.
+            archive_root: The root directory of the archive of the tool results.
+                If empty, it is the ``local_uri`` of the database of the
+                configuration, else ``default_archive/``.
         """
         options = ToolConstructorSettings(
             root_directory=root_directory,
             directory_naming_method=directory_naming_method,
             working_directory=working_directory,
             name=name,
+            archive_manager=archive_manager,
+            archive_root=archive_root,
         ).model_dump()
         self.name = (
             self.__class__.__name__ if options["name"] == "" else options["name"]
         )
         options = ToolConstructorSettings(**options).model_dump()
+        self._tool_archive = self._create_tool_archive(
+            options["archive_manager"], options["archive_root"]
+        )
         self.time = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         self.result = BaseResult()
         self.report_name = f"{self.__class__.__name__} Report"
@@ -377,13 +405,59 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         def decorated(self, *args, **options):
             self._create_working_directory()
             options = self._pre_process_options(**options)
-            with tool_run(self.name) as run:
-                f(self, *args, **options)
-            self._set_options_to_results(options)
-            self._set_run_to_results(run)
+            self._execute_and_archive(f, args, options)
             return self.result
 
         return decorated
+
+    def _execute_and_archive(self, f, args, options) -> None:
+        """Execute the tool as a tool run, and archive its result.
+
+        The tool run is started in the archive before the tool is executed, so that
+        the simulations it launches can be attached to it.
+        """
+        with tool_run(self.name) as run:
+            self._archive(
+                self._tool_archive.start_tool_run,
+                self.name,
+                run.tool_run_id,
+                "" if run.parent is None else run.parent.tool_run_id,
+            )
+            try:
+                f(self, *args, **options)
+            except BaseException as error:
+                self._archive(
+                    self._tool_archive.end_tool_run,
+                    self._tool_archive.STATUS_FAILED,
+                    f"{type(error).__name__}: {error}",
+                )
+                raise
+        self._set_options_to_results(options)
+        self._set_run_to_results(run)
+        self._archive(self._tool_archive.publish_tool_result, self.result)
+
+    @staticmethod
+    def _archive(archive_method, *args) -> None:
+        """Call a method of the archive of the tool results.
+
+        An error is logged and not raised: the result of a tool, which may have taken
+        hours to compute, must not be lost because it could not be archived.
+        """
+        try:
+            archive_method(*args)
+        except Exception:
+            LOGGER.exception(
+                "The tool result could not be archived by "
+                f"{archive_method.__qualname__}."
+            )
+
+    @staticmethod
+    def _create_tool_archive(archive_manager: str | None, archive_root: str | Path):
+        """Create the archive of the tool results from the settings and the
+        configuration."""
+        name = archive_manager or config.tool_archive_manager or config.archive_manager
+        root = archive_root or config.database.local_uri or DEFAULT_ARCHIVE_ROOT
+        return create_tool_archive(name, root)
 
     @abstractmethod
     def execute(self, *args, **options):

@@ -21,7 +21,6 @@ import logging
 from pydantic import ConfigDict
 from pydantic import Field
 
-from vimseo.core.run_context import tool_run
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.base_tool import StreamlitToolConstructorSettings
 from vimseo.tools.base_tool import ToolConstructorSettings
@@ -64,10 +63,7 @@ class BaseCompositeTool(BaseTool):
                 tool._create_working_directory()
 
             options = self._pre_process_options(**options)
-            with tool_run(self.name) as run:
-                f(self, *args, **options)
-            self._set_options_to_results(options)
-            self._set_run_to_results(run)
+            self._execute_and_archive(f, args, options)
             return self.result
 
         return decorated

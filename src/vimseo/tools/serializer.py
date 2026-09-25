@@ -108,7 +108,16 @@ def __to_dataframe(value: pd.DataFrame, key: str, group: h5py.Group, type_name: 
     else:
         sub.attrs["columns"] = json.dumps(list(value.columns), cls=EnhancedJSONEncoder)
 
-    sub.attrs["index"] = json.dumps(list(value.index))
+    if isinstance(value.index, pd.RangeIndex):
+        # Stored by its parameters, so that it is read back as a RangeIndex and not
+        # as an Index of integers, which is a different type.
+        sub.attrs["index_range"] = json.dumps([
+            value.index.start,
+            value.index.stop,
+            value.index.step,
+        ])
+    else:
+        sub.attrs["index"] = json.dumps(list(value.index))
 
     cols_group = sub.require_group("columns_data")
     for i, col in enumerate(value.columns):
@@ -152,6 +161,8 @@ def __from_dataframe(item: h5py.Group) -> pd.DataFrame:
         columns = columns_raw
 
     index = json.loads(item.attrs.get("index", "null") or "null")
+    if "index_range" in item.attrs:
+        index = pd.RangeIndex(*json.loads(item.attrs["index_range"]))
     cols_group = item["columns_data"]
     data = {}
     for i, col in enumerate(columns):
