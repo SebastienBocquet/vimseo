@@ -69,6 +69,16 @@ and this project adheres to
 - `MlflowArchive` creates the MLflow run when the job starts instead of when its
   results are published. Runs which are still running or failed are not returned
   by `get_archived_results()`.
+- Renamed the `archive_manager` configuration setting (environment variable
+  `VIMSEO_ARCHIVE_MANAGER`) to `run_archive_manager`
+  (`VIMSEO_RUN_ARCHIVE_MANAGER`), to distinguish it from the new
+  `tool_archive_manager`. No alias: `VIMSEO_ARCHIVE_MANAGER` left in a `.env`
+  file now makes `VimseoSettings()` fail at startup with a
+  `pydantic.ValidationError` naming the offending key (an unknown key set as a
+  plain environment variable is still ignored, but a `.env` file is validated
+  strictly). Update any `.env` file accordingly. This does not affect the
+  `archive_manager` argument of a model or a tool, nor the `model.archive_manager`
+  property, which are unrelated to this configuration setting.
 
 ## Fixed
 

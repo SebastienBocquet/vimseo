@@ -455,7 +455,9 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
     def _create_tool_archive(archive_manager: str | None, archive_root: str | Path):
         """Create the archive of the tool results from the settings and the
         configuration."""
-        name = archive_manager or config.tool_archive_manager or config.archive_manager
+        name = (
+            archive_manager or config.tool_archive_manager or config.run_archive_manager
+        )
         root = archive_root or config.database.local_uri or DEFAULT_ARCHIVE_ROOT
         return create_tool_archive(name, root)
 

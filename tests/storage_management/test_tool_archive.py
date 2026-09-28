@@ -238,7 +238,7 @@ def test_archive_manager_comes_from_the_configuration(tmp_wd, monkeypatch):
 
     # Without ``tool_archive_manager``, it is the one of the simulations.
     monkeypatch.setattr(config, "tool_archive_manager", None)
-    monkeypatch.setattr(config, "archive_manager", "DirectoryArchive")
+    monkeypatch.setattr(config, "run_archive_manager", "DirectoryArchive")
     assert isinstance(MyTool()._tool_archive, DirectoryToolArchive)
 
     # The setting of the tool takes precedence over the configuration.
