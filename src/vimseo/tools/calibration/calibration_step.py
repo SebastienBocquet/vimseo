@@ -95,6 +95,41 @@ def get_namespace(namespaced_name: str) -> str:
     return namespaced_name.split(":")[0]
 
 
+def _normalize_weights(namespaced_control_outputs: Mapping[str, dict]) -> None:
+    """Turn relative control-output weights into the ones gemseo-calibration expects.
+
+    gemseo-calibration requires each explicit weight to lie in ]0, 1[ and the
+    explicit weights to sum to exactly 1 over *all* the metrics, i.e. over every
+    (load case, output) pair once namespaced. Weights are therefore normalized
+    here by their sum over all those pairs. A flat ``control_outputs`` is
+    copied to every load case, so an output's weight is split evenly across
+    the load cases while the ratio between outputs is kept.
+
+    A ``None`` weight counts as 1 as soon as one weight is given. The last
+    weight is left to ``None`` so that gemseo-calibration fills it with the
+    remainder, which avoids its exact float comparison of the sum with 1.
+    Equal weights all become ``None``, which is gemseo-calibration's default.
+
+    Args:
+        namespaced_control_outputs: The metric settings per namespaced output,
+            whose ``weight`` is updated in place.
+    """
+    settings = list(namespaced_control_outputs.values())
+    weights = [metric_settings.get("weight") for metric_settings in settings]
+    if all(weight is None for weight in weights):
+        return
+
+    weights = [1.0 if weight is None else float(weight) for weight in weights]
+    total = sum(weights)
+    if len(set(weights)) == 1:
+        normalized_weights = [None] * len(weights)
+    else:
+        normalized_weights = [weight / total for weight in weights[:-1]] + [None]
+
+    for metric_settings, weight in zip(settings, normalized_weights, strict=True):
+        metric_settings["weight"] = weight
+
+
 class CalibrationStepInputs(BaseInputs):
     reference_data: dict[str, IODataset] = Field(
         default={}, description="A mapping between load cases and reference datasets."
@@ -123,7 +158,14 @@ class CalibrationStepSettings(BaseSettings):
     control_outputs: (
         Mapping[str, Mapping[str, CalibrationMetricSettings]]
         | Mapping[str, CalibrationMetricSettings]
-    ) = {}
+    ) = Field(
+        default={},
+        description="The metric settings per output, "
+        "either shared by all the load cases or given per load case. "
+        "The metric weights are relative: "
+        "they are normalized over all the (load case, output) pairs, "
+        "a weight left to ``None`` counting as 1 when another one is given.",
+    )
     input_names: list[str] = Field(
         default=[],
         description="The names of the inputs to be considered for the calibration."
@@ -309,6 +351,7 @@ class CalibrationStep(BaseAnalysisTool):
                     setting_names.remove("mesh")
                     for name in setting_names:
                         namespaced_control_outputs[key][name] = metric_settings[name]
+        _normalize_weights(namespaced_control_outputs)
 
         reference_data_dict = reference_datasets[0].to_dict_of_arrays(False)
         for reference_data in reference_datasets[1:]:

@@ -158,7 +158,7 @@ def test_calibration_step_with_starting_point(tmp_wd):
         ),
     )
 
-    assert step.result.prior_parameters["young_modulus"] == 2e5  # noqa: RUF069
+    assert step.result.prior_parameters["young_modulus"] == 2e5  # ruff: ignore[float-equality-comparison]
     assert step.result.posterior_parameters["young_modulus"] == pytest.approx(
         TARGET_YOUNG_MODULUS, rel=1e-2
     )
@@ -168,7 +168,21 @@ def test_calibration_step_with_starting_point(tmp_wd):
         )
 
 
-def test_calibration_step_on_scalars_multiple_models(tmp_wd):
+@pytest.mark.parametrize(
+    ("weights", "expected_cantilever_share"),
+    [
+        # No weight: both load cases weigh the same.
+        (None, 0.5),
+        # A flat weight is copied to both load cases, which still weigh the same
+        # once the weights are normalized.
+        ({"flat": 0.7}, 0.5),
+        # Weights per load case: the cantilever counts three times as much.
+        ({"Cantilever": 3.0, "ThreePoints": 1.0}, None),
+    ],
+)
+def test_calibration_step_on_scalars_multiple_models(
+    tmp_wd, weights, expected_cantilever_share
+):
     """Check that a calibration step runs correctly, when the design space is left to
     default.
 
@@ -205,6 +219,25 @@ def test_calibration_step_on_scalars_multiple_models(tmp_wd):
     )
 
     output_name = "reaction_forces"
+    if weights is None:
+        control_outputs = {
+            output_name: CalibrationMetricSettings(measure="RelativeMSE")
+        }
+    elif "flat" in weights:
+        control_outputs = {
+            output_name: CalibrationMetricSettings(
+                measure="RelativeMSE", weight=weights["flat"]
+            )
+        }
+    else:
+        control_outputs = {
+            load_case: {
+                output_name: CalibrationMetricSettings(
+                    measure="RelativeMSE", weight=weight
+                )
+            }
+            for load_case, weight in weights.items()
+        }
 
     step = CalibrationStep()
     step.execute(
@@ -219,9 +252,7 @@ def test_calibration_step_on_scalars_multiple_models(tmp_wd):
                 "Cantilever": "BendingTestAnalytical",
                 "ThreePoints": "BendingTestAnalytical",
             },
-            control_outputs={
-                output_name: CalibrationMetricSettings(measure="RelativeMSE")
-            },
+            control_outputs=control_outputs,
             input_names=[
                 "height",
                 "width",
@@ -243,12 +274,23 @@ def test_calibration_step_on_scalars_multiple_models(tmp_wd):
             MetricVariableType.SCALAR,
         ),
     ]
-    # We expect that the best compromise is the average value between the two
-    # young modulus:
-    assert step.result.posterior_parameters["young_modulus"] == pytest.approx(
-        0.5 * (target_young_modulus_cantilever + target_young_modulus_three_points),
-        rel=1e-2,
-    )
+    posterior_young_modulus = step.result.posterior_parameters["young_modulus"]
+    if expected_cantilever_share is None:
+        # The more weighted cantilever pulls the compromise towards its own value.
+        assert (
+            target_young_modulus_cantilever
+            < posterior_young_modulus
+            < 0.5
+            * (target_young_modulus_cantilever + target_young_modulus_three_points)
+        )
+    else:
+        # We expect that the best compromise is the average value between the two
+        # young modulus:
+        assert posterior_young_modulus == pytest.approx(
+            expected_cantilever_share * target_young_modulus_cantilever
+            + (1 - expected_cantilever_share) * target_young_modulus_three_points,
+            rel=1e-2,
+        )
 
 
 def test_save_result(tmp_wd):
