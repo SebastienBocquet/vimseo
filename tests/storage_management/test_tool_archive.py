@@ -27,7 +27,7 @@ from gemseo.datasets.io_dataset import IODataset
 from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.problems.mock.mock_pre_run_post.mock_main import MockModel
-from vimseo.storage_management.tool_archive import create_tool_archive
+from vimseo.storage_management.tool_archive import open_tool_archive
 from vimseo.storage_management.tool_archive.base_tool_archive import NullToolArchive
 from vimseo.storage_management.tool_archive.directory_tool_archive import (
     DirectoryToolArchive,
@@ -210,6 +210,33 @@ def test_subtools_are_archived_with_their_parent(archive_root, archive):
     assert summaries[composite_id]["child_tool_run_ids"] == [sub_id]
 
 
+def test_subtools_inherit_the_archive_of_their_parent(archive_root, archive):
+    """The subtools created without archive settings, as the composite tools do,
+    archive their results with their parent, at any depth of nesting."""
+    inner = MyBaseCompositeTool(name="inner", subtools=[MyTool()])
+    outer = MyBaseCompositeTool(
+        subtools=[inner], archive_manager="DirectoryArchive", archive_root=archive_root
+    )
+    outer.execute()
+
+    names = {run["tool_name"] for run in archive.search_tool_runs()}
+    assert names == {"MyBaseCompositeTool", "inner", "MyTool"}
+
+
+def test_explicit_archive_settings_of_a_subtool_are_kept(archive_root, archive):
+    sub_tool = MyTool(archive_manager="none")
+    composite = MyBaseCompositeTool(
+        subtools=[sub_tool],
+        archive_manager="DirectoryArchive",
+        archive_root=archive_root,
+    )
+    composite.execute()
+
+    assert isinstance(sub_tool._tool_archive, NullToolArchive)
+    (run,) = archive.search_tool_runs()
+    assert run["tool_name"] == "MyBaseCompositeTool"
+
+
 def test_an_error_of_the_archive_does_not_lose_the_result(
     archive_root, parameter_space, monkeypatch, caplog
 ):
@@ -257,4 +284,4 @@ def test_default_archive_root(tmp_wd):
 
 def test_unknown_archive_manager():
     with pytest.raises(ValueError, match="Unknown archive manager"):
-        create_tool_archive("Unknown", "root")
+        open_tool_archive("Unknown", "root")

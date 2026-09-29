@@ -39,7 +39,7 @@ from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.run_context import tool_run
 from vimseo.io.io_factory import IOFactory
 from vimseo.storage_management.archive_settings import DEFAULT_ARCHIVE_ROOT
-from vimseo.storage_management.tool_archive import create_tool_archive
+from vimseo.storage_management.tool_archive import open_tool_archive
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.metadata import ToolResultMetadata
@@ -204,8 +204,10 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
             self.__class__.__name__ if options["name"] == "" else options["name"]
         )
         options = ToolConstructorSettings(**options).model_dump()
-        self._tool_archive = self._create_tool_archive(
-            options["archive_manager"], options["archive_root"]
+        self._archive_manager = options["archive_manager"]
+        self._archive_root = options["archive_root"]
+        self._tool_archive = self._open_tool_archive(
+            self._archive_manager, self._archive_root
         )
         self.time = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         self.result = BaseResult()
@@ -451,15 +453,39 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
                 f"{archive_method.__qualname__}."
             )
 
+    def _inherit_archive_settings(
+        self, archive_manager: str | None, archive_root: str | Path
+    ) -> None:
+        """Use the archive settings of the tool executing this tool.
+
+        A setting passed explicitly to this tool takes precedence over the one of the
+        executing tool.
+
+        Args:
+            archive_manager: The archive manager of the executing tool.
+            archive_root: The root directory of the archive of the executing tool.
+        """
+        archive_manager = self._archive_manager or archive_manager
+        archive_root = self._archive_root or archive_root
+        if (archive_manager, archive_root) == (
+            self._archive_manager,
+            self._archive_root,
+        ):
+            return
+
+        self._archive_manager = archive_manager
+        self._archive_root = archive_root
+        self._tool_archive = self._open_tool_archive(archive_manager, archive_root)
+
     @staticmethod
-    def _create_tool_archive(archive_manager: str | None, archive_root: str | Path):
-        """Create the archive of the tool results from the settings and the
+    def _open_tool_archive(archive_manager: str | None, archive_root: str | Path):
+        """Open the archive of the tool results from the settings and the
         configuration."""
         name = (
             archive_manager or config.tool_archive_manager or config.run_archive_manager
         )
         root = archive_root or config.database.local_uri or DEFAULT_ARCHIVE_ROOT
-        return create_tool_archive(name, root)
+        return open_tool_archive(name, root)
 
     @abstractmethod
     def execute(self, *args, **options):

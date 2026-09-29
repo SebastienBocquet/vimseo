@@ -42,7 +42,9 @@ and this project adheres to
   runs which used a simulation. It is enabled by default with the archive manager of
   the simulations (`DirectoryArchive`), in `default_archive/`. It is configured
   by the `archive_manager` and `archive_root` arguments of a tool, or by
-  `tool_archive_manager` in the configuration (`none` disables it). A tool run which
+  `tool_archive_manager` in the configuration (`none` disables it). The subtools of
+  a composite tool use its archive settings, unless they were given their own. A
+  tool run which
   raised is archived with the status `FAILED`, and an error of the archive is logged
   without losing the result.
 - Unique identifiers linking the simulations and the tool results. A simulation

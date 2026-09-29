@@ -33,8 +33,12 @@ NO_TOOL_ARCHIVE = "none"
 """The name of the archive manager which disables the archive of the tool results."""
 
 
-def create_tool_archive(name: str, root_directory: Path | str) -> BaseToolArchive:
-    """Create the archive of the results of the tools.
+def open_tool_archive(name: str, root_directory: Path | str) -> BaseToolArchive:
+    """Open the archive of the results of the tools.
+
+    The tool runs already archived under ``root_directory`` are kept: they can be
+    searched and read, and the new tool runs are added to them. The archive is
+    created if it does not exist yet.
 
     The names are the ones of the archive managers of the simulations (see
     :class:`.ArchiveManager`), plus ``"none"`` to disable the archive.
