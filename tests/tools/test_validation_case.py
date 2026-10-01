@@ -25,6 +25,9 @@ from numpy.testing import assert_allclose
 
 from vimseo.api import create_model
 from vimseo.problems.mock.mock_reference_data import MOCK_REFERENCE_DIR
+from vimseo.storage_management.tool_archive.directory_tool_archive import (
+    DirectoryToolArchive,
+)
 from vimseo.tools.base_result import assert_results_equal
 from vimseo.tools.io.reader_file_dataframe import ReaderFileDataFrame
 from vimseo.tools.io.reader_file_dataframe import ReaderFileDataFrameSettings
@@ -215,6 +218,58 @@ def test_end_to_end_deterministic_validation(tmp_wd, reference_data, metric_name
     assert validation_case.result.integrated_metrics["RelativeErrorMetric"][
         "y4"
     ] == pytest.approx(0.1287879)
+
+
+def test_simulations_are_run_by_the_doe_subtool(tmp_wd, reference_data):
+    """Check that the samples are simulated by the DOE subtool, once per cache file.
+
+    The vector input ``x3`` of the reference data has two sizes, so the two samples
+    are in two cache files and simulated by two executions of the DOE subtool.
+    """
+    archive_root = tmp_wd / "archive"
+    validation_case = DeterministicValidationCase(
+        archive_manager="DirectoryArchive", archive_root=archive_root
+    )
+    model = create_model("MockModelPersistent", "LC1")
+    model.EXTRA_INPUT_GRAMMAR_CHECK = True
+    validation_case.execute(
+        inputs=DeterministicValidationCaseInputs(
+            model=model, reference_data=reference_data
+        ),
+        settings=DeterministicValidationCaseSettings(output_names=["y4"]),
+    )
+
+    # One archived run of the DOE subtool per cache file, child of the validation.
+    runs = {
+        run["tool_run_id"]: run
+        for run in DirectoryToolArchive(archive_root).search_tool_runs()
+    }
+    child_ids = validation_case.result.metadata.child_tool_run_ids
+    assert len(child_ids) == 2
+    assert {runs[child_id]["tool_name"] for child_id in child_ids} == {"CustomDOETool"}
+    assert all(len(runs[child_id]["simulation_run_ids"]) == 1 for child_id in child_ids)
+
+    # The DOE subtool holds all the samples, in the order of the reference data.
+    doe_result = validation_case._subtools["CustomDOETool"].result
+    assert_allclose(
+        doe_result.dataset.get_view(
+            group_names=IODataset.INPUT_GROUP, variable_names=["x3", "x1", "x2"]
+        ).to_numpy(),
+        reference_data.get_view(
+            group_names=IODataset.INPUT_GROUP, variable_names=["x3", "x1", "x2"]
+        ).to_numpy(),
+    )
+    assert_allclose(
+        doe_result.dataset.get_view(
+            group_names=IODataset.OUTPUT_GROUP, variable_names="y4"
+        ).to_numpy(),
+        validation_case.result.element_wise_metrics.get_view(
+            group_names=IODataset.OUTPUT_GROUP, variable_names="y4"
+        ).to_numpy(),
+    )
+    assert set(doe_result.metadata.simulation_run_ids) == set(
+        validation_case.result.metadata.simulation_run_ids
+    )
 
 
 def test_validation_plots(tmp_wd, deterministic_validation_case):

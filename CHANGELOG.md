@@ -83,6 +83,9 @@ and this project adheres to
 
 ## Fixed
 
+- `DeterministicValidationCase` executed the model directly instead of its
+  `CustomDOETool` subtool, whose result was therefore empty. The subtool now
+  simulates the samples, once per cache file, and holds all of them.
 - A `DataFrame` with a `RangeIndex` (a DOE dataset for instance) was read back from
   an HDF5 result with an `Index` of integers, which is a different type.
 - The `directory_archive_job` metadata was empty in the outputs and in the cache of

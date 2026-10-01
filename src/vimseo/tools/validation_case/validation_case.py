@@ -24,7 +24,6 @@ from gemseo.datasets.io_dataset import IODataset
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from gemseo.utils.metrics.dataset_metric import DatasetMetric
 from gemseo.utils.metrics.metric_factory import MetricFactory
-from numpy import atleast_1d
 from numpy import hstack
 from numpy import isnan
 from numpy import vstack
@@ -155,47 +154,85 @@ class DeterministicValidationCase(BaseAnalysisTool):
 
         self.__orig_cache_path = Path(model._cache_file_path)
 
-        all_output_data = []
+        # The NaN padding the vectors of the reference data is removed, so that the
+        # size of a vector input can change from a sample to another. The samples
+        # sharing the same vector inputs share a cache file, and are simulated together
+        # by the DOE tool, which needs inputs of the same size for all its samples.
+        sample_indices_per_cache = defaultdict(list)
+        input_data_per_sample = []
         for i in range(len(reference_data)):
             input_data = {
                 k: v[i][~isnan(v[i])]
                 for k, v in all_input_data.items()
                 if k in input_names
             }
+            input_data_per_sample.append(input_data)
 
             vector_names = [name for name, data in input_data.items() if len(data) > 1]
             suffix = "".join([
                 f"{name}_{encode_vector(input_data[name])}__" for name in vector_names
             ])
             suffix = suffix[:-2]
-            new_cache_path = (
+            cache_path = (
                 f"{str(self.__orig_cache_path).split(self.__orig_cache_path.suffix)[0]}_"
                 f"{suffix}{self.__orig_cache_path.suffix}"
             )
-            model.reset_cache(new_cache_path)
+            sample_indices_per_cache[cache_path].append(i)
 
-            all_output_data.append({
-                k: v for k, v in model.execute(input_data).items() if k in output_names
-            })
-
-        data = [
-            hstack([atleast_1d(v) for v in output_data.values()])
-            for output_data in all_output_data
-        ]
+        doe_tool = self._subtools["CustomDOETool"]
+        output_data_per_sample = [None] * len(reference_data)
+        simulation_run_ids = {}
+        for cache_path, sample_indices in sample_indices_per_cache.items():
+            model.reset_cache(cache_path)
+            first_input_data = input_data_per_sample[sample_indices[0]]
+            input_dataset = IODataset.from_array(
+                data=vstack([
+                    hstack(list(input_data_per_sample[i].values()))
+                    for i in sample_indices
+                ]),
+                variable_names=list(first_input_data),
+                variable_names_to_n_components={
+                    name: len(data) for name, data in first_input_data.items()
+                },
+                variable_names_to_group_names=dict.fromkeys(
+                    first_input_data, IODataset.INPUT_GROUP
+                ),
+            )
+            group_dataset = doe_tool.execute(
+                model=model, input_dataset=input_dataset, output_names=output_names
+            ).dataset
+            simulation_run_ids.update(
+                dict.fromkeys(doe_tool.result.metadata.simulation_run_ids)
+            )
+            output_data = group_dataset.get_view(
+                group_names=IODataset.OUTPUT_GROUP, variable_names=output_names
+            ).to_numpy()
+            for i, sample_output_data in zip(sample_indices, output_data, strict=True):
+                output_data_per_sample[i] = sample_output_data
 
         # only works for numerical outputs. If a string is considered, data is entirely
         # converted to string
         # TODO check that the outputs are numerical
         doe_dataset = IODataset.from_array(
-            data=vstack(data),
-            variable_names=list(all_output_data[0].keys()),
+            data=vstack(output_data_per_sample),
+            variable_names=output_names,
             variable_names_to_group_names=dict.fromkeys(
-                list(all_output_data[0].keys()), IODataset.OUTPUT_GROUP
+                output_names, IODataset.OUTPUT_GROUP
             ),
             variable_names_to_n_components={
-                k: len(atleast_1d(v)) for k, v in all_output_data[0].items()
+                name: group_dataset.variable_names_to_n_components[name]
+                for name in output_names
             },
         )
+
+        if len(sample_indices_per_cache) > 1:
+            # The DOE tool holds the result of its last execution only: it is
+            # given all the samples, so that its exported result is complete. Each
+            # execution is archived with its own samples.
+            doe_tool.result.dataset = self.__gather_samples(
+                reference_data, input_names, doe_dataset
+            )
+            doe_tool.result.metadata.simulation_run_ids = tuple(simulation_run_ids)
 
         error_dataset = Dataset()
         error_dataset.add_group(
@@ -257,6 +294,40 @@ class DeterministicValidationCase(BaseAnalysisTool):
         self.result.element_wise_metrics = error_dataset
 
         return self.result
+
+    @staticmethod
+    def __gather_samples(
+        reference_data: IODataset, input_names: Sequence[str], doe_dataset: IODataset
+    ) -> IODataset:
+        """Return the inputs and the outputs of all the samples.
+
+        Args:
+            reference_data: The reference data, whose vector inputs are padded with NaN.
+            input_names: The names of the inputs.
+            doe_dataset: The outputs of the samples, in the order of the reference data.
+
+        Returns:
+            The inputs of the reference data, padded with NaN, and the outputs.
+        """
+        dataset = IODataset()
+        dataset.add_group(
+            group_name=IODataset.INPUT_GROUP,
+            data=reference_data.get_view(
+                variable_names=input_names, group_names=IODataset.INPUT_GROUP
+            ).to_numpy(),
+            variable_names=input_names,
+            variable_names_to_n_components={
+                name: reference_data.variable_names_to_n_components[name]
+                for name in input_names
+            },
+        )
+        dataset.add_group(
+            group_name=IODataset.OUTPUT_GROUP,
+            data=doe_dataset.get_view(group_names=IODataset.OUTPUT_GROUP).to_numpy(),
+            variable_names=doe_dataset.get_variable_names(IODataset.OUTPUT_GROUP),
+            variable_names_to_n_components=doe_dataset.variable_names_to_n_components,
+        )
+        return dataset
 
     def plot_results(
         self,
