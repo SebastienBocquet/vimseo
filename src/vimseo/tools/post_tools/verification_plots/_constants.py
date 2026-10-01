@@ -13,19 +13,9 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+"""Constants shared by the verification plots."""
+
 from __future__ import annotations
 
-import logging
-
-from gemseo.core.base_factory import BaseFactory
-
-from vimseo.tools.post_tools.base_plot import Plotter
-
-LOGGER = logging.getLogger(__name__)
-
-
-class PlotFactory(BaseFactory):
-    """Plot factory to create a :class:`~.Plotter` from a name or a class."""
-
-    _CLASS = Plotter
-    _PACKAGE_NAMES = ("vimseo.tools.post_tools",)
+_DOF_ABSCISSA_NAME = "N_dof_coarsest / N_dof"
+ELEMENT_SIZE_PRECISION = 4
