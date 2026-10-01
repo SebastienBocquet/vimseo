@@ -27,7 +27,7 @@ def test_discipline_based_model(tmp_wd):
     output_data = model.execute()
     assert output_data["x"][0] == 1.0  # ruff: ignore[float-equality-comparison]
     assert output_data["x_1"][0] == 1.0  # ruff: ignore[float-equality-comparison]
-    for name in ["y_axis", "y"]:
+    for name in ["x_history", "y_history"]:
         assert (
             len(output_data[name])
             == model._chain.disciplines[0]._discipline.CURVE_NB_POINTS

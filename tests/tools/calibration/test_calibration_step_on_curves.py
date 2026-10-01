@@ -46,7 +46,7 @@ def calibration_on_curves(mesh: str):
         as_dataset=True,
     )
 
-    output_name = "y"
+    output_name = "y_history"
 
     step = CalibrationStep()
     step.execute(
@@ -74,21 +74,21 @@ def calibration_on_curves(mesh: str):
 
 def test_calibration_on_curves(tmp_wd):
     """Check that a calibration step based on curves can be executed."""
-    calibration_step, x_target = calibration_on_curves("y_axis")
+    calibration_step, x_target = calibration_on_curves("x_history")
     calibration_step.plot_results(calibration_step.result, show=False, save=True)
     assert calibration_step.result.posterior_parameters["x"] == pytest.approx(x_target)
 
 
 def test_calibration_monotonic_decreasing_axis(tmp_wd):
     """Test calibration with a monotonic decreasing axis."""
-    calibration_step, x_target = calibration_on_curves("y_axis")
+    calibration_step, x_target = calibration_on_curves("x_history")
     calibration_step.plot_results(calibration_step.result, show=False, save=True)
     assert calibration_step.result.posterior_parameters["x"] == pytest.approx(x_target)
 
 
 def test_plots_on_curves(tmp_wd):
     """Check that a calibration step based on curves can be plotted."""
-    calibration_step, _ = calibration_on_curves("y_axis")
+    calibration_step, _ = calibration_on_curves("x_history")
     calibration_step.plot_results(calibration_step.result, show=False, save=True)
     assert (
         calibration_step.working_directory

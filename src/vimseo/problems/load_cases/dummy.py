@@ -37,6 +37,6 @@ class DummyOverride(LoadCase):
     """A dummy load case overriding/completing a model's PLOTS."""
 
     PLOTS: ClassVar[Sequence[Plot | tuple[str, ...]]] = [
-        Plot(x="y_axis", traces=[Trace(y="y")], title="Overridden plot"),
-        ("y_axis", "y_2"),
+        Plot(x="x_history", traces=[Trace(y="y_history")], title="Overridden plot"),
+        ("x_history", "y_2_history"),
     ]

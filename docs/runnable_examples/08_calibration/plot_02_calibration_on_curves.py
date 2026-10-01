@@ -107,7 +107,7 @@ model = create_model(
 # which is mandatory when calibrating for:
 #  - several metrics in the same step
 #  - several load cases in the same step
-output_name = "y"
+output_name = "y_history"
 step = CalibrationStep(working_directory="curves")
 step.execute(
     inputs=CalibrationStepInputs(
@@ -120,7 +120,7 @@ step.execute(
         control_outputs={
             output_name: CalibrationMetricSettings(
                 metric_name="SBPISE",
-                mesh_name="y_axis",
+                mesh_name="x_history",
                 scaling=CurveScaling.XYRange,
             ).model_dump()
         },
@@ -140,7 +140,7 @@ step.result.prior_parameters
 # %%
 # The outputs can be compared to the reference data, before and after calibration:
 figs = step.plot_results(step.result, show=True, save=False)
-figs["Dummy"]["simulated_versus_reference_curve_y_versus_y_axis"]
+figs["Dummy"]["simulated_versus_reference_curve_y_history_versus_x_history"]
 
 # %%
 # The curves that have been defined as ``control_outputs`` can be retrieved as

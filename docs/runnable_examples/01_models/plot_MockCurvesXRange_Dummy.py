@@ -65,6 +65,6 @@ figures = model.plot_results(show=True)
 
 
 # %%
-# Plot of y_vs_y_axis
+# Plot of y_history_vs_x_history
 
-figures["y_vs_y_axis"]
+figures["y_history_vs_x_history"]

@@ -17,14 +17,14 @@
         "type": "number"
       }
     },
-    "y_axis": {
+    "x_history": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "number"
       }
     },
-    "y": {
+    "y_history": {
       "type": "array",
       "minItems": 1,
       "items": {

@@ -108,7 +108,7 @@ def test_plot_model_plots_override(tmp_wd):
     plots = model.plots
 
     keys = [p.get_key() for p in plots]
-    assert keys == [("y_axis", "y"), ("y_axis", "y_2")]
+    assert keys == [("x_history", "y_history"), ("x_history", "y_2_history")]
     assert plots[0].title == "Overridden plot"
 
 

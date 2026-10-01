@@ -75,10 +75,10 @@ def create_reference_dataset(
     y_ref = y_max * y_ref / (np_max(y_ref) - np_min(y_ref))
     reference_data = IODataset.from_array(
         data=[concatenate([x_ref, y_ref])],
-        variable_names=["y_axis", "y"],
+        variable_names=["x_history", "y_history"],
         variable_names_to_n_components={
-            "y": NB_REF_POINTS,
-            "y_axis": NB_REF_POINTS,
+            "y_history": NB_REF_POINTS,
+            "x_history": NB_REF_POINTS,
         },
     )
     reference_data.add_variable(
@@ -112,7 +112,7 @@ def check_abscissa_bound_penalization(
     x_left = x_ref_left * (1 + delta_x_left)
     x_right = x_ref_right * (1 + delta_x_right)
     # The starting point for the max y of the model:
-    y_max = 1.2 * reference_data.get_view(variable_names=["y"]).to_numpy().max()
+    y_max = 1.2 * reference_data.get_view(variable_names=["y_history"]).to_numpy().max()
 
     design_space = DesignSpace()
     design_space.add_variable(
@@ -137,9 +137,9 @@ def check_abscissa_bound_penalization(
         settings=CalibrationStepSettings(
             name_to_models={"Dummy": "MockCurvesXRange"},
             control_outputs={
-                "y": CalibrationMetricSettings(
+                "y_history": CalibrationMetricSettings(
                     metric_name="SBPISE",
-                    mesh_name="y_axis",
+                    mesh_name="x_history",
                     scaling=CurveScaling.XYRange,
                     x_left_penalization_factor=1.0,
                     x_right_penalization_factor=1.0,
