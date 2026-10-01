@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from dataclasses import fields
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -56,9 +57,14 @@ class BaseToolFileIO(metaclass=GoogleDocstringInheritanceMeta):
         metadata.settings = data["metadata"]["settings"]
         metadata.misc = data["metadata"]["misc"]
         metadata.report = data["metadata"]["report"]
-        metadata.model = (
-            ModelDescription(**data["metadata"]["model"])
-            if data["metadata"]["model"] is not None
-            else None
-        )
+        model = data["metadata"]["model"]
+        if model is None:
+            metadata.model = None
+        else:
+            # Results saved by older versions may hold fields that no longer exist
+            # (e.g. ``plots``).
+            field_names = {f.name for f in fields(ModelDescription)}
+            metadata.model = ModelDescription(**{
+                name: value for name, value in model.items() if name in field_names
+            })
         return metadata

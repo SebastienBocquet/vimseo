@@ -462,7 +462,6 @@ class IntegratedModel(GemseoDisciplineWrapper):
             self.load_case,
             self.get_dataflow(),
             default_inputs_by_group,
-            copy(self.plots),
         )
 
     @property

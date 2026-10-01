@@ -18,7 +18,6 @@ from __future__ import annotations
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.load_case import LoadCase
 from vimseo.core.model_description import ModelDescription
-from vimseo.tools.post_tools.plot_parameters import Plot
 
 
 def _make_description(**kwargs) -> ModelDescription:
@@ -39,7 +38,7 @@ def _make_description(**kwargs) -> ModelDescription:
 
 
 def test_model_description_default_rendering():
-    """The default (non-verbose) rendering has no dataflow or plots section."""
+    """The default (non-verbose) rendering has no dataflow section."""
     description = _make_description()
 
     text = str(description)
@@ -52,13 +51,11 @@ def test_model_description_default_rendering():
     assert "Plots:" not in text
 
 
-def test_model_description_verbose_rendering_includes_dataflow_and_plots():
-    """Verbose rendering adds the dataflow (JSON) and the plots repr."""
-    description = _make_description(
-        plots=[Plot.from_variable_names(("x", "y"))], verbose=True
-    )
+def test_model_description_verbose_rendering_includes_dataflow():
+    """Verbose rendering adds the dataflow (JSON)."""
+    description = _make_description(verbose=True)
 
     text = str(description)
 
     assert "Dataflow:" in text
-    assert "Plots:" in text
+    assert "Plots:" not in text

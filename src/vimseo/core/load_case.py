@@ -19,7 +19,6 @@ import sys
 from dataclasses import dataclass
 from dataclasses import field
 from dataclasses import fields
-from json import dumps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -31,7 +30,6 @@ from matplotlib.pyplot import imshow
 from numpy import asarray
 
 from vimseo.core.load import Load
-from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -70,9 +68,6 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
     load: Load = field(default_factory=Load)
     """The load."""
 
-    verbose: bool = False
-    """Whether ``__str__`` includes the full plot-parameters definition."""
-
     @property
     def image_path(self):
         """The fully-qualified path to the image illustrating the load case."""
@@ -98,15 +93,8 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
     def get_load(self) -> Load:
         return Load()
 
-    def _get_multiline(self, verbose: bool | None = None):
-        """A multiline representation of the load case as a ``MultiLineString``.
-
-        Args:
-            verbose: Whether to include the full plot-parameters definition.
-                If ``None``, use :attr:`.verbose`.
-        """
-        verbose = self.verbose if verbose is None else verbose
-
+    def _get_multiline(self) -> MultiLineString:
+        """A multiline representation of the load case as a ``MultiLineString``."""
         text = MultiLineString()
         text.add(f"Load case {self.name}: {self.summary}")
         if self.domain:
@@ -130,20 +118,6 @@ class LoadCase(metaclass=GoogleDocstringInheritanceMeta):
             text.add(
                 f"Boundary condition variables: {', '.join(self.bc_variable_names)}"
             )
-
-        if verbose:
-            text.add("")
-            text.add("Plots:")
-            text.indent()
-            text.add(
-                dumps(
-                    self.PLOTS,
-                    sort_keys=True,
-                    indent=4,
-                    cls=EnhancedJSONEncoder,
-                )
-            )
-            text.dedent()
 
         return text
 

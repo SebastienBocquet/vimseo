@@ -47,7 +47,7 @@ def test_load_case_with_domain():
 
 
 def test_load_case_description():
-    """The default rendering is compact; verbose adds the plot parameters."""
+    """The rendering is compact and does not include the plots."""
     lc = LoadCaseFactory().create("Beam_Cantilever")
 
     default_text = str(lc)
@@ -58,10 +58,6 @@ def test_load_case_description():
     )
     assert "Plots:" not in default_text
     assert "[" not in default_text  # no Python list repr
-
-    lc.verbose = True
-    assert "Plots:" in str(lc)
-    assert str(lc) == str(lc._get_multiline(verbose=True))
 
 
 def test_load_case_description_includes_domain_when_set():

@@ -22,7 +22,6 @@ from gemseo.utils.string_tools import MultiLineString
 from numpy import ndarray
 
 from vimseo.core.load_case import LoadCase
-from vimseo.tools.post_tools.plot_parameters import Plot
 
 
 class BaseDescription:
@@ -48,10 +47,8 @@ class ModelDescription(BaseDescription):
     default_inputs: dict[str, ndarray] = field(default_factory=dict)
     """The model default inputs."""
 
-    plots: list[Plot] = ()
-    """The definitions of the figures plotted from the model data."""
-
     verbose: bool = False
+    """Whether ``__str__`` includes the full dataflow."""
 
     def _get_multiline(self):
         """A multiline representation of the load case as a ```MultiLineString``."""
@@ -64,7 +61,7 @@ class ModelDescription(BaseDescription):
         text.add("Load case:")
         text.indent()
         indentation = MultiLineString.INDENTATION
-        for line in self.load_case._get_multiline(verbose=self.verbose).lines:
+        for line in self.load_case._get_multiline().lines:
             text.add(indentation * line.level + line.str_format)
         text.dedent()
 
@@ -95,10 +92,6 @@ class ModelDescription(BaseDescription):
             text.add("Dataflow:")
             text.indent()
             text.add(dumps(dataflow, sort_keys=True, indent=4))
-            text.dedent()
-            text.add("Plots:")
-            text.indent()
-            text.add(str(self.plots))
             text.dedent()
 
         return text
