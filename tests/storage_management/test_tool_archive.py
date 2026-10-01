@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import logging
+from functools import partial
 
 import pytest
 from gemseo.algos.parameter_space import ParameterSpace
@@ -34,11 +35,29 @@ from vimseo.storage_management.tool_archive.directory_tool_archive import (
 )
 from vimseo.tools.base_result import assert_results_equal
 from vimseo.tools.base_tool import BaseTool
+from vimseo.tools.calibration.direct_measure_calibration_step import DirectMeasures
 from vimseo.tools.doe.custom_doe import CustomDOETool
 from vimseo.tools.doe.doe import DOETool
 from vimseo.tools.doe.doe_result import DOEResult
+from vimseo.tools.io.reader_file_dataframe import ReaderFileDataFrame
+from vimseo.tools.io.reader_file_dataset import ReaderFileGemseoDataset
+from vimseo.tools.io.reader_file_result import ResultFileReaderTool
+from vimseo.tools.io.reader_file_tecplot import ReaderFileTecplot
+from vimseo.tools.io.reader_material import MaterialReader
+from vimseo.tools.io.reader_parameter_space import ParameterSpaceReader
 from vimseo.tools.mock.mock_tool import MyBaseCompositeTool
 from vimseo.tools.mock.mock_tool import MyTool
+from vimseo.tools.verification.solution_verification import (
+    DiscretizationSolutionVerification,
+)
+from vimseo.tools.verification.solution_verification_case import (
+    SolutionVerificationCase,
+)
+from vimseo.tools.verification.verification_vs_data import CodeVerificationAgainstData
+from vimseo.tools.verification.verification_vs_model import CodeVerificationAgainstModel
+from vimseo.tools.verification.verification_vs_model_from_parameter_space import (
+    CodeVerificationAgainstModelFromParameterSpace,
+)
 from vimseo.utilities.datasets import Variable
 from vimseo.utilities.datasets import generate_dataset
 
@@ -235,6 +254,38 @@ def test_explicit_archive_settings_of_a_subtool_are_kept(archive_root, archive):
     assert isinstance(sub_tool._tool_archive, NullToolArchive)
     (run,) = archive.search_tool_runs()
     assert run["tool_name"] == "MyBaseCompositeTool"
+
+
+@pytest.mark.parametrize(
+    "tool_class",
+    [
+        DiscretizationSolutionVerification,
+        CodeVerificationAgainstData,
+        CodeVerificationAgainstModel,
+        CodeVerificationAgainstModelFromParameterSpace,
+        SolutionVerificationCase,
+        DirectMeasures,
+        ReaderFileDataFrame,
+        ReaderFileGemseoDataset,
+        ReaderFileTecplot,
+        MaterialReader,
+        ParameterSpaceReader,
+        partial(ResultFileReaderTool, "SpaceTool"),
+    ],
+    ids=lambda tool_class: getattr(tool_class, "__name__", "ResultFileReaderTool"),
+)
+def test_tools_with_their_own_constructor_accept_the_archive_settings(
+    archive_root, tool_class
+):
+    """The tools defining their own constructor pass the archive settings to their
+    base class, and to their subtools."""
+    tool = tool_class(archive_manager="DirectoryArchive", archive_root=archive_root)
+
+    for archived_tool in [tool, *getattr(tool, "_subtools", {}).values()]:
+        assert isinstance(archived_tool._tool_archive, DirectoryToolArchive)
+        assert archived_tool._tool_archive.root_directory == str(
+            archive_root.absolute()
+        )
 
 
 def test_an_error_of_the_archive_does_not_lose_the_result(

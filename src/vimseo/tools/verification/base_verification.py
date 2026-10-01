@@ -156,12 +156,14 @@ class BaseVerification(BaseAnalysisTool):
         root_directory: str | Path = config.root_directory,
         directory_naming_method: DirectoryNamingMethod = DirectoryNamingMethod.NUMBERED,
         working_directory: str | Path = config.working_directory,
+        **options,
     ):
         super().__init__(
             subtools=subtools,
             root_directory=root_directory,
             directory_naming_method=directory_naming_method,
             working_directory=working_directory,
+            **options,
         )
         self._output_names = []
         self.result = VerificationResult()
