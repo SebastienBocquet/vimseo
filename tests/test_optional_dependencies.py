@@ -142,7 +142,7 @@ def test_core_models_are_discoverable():
 
 
 @pytest.mark.fast
-def test_tan_open_hole_execution_needs_mesh_extra():
+def test_tan_open_hole_execution_needs_mesh_extra(tmp_wd):
     """TanOpenHole is a core model, but executing it is not core-only.
 
     Its ``PostFieldExtraction`` step reads the flux field it just wrote back with
