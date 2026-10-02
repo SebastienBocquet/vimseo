@@ -576,20 +576,37 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
                 self._check_options(**loaded_options)
             self._options.update(loaded_options)
 
+    @classmethod
+    def get_result_file_name(
+        cls, tool_name: str, file_format: str = "hdf5", prefix: str = ""
+    ) -> str:
+        """Return the name of the file of a tool result.
+
+        The same name is used by :meth:`save_results` and by the archive of the tool
+        results, so that a result file tells which tool it comes from.
+
+        Args:
+            tool_name: The name of the tool.
+            file_format: The format of the file.
+            prefix: The prefix of the file name, if any.
+
+        Returns:
+            The name of the file, ``{prefix}_{tool_name}_result.{file_format}``.
+        """
+        prefix_separator = "_" if prefix != "" else ""
+        return (
+            f"{prefix}{prefix_separator}{tool_name}{cls._RESULT_SUFFIX}.{file_format}"
+        )
+
     def save_results(self, prefix: str = "", file_format="hdf5") -> None:
         """Save the results of the tool on disk. The file path is
-        `BaseTool.working_directory` / ``{filename}_result.{file_format}``.
+        `BaseTool.working_directory` / :meth:`get_result_file_name`.
 
          Args:
              prefix: The prefix of the filename result.
         """
-        prefix_separator = ""
-        if prefix != "":
-            prefix_separator = "_"
-
-        path = (
-            self.working_directory
-            / f"{prefix}{prefix_separator}{self.name}{self._RESULT_SUFFIX}.{file_format}"
+        path = self.working_directory / self.get_result_file_name(
+            self.name, file_format, prefix
         )
         LOGGER.info(f"Saving result to {path.absolute().resolve()}")
 

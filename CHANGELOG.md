@@ -34,9 +34,11 @@ and this project adheres to
 
 - Export to disk of analysis results (DOE, Sensitivity etc...) in hd5 format.
 - Archive of the results of the tools. Each time a tool is executed, its result is
-  written under `{archive_root}/tools/{tool_name}/{tool_run_id}/` (`result.hdf5`, and
-  `result_metadata.json`, a readable summary with the status of the run, its settings
-  and the identifiers of its simulations and of its parent and child tool runs). The
+  written under `{archive_root}/tools/{tool_name}/{tool_run_id}/`
+  (`{tool_name}_result.hdf5`, named as by `save_results()`, and
+  `{tool_name}_result_metadata.json`, a readable summary with the status of the run,
+  its settings and the identifiers of its simulations and of its parent and child
+  tool runs). The
   archive is searched with `DirectoryToolArchive.search_tool_runs()`, a result is read
   back with `get_tool_result()`, and `find_tool_runs_of_simulation()` gives the tool
   runs which used a simulation. It is enabled by default with the archive manager of

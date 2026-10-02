@@ -216,6 +216,18 @@ def test_save_results(
         ).is_file()
 
 
+@pytest.mark.parametrize(
+    ("file_format", "prefix", "expected"),
+    [
+        ("hdf5", "", "DOETool_result.hdf5"),
+        ("hdf5", "batch_1", "batch_1_DOETool_result.hdf5"),
+        ("pickle", "", "DOETool_result.pickle"),
+    ],
+)
+def test_get_result_file_name(file_format, prefix, expected):
+    assert BaseTool.get_result_file_name("DOETool", file_format, prefix) == expected
+
+
 def test_save_and_load_results_pickle(tmp_wd):
     """A pickled result can be saved and reloaded from disk."""
     tool = MyTool()

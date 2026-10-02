@@ -110,11 +110,13 @@ def test_result_is_archived_after_execution(archive_root, archive, parameter_spa
     tool, _ = execute_doe(archive_root, parameter_space)
     run_id = tool.result.metadata.run_id
 
+    # The files are named after the tool, as the results saved by the tool.
     directory = archive_root / "tools" / "DOETool" / run_id
-    assert (directory / DirectoryToolArchive.RESULT_FILE_NAME).is_file()
-    summary = json.loads(
-        (directory / DirectoryToolArchive.SUMMARY_FILE_NAME).read_text()
-    )
+    assert {path.name for path in directory.iterdir()} == {
+        "DOETool_result.hdf5",
+        "DOETool_result_metadata.json",
+    }
+    summary = json.loads((directory / "DOETool_result_metadata.json").read_text())
     assert summary["status"] == "FINISHED"
     assert summary["tool_run_id"] == run_id
     assert summary["tool_name"] == "DOETool"
@@ -204,7 +206,7 @@ def test_failed_tool_run_is_archived_as_failed(archive_root, archive):
         / "tools"
         / "FailingTool"
         / summary["tool_run_id"]
-        / DirectoryToolArchive.RESULT_FILE_NAME
+        / DirectoryToolArchive.get_result_file_name("FailingTool")
     ).exists()
     with pytest.raises(KeyError, match="no result"):
         archive.get_tool_result(summary["tool_run_id"])

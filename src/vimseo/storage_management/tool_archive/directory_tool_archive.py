@@ -55,8 +55,11 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
     directory named after the ``tool_run_id``, under the directory of its tool::
 
         {root_directory}/tools/{tool_name}/{tool_run_id}/
-            result.hdf5           # the result, as written by BaseResult.to_hdf5
-            result_metadata.json  # a readable summary of the run
+            {tool_name}_result.hdf5           # the result, written by BaseResult.to_hdf5
+            {tool_name}_result_metadata.json  # a readable summary of the run
+
+    The result file has the name given by :meth:`.BaseTool.save_results`, so that it
+    tells which tool it comes from wherever it is opened.
 
     The summary lets the runs be searched without opening any result, and holds the
     links to the simulations (``simulation_run_ids``) and to the other tool runs
@@ -68,11 +71,8 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
     simulations, and are not used.
     """
 
-    RESULT_FILE_NAME = "result.hdf5"
-    """The name of the file of the result, in the directory of a tool run."""
-
-    SUMMARY_FILE_NAME = "result_metadata.json"
-    """The name of the file of the summary, in the directory of a tool run."""
+    SUMMARY_SUFFIX = "_result_metadata.json"
+    """The suffix of the name of the file of the summary, after the tool name."""
 
     TOOLS_DIRECTORY_NAME = "tools"
     """The name of the directory, under the root, of the tool runs."""
@@ -108,8 +108,28 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
         self.create_job_directory()
         self._write_summary(self.STATUS_RUNNING)
 
+    @staticmethod
+    def get_result_file_name(tool_name: str) -> str:
+        """Return the name of the file of the result, in the directory of a run.
+
+        Args:
+            tool_name: The name of the tool.
+        """
+        from vimseo.tools.base_tool import BaseTool
+
+        return BaseTool.get_result_file_name(tool_name)
+
+    @classmethod
+    def get_summary_file_name(cls, tool_name: str) -> str:
+        """Return the name of the file of the summary, in the directory of a run.
+
+        Args:
+            tool_name: The name of the tool.
+        """
+        return f"{tool_name}{cls.SUMMARY_SUFFIX}"
+
     def publish_tool_result(self, result: BaseResult) -> None:
-        result.to_hdf5(self._job_directory / self.RESULT_FILE_NAME)
+        result.to_hdf5(self._job_directory / self.get_result_file_name(self._tool_name))
         self._write_summary(self.STATUS_FINISHED, result=result)
 
     def end_tool_run(self, status: str, error: str = "") -> None:
@@ -146,7 +166,9 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
         except TypeError:
             # A key which is not a string, in the settings for example.
             text = json.dumps(summary, indent=2, default=_to_json_value, skipkeys=True)
-        (self._job_directory / self.SUMMARY_FILE_NAME).write_text(text)
+        (self._job_directory / self.get_summary_file_name(self._tool_name)).write_text(
+            text
+        )
 
     def _find_run_directory(self, tool_run_id: str, tool_name: str = "") -> Path:
         pattern = f"{tool_name or '*'}/{tool_run_id}"
@@ -164,7 +186,8 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
         from vimseo.tools.base_tool import BaseTool
 
         directory = self._find_run_directory(tool_run_id, tool_name)
-        path = directory / self.RESULT_FILE_NAME
+        # The directory of a run is in the directory of its tool.
+        path = directory / self.get_result_file_name(directory.parent.name)
         if not path.is_file():
             msg = (
                 f"The tool run {tool_run_id} has no result: its status is "
@@ -176,7 +199,10 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
     @staticmethod
     def _read_summary(directory: Path) -> dict[str, object]:
         return json.loads(
-            (directory / DirectoryToolArchive.SUMMARY_FILE_NAME).read_text()
+            (
+                directory
+                / DirectoryToolArchive.get_summary_file_name(directory.parent.name)
+            ).read_text()
         )
 
     def search_tool_runs(
@@ -184,7 +210,7 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
     ) -> list[dict[str, object]]:
         summaries = []
         for path in sorted(
-            self._tools_directory.glob(f"{tool_name or '*'}/*/{self.SUMMARY_FILE_NAME}")
+            self._tools_directory.glob(f"{tool_name or '*'}/*/*{self.SUMMARY_SUFFIX}")
         ):
             summary = json.loads(path.read_text())
             if status == "" or summary["status"] == status:
