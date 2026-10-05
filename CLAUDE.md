@@ -85,8 +85,14 @@ All analysis tools inherit from `BaseTool` ([base_tool.py](src/vimseo/tools/base
 
 - Class attributes `_INPUTS` (a `BaseInputs` subclass) and `_SETTINGS` (a `BaseSettings` subclass) define Pydantic models for validation.
 - `execute(inputs=..., settings=...)` accepts instances of those Pydantic models, or falls back to keyword arguments.
-- Results are stored in `tool.result` (a `BaseResult` subclass) and persisted via `tool.save_results()` to HDF5/pickle.
-- `plot_results(result, ...)` produces Plotly figures.
+- Results are stored in `tool.result` (a `BaseResult` subclass) and persisted via `tool.save_results()` to HDF5.
+- A result is visualized without its tool, e.g. once loaded from an archive:
+  `result.visualize(**settings)` returns its figures (Plotly or matplotlib) and
+  `result.tabulate()` its numerical values as DataFrames. A result class declares its
+  figures in `_create_figures()` and its settings in `_VISUALIZATION_SETTINGS`, whose
+  fields are flat and default to "everything". `BaseTool.plot_results` is deprecated.
+- `vimseo.api.load_tool_result(uri)` loads a result from a file, an archived tool run
+  directory or `tool-run:{tool_run_id}` ([tool_archive/uri.py](src/vimseo/storage_management/tool_archive/uri.py)).
 
 Available tool categories: DOE, sensitivity analysis, calibration, verification (solution + vs-data + vs-model), validation (point + case), surrogate modelling, statistics, Bayesian analysis, design value.
 
@@ -140,6 +146,7 @@ All settings classes inherit from `BaseSettings` (Pydantic `BaseModel` with `ext
 | `workflow_executor` | `vimseo.workflow.workflow_executor:main` |
 | `dashboard_database_viewer` | `vimseo.dashboards.database_viewer.db_viewer_entry_point:main` |
 | `dashboard_mlflow` | `vimseo.storage_management.mlflow_ui_entry_point:main` |
+| `visualize_tool_result` | `vimseo.tools.visualize_tool_result:main` |
 
 ### Test structure
 

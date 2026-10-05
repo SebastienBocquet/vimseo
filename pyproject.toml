@@ -110,6 +110,7 @@ dashboard_workflow = "vimseo.dashboards.workflow.entry_point:main"
 dashboard_database_viewer = "vimseo.dashboards.database_viewer.db_viewer_entry_point:main"
 workflow_executor = "vimseo.workflow.workflow_executor:main"
 dashboard_mlflow = "vimseo.storage_management.mlflow_ui_entry_point:main"
+visualize_tool_result = "vimseo.tools.visualize_tool_result:main"
 
 [build-system]
 requires = [
