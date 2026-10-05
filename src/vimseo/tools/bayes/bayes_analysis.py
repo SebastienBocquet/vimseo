@@ -37,7 +37,6 @@ from numpy import floor
 from numpy import inf
 from numpy import isfinite
 from numpy import isnan
-from numpy import linspace
 from numpy import log
 from numpy import mean
 from numpy import ndarray
@@ -362,6 +361,7 @@ class BayesTool(BaseAnalysisTool):
             raise ValueError(msg)
 
         self._data = Sample(options["data"].reshape(-1, 1))
+        self.result.data = options["data"]
 
         self._dist_model = getattr(dist, options["likelihood_dist"])()
 
@@ -710,38 +710,14 @@ class BayesTool(BaseAnalysisTool):
 
         Returns: The plot of the posterior distribution.
         """
-
-        ndim = result.ndim
-
-        parameters_name = self._dist_model.getParameterDescription()
-
-        fig, axes = subplots(ndim, ndim)
-
-        for i in range(ndim):
-            for j in range(ndim):
-                if i == j:
-                    axes[i, i].hist(result.processed_samples[:, i])
-
-                    axes[i, i].set_xlabel(parameters_name[i])
-
-                elif i > j:
-                    axes[i, j].scatter(
-                        result.processed_samples[:, i], result.processed_samples[:, j]
-                    )
-
-                    axes[i, j].set_xlabel(parameters_name[i])
-                    axes[i, j].set_ylabel(parameters_name[j])
-
-                else:
-                    axes[i, j].set_axis_off()
-
-        Path(directory_path).mkdir(parents=True, exist_ok=True)
+        fig = result.plot_posterior_distribution()
+        directory_path = Path(directory_path)
+        directory_path.mkdir(parents=True, exist_ok=True)
         save_show_figure(
             fig,
             show,
             directory_path / "posterior_distribution.png" if save else "",
         )
-
         return fig
 
     def plot_predictive_distribution(
@@ -752,7 +728,7 @@ class BayesTool(BaseAnalysisTool):
         save: bool = False,
         show: bool = False,
         **kwargs,
-    ) -> Axes:
+    ) -> tuple[Axes, Axes]:
         """Plot the posterior predictive distribution.
 
         Args:
@@ -761,82 +737,16 @@ class BayesTool(BaseAnalysisTool):
             name: The name of the input variable.
             directory_path: Where to save the plot.
 
-        Returns: The plot of the posterior predictive distribution.
+        Returns: The axes of the data and of the posterior predictive distribution.
         """
-        x_disc = linspace(
-            0.1 * min(array(self._data).ravel()),
-            2 * max(array(self._data).ravel()),
-            num=n_disc,
-        )
-
-        fig, ax = subplots()
-
-        ax1 = ax.twinx()
-        ax.hist(array(self._data).ravel(), label="Experimental data")
-        ax1.plot(
-            x_disc,
-            self.result.posterior_predictive.computePDF(Sample(x_disc.reshape(-1, 1)))
-            / max(
-                array(
-                    self.result.posterior_predictive.computePDF(
-                        Sample(x_disc.reshape(-1, 1))
-                    )
-                )
-            ),
-            label="posterior predictive distribution for "
-            + self._dist_model.getName()
-            + " model.",
-            **kwargs,
-        )
-        ax1.set_ylabel("PDF")
-        ax1.set_xlabel(name)
-        ax1.legend()
-
         if save and directory_path == "":
             msg = "There is no directory path provided."
-
             raise ValueError(msg)
 
-        Path(directory_path).mkdir(parents=True, exist_ok=True)
+        fig = self.result.plot_predictive_distribution(n_disc, name, **kwargs)
+        directory_path = Path(directory_path)
+        directory_path.mkdir(parents=True, exist_ok=True)
         save_show_figure(
             fig, show, directory_path / "posterior_predictive.png" if save else ""
         )
-
-        return ax, ax1
-
-    def plot_results(
-        self,
-        n_disc: int = 100,
-        name: str = "",
-        directory_path: str | Path = "",
-        save: bool = False,
-        show: bool = True,
-        **kwargs,
-    ) -> Mapping[str, Figure]:
-        """Generate the different plots.
-
-        Args:
-            kwargs: a dictionary for plot options.
-            n_disc: The discretization of the input.`
-            name: The name of the input variable.`
-            directory_path: where to save the plot.
-
-        Returns: The plot of the cropped MCMC chains
-        and the posterior predictive distribution
-        that makes prediction according to the probabilistic model.
-        """
-        directory_path = (
-            self.working_directory if directory_path == "" else Path(directory_path)
-        )
-
-        figs = {}
-
-        figs["posterior_samples"] = self.plot_posterior_distribution(
-            self.result, directory_path, save, show
-        )
-
-        figs["posterior_predictive"] = self.plot_predictive_distribution(
-            n_disc, name, directory_path, save, show, **kwargs
-        )
-
-        return figs
+        return tuple(fig.axes[:2])

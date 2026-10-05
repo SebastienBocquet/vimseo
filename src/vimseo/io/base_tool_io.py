@@ -35,7 +35,7 @@ class BaseToolFileIO(metaclass=GoogleDocstringInheritanceMeta):
 
     _EXTENSION: ClassVar[str]
 
-    # TODO by default use save_result/load_result based on pickle format
+    # TODO by default use save_result/load_result based on HDF5 format
     @abstractmethod
     def read(self, file_name: str | Path, directory_path: str | Path = "") -> Any:
         """Read a result."""

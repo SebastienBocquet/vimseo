@@ -37,22 +37,14 @@ from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_composite_tool import BaseCompositeTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.doe.custom_doe import CustomDOETool
-from vimseo.tools.post_tools.error_scatter_matrix_plot import ErrorScatterMatrix
-from vimseo.tools.post_tools.metric_bar_plot import IntegratedMetricBars
-from vimseo.tools.post_tools.parallel_coordinates_plot import ParallelCoordinates
-from vimseo.tools.post_tools.predict_vs_true_plot import PredictVsTrue
 from vimseo.tools.validation_case.validation_case_result import ValidationCaseResult
 from vimseo.tools.verification.base_verification import BaseCodeVerificationSettings
 from vimseo.utilities.datasets import DatasetInput
-from vimseo.utilities.datasets import dataset_to_dataframe
 from vimseo.utilities.datasets import encode_vector
 from vimseo.utilities.datasets import resolve_io_groups
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
     from collections.abc import Sequence
-
-    from plotly.graph_objs import Figure
 
 
 class DeterministicValidationCaseSettings(BaseCodeVerificationSettings):
@@ -328,94 +320,3 @@ class DeterministicValidationCase(BaseAnalysisTool):
             variable_names_to_n_components=doe_dataset.variable_names_to_n_components,
         )
         return dataset
-
-    def plot_results(
-        self,
-        result: ValidationCaseResult,
-        metric_name: str,
-        output_name: str,
-        input_names: Sequence[str] = (),
-        directory_path: str | Path = "",
-        save=False,
-        show=True,
-        threshold=None,
-    ) -> Mapping[str, Figure]:
-        """Plot a line plot of simulated versus reference results, and a bar plot of
-        metrics values.
-
-        Args:
-            metric_name: The name of the error metric to visualize.
-            output_name: The name of the output variable to visualize.
-            threshold: The threshold used a mid-point for the parallel coordinates plot
-                color bar.
-        """
-        working_directory = (
-            self.working_directory if directory_path == "" else Path(directory_path)
-        )
-
-        figs = {}
-
-        variable_names = [] if not input_names else [*input_names, output_name]
-        df = result.element_wise_metrics.get_view(
-            group_names=[IODataset.INPUT_GROUP, metric_name],
-            variable_names=variable_names,
-        ).copy()
-        df.columns = df.get_columns(as_tuple=False)
-
-        figs["parallel_coordinates"] = (
-            ParallelCoordinates(working_directory=working_directory)
-            .execute(
-                df,
-                metric_name,
-                output_name,
-                save=save,
-                show=show,
-                threshold=threshold,
-            )
-            .figure
-        )
-
-        # Weird inteface: the following plots expect variable names with group suffixes.
-        # TODO: document the expected name convention of the dataframe columns.
-        df = dataset_to_dataframe(
-            result.element_wise_metrics,
-            variable_names=variable_names,
-            suffix_by_group=True,
-        )
-
-        figs["error_scatter_matrix"] = (
-            ErrorScatterMatrix(working_directory=working_directory)
-            .execute(
-                df,
-                metric_name,
-                output_name,
-                save=save,
-                show=show,
-            )
-            .figure
-        )
-
-        figs["predict_vs_true"] = (
-            PredictVsTrue(working_directory=working_directory)
-            .execute(
-                df,
-                metric_name,
-                output_name,
-                save=save,
-                show=show,
-            )
-            .figure
-        )
-
-        figs["integrated_metric_bars"] = (
-            IntegratedMetricBars(working_directory=working_directory)
-            .execute(
-                result.integrated_metrics,
-                metric_name,
-                save=save,
-                show=show,
-            )
-            .figure
-        )
-
-        return figs

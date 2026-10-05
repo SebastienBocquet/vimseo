@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from pathlib import Path
 
 import pytest
 from matplotlib.figure import Figure
@@ -40,6 +41,7 @@ from vimseo.tools.bayes.bayes_analysis import BayesInputs
 from vimseo.tools.bayes.bayes_analysis import BayesTool
 from vimseo.tools.bayes.bayes_analysis_result import BayesAnalysisResult
 from vimseo.utilities.datasets import to_dataset
+from vimseo.utilities.test_utils import check_result_visualization
 
 random.seed(1)  # ruff: ignore[numpy-legacy-random]
 
@@ -319,15 +321,15 @@ def test_plot_results_return_type(tmp_wd, model, prior, data, plot_directory):
         nb_samples_posterior=2,
     )
     assert analysis.working_directory.absolute().exists()
-    plot_checks = analysis.plot_results(
-        directory_path=plot_directory, save=True, show=False
-    )
+    plot_checks = analysis.result.visualize(directory_path=plot_directory, save=True)
     assert isinstance(plot_checks, Mapping)
     assert "posterior_samples" in plot_checks
     assert "posterior_predictive" in plot_checks
     assert isinstance(plot_checks["posterior_samples"], Figure)
-    for fig in plot_checks["posterior_predictive"]:
-        assert isinstance(fig, Axes)
+    assert isinstance(plot_checks["posterior_predictive"], Figure)
+    directory = Path(plot_directory or Path.cwd())
+    assert (directory / "posterior_samples.png").is_file()
+    assert (directory / "posterior_predictive.png").is_file()
 
 
 def test_plot_posterior_distributio_return_type(tmp_wd, processed_analysis):
@@ -391,3 +393,11 @@ def test_data_not_a_single_scalar_variable(user_data):
     """Check that data that are not the sample of a single scalar variable raise."""
     with pytest.raises(ValueError, match="must hold a single scalar variable"):
         BayesInputs(data=user_data)
+
+
+def test_result_visualization(tmp_wd, processed_analysis):
+    """Check that a Bayes result can be visualized once loaded from a file."""
+    check_result_visualization(processed_analysis.result, "visualization")
+    tables = processed_analysis.result.tabulate()
+    assert set(tables["criteria"].index) == {"lppd", "ml"}
+    assert "median" in tables["posterior"].columns

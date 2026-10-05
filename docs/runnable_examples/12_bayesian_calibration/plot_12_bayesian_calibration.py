@@ -183,11 +183,11 @@ analysis_l.post(50, n_mcmc=N_MCMC, nb_samples_ml=10, nb_samples_posterior=5)
 # %% Next,
 # we generate the plots
 # for the Normal model,
-figs_n = analysis_n.plot_results()
+figs_n = analysis_n.result.visualize(show=True)
 # the Weibull Min model
-figs_w = analysis_w.plot_results()
+figs_w = analysis_w.result.visualize(show=True)
 # and the Log Normal model
-figs_l = analysis_l.plot_results()
+figs_l = analysis_l.result.visualize(show=True)
 
 
 # %%
@@ -316,9 +316,9 @@ analysis_l_b.post(50)
 
 # %% and generate the plots
 # the Weibull Min model
-figs_w_b = analysis_w_b.plot_results()
+figs_w_b = analysis_w_b.result.visualize(show=True)
 # and the Log Normal model
-figs_l_b = analysis_l_b.plot_results()
+figs_l_b = analysis_l_b.result.visualize(show=True)
 
 # %%
 # First,

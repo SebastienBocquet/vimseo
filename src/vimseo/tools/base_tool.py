@@ -20,7 +20,7 @@ import functools
 import inspect
 import json
 import logging
-import pickle
+import warnings
 from abc import abstractmethod
 from copy import deepcopy
 from os.path import join
@@ -43,18 +43,18 @@ from vimseo.storage_management.tool_archive import open_tool_archive
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.metadata import ToolResultMetadata
-from vimseo.tools.tool_results_factory import ToolResultsFactory
+from vimseo.tools.tool_results_factory import load_result_file
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Mapping
     from collections.abc import Sequence
 
-    from plotly.graph_objects import Figure
     from pydantic import BaseModel
 
     from vimseo.core.run_context import ToolRunContext
     from vimseo.tools.base_settings import BaseInputs
+    from vimseo.tools.result_visualization import Figure
 
 LOGGER = logging.getLogger(__name__)
 
@@ -119,12 +119,11 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         # Optionnaly, the current options of the tool can be saved on disk.
         >>> tool.result.save_metadata_to_disk()
         # The result saved on disk can be loaded.
-        >>> results = BaseTool.load_results(tool.working_directory /
-        >>> 'Tool_result.pickle')
-        # Then, the tool can plot the result. Note that the :meth:`plot_results` method
-        # takes the result as input. In the future, this method will be moved from the
-        # tools to a post processor class.
-        >>> tool.plot_results(results, save=True, show=False)
+        >>> result = BaseTool.load_results(tool.working_directory /
+        >>> 'MyTool_result.hdf5')
+        # Then, the result can be visualized, without the tool.
+        >>> figures = result.visualize(save=True)
+        >>> tables = result.tabulate()
     """
 
     results: BaseResult | None
@@ -139,7 +138,6 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
     _options: dict
     """The current options used to execute the tool."""
 
-    _plot_factory: str | None
     """The plot factory used to generate the plot instance."""
 
     _IS_JSON_GRAMMAR = False
@@ -158,7 +156,7 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
 
     _RESULT_SUFFIX: ClassVar[str] = "_result"
 
-    _RESULT_FORMATS: ClassVar[Sequence[str]] = ["hdf5", "json", "pickle"]
+    _RESULT_FORMATS: ClassVar[Sequence[str]] = ["hdf5", "json"]
 
     _STREAMLIT_CONSTRUCTOR_OPTIONS = StreamlitToolConstructorSettings
 
@@ -226,7 +224,6 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
 
         self._has_check_options = self._HAS_OPTION_CHECK
         self._opt_grammar = None
-        self._plot_factory = None
 
         if self._IS_JSON_GRAMMAR:
             f_class = inspect.getfile(self.__class__)
@@ -292,17 +289,6 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         LOGGER.info(
             f"Working directory is {self.working_directory.absolute().resolve()}"
         )
-
-    def set_plot(self, class_name, **options) -> None:
-        """Set the type of plot to show the results of this tool.
-
-        Args:
-            class_name: The name of the plot class.
-            **options: The options of the plot constructor.
-        """
-        if self._plot_factory:
-            self._plot = self._plot_factory.create(class_name, **options)
-        self._plot_class = class_name
 
     def update_options(self, **options):
         self._options.update(options)
@@ -505,18 +491,10 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
 
         Args:
             path: The path to the file.
-            tool_name: The name of the tool associated with the result under stored
-            in ``path``.
         """
-        import h5py
-
         path = Path(path)
         if path.suffix == ".hdf5":
-            class_name = ""
-            with h5py.File(path, "r") as f:
-                class_name = f.attrs["__class__"]
-            tmp_result = ToolResultsFactory().create(class_name)
-            return type(tmp_result).from_hdf5(path)
+            return load_result_file(path)
         # TODO remove support for json
         if path.suffix == ".json":
             if cls.__name__ == "BaseTool":
@@ -531,10 +509,6 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
             return io.read(
                 file_name=path,
             )
-        if path.suffix == ".pickle":
-            with Path(path).open("rb") as f:
-                return pickle.load(f)
-
         msg = f"Unknow file format {path.suffix}. Supported formats are {cls._RESULT_FORMATS}"
         raise ValueError(msg)
 
@@ -619,28 +593,52 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         elif file_format == "json":
             io = IOFactory().create(f"{self.name}FileIO")
             io.write(self.result, directory_path=path.parent, file_base_name=path.stem)
-        elif file_format == "pickle":
-            self.result.to_pickle(path)
 
-    # TODO Choose if it is a class method or not
-    @abstractmethod
     def plot_results(
         self,
-        result: BaseResult,
+        result: BaseResult | None = None,
         directory_path: str | Path = "",
-        save=False,
-        show=True,
+        save: bool = False,
+        show: bool = True,
         **options,
     ) -> Mapping[str, Figure]:
-        """Plot criteria for a given variable name.
+        """Plot a result of the tool.
+
+        .. deprecated::
+            Use :meth:`.BaseResult.visualize`, which does not need the tool.
 
         Args:
-            result: The result of the tool.
+            result: The result of the tool. If ``None``, use :attr:`result`.
             directory_path: The path under which the plots are saved.
+                If empty, use :attr:`working_directory`.
             save: Whether to save the plot on disk.
             show: Whether to show the plot.
-            options: The options of the plot.
+            options: The settings of the visualization of the result.
         """
+        warnings.warn(
+            "BaseTool.plot_results is deprecated, use BaseResult.visualize instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        result = self.result if result is None else result
+        # The former options selected a single variable, like ``output_name``,
+        # whereas the settings of the visualization select several ones.
+        settings_names = result._VISUALIZATION_SETTINGS.model_fields
+        for name in list(options):
+            if name in settings_names:
+                continue
+            for plural_name in (f"{name}s", f"{name}_names"):
+                if plural_name in settings_names:
+                    value = options.pop(name)
+                    if value:
+                        options[plural_name] = (value,)
+                    break
+        return result.visualize(
+            directory_path=directory_path or self.working_directory,
+            save=save,
+            show=show,
+            **options,
+        )
 
     def _check_options(self, **options) -> None:
         """Check the options of the passed at execution of the tool. It is not

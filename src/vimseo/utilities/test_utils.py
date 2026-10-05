@@ -17,6 +17,11 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from vimseo.tools.base_result import BaseResult
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,3 +54,44 @@ class SetConfig:
             f"Replacing back config value to {self._field_name}={self._original_value}."
         )
         setattr(self._config, self._field_name, self._original_value)
+
+
+def check_result_visualization(
+    result: BaseResult, directory_path: str | Path, **options
+) -> None:
+    """Check that a tool result can be visualized after being loaded from a file.
+
+    The result is written to an HDF5 file, loaded back without knowing its class,
+    and its figures and tables are compared with the ones of the original result.
+
+    Args:
+        result: The tool result.
+        directory_path: The directory where the result and its figures are written.
+        **options: The settings of the visualization.
+    """
+    from vimseo.tools.tool_results_factory import load_result_file
+
+    directory_path = Path(directory_path)
+    directory_path.mkdir(parents=True, exist_ok=True)
+    path = directory_path / "result.hdf5"
+    result.to_hdf5(path)
+    loaded_result = load_result_file(path)
+    assert type(loaded_result) is type(result)
+
+    figures = result.visualize(**options)
+    figure_directory = directory_path / "figures"
+    loaded_figures = loaded_result.visualize(
+        directory_path=figure_directory, save=True, **options
+    )
+    assert figures
+    assert set(loaded_figures) == set(figures)
+    for key in loaded_figures:
+        files = list(figure_directory.glob(f"{key}.*"))
+        assert len(files) == 1, key
+        assert files[0].stat().st_size > 0
+
+    tables = result.tabulate()
+    loaded_tables = loaded_result.tabulate()
+    assert set(loaded_tables) == set(tables)
+    for key, table in tables.items():
+        assert loaded_tables[key].shape == table.shape, key

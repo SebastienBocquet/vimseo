@@ -41,6 +41,7 @@ from vimseo.tools.validation_case.validation_case import (
 )
 from vimseo.tools.validation_case.validation_case_result import ValidationCaseResult
 from vimseo.utilities.metrics.error_metrics import RelativeErrorMetric
+from vimseo.utilities.test_utils import check_result_visualization
 
 
 @pytest.fixture
@@ -274,28 +275,22 @@ def test_simulations_are_run_by_the_doe_subtool(tmp_wd, reference_data):
 
 def test_validation_plots(tmp_wd, deterministic_validation_case):
     """Check that validation plots are saved on disk."""
-    deterministic_validation_case.plot_results(
-        deterministic_validation_case.result,
-        "RelativeErrorMetric",
-        "y4",
+    directory = deterministic_validation_case.working_directory
+    figures = deterministic_validation_case.result.visualize(
+        directory_path=directory,
+        metric_names=["RelativeErrorMetric"],
+        output_names=["y4"],
         save=True,
-        show=False,
     )
-    assert (
-        deterministic_validation_case.working_directory
-        / "error_scatter_matrix_RelativeErrorMetric_y4.html"
-    ).is_file()
-    assert (
-        deterministic_validation_case.working_directory
-        / "parallel_coordinates_RelativeErrorMetric_y4.html"
-    ).is_file()
-    assert (
-        deterministic_validation_case.working_directory
-        / "metric_histogram_RelativeErrorMetric_y4.html"
-    ).is_file()
-    assert (
-        deterministic_validation_case.working_directory / "integrated_metric_bars.html"
-    ).is_file()
+    expected_keys = [
+        "error_scatter_matrix_RelativeErrorMetric_y4",
+        "parallel_coordinates_RelativeErrorMetric_y4",
+        "predict_vs_true_RelativeErrorMetric_y4",
+        "integrated_metric_bars_RelativeErrorMetric",
+    ]
+    assert set(figures) == set(expected_keys)
+    for key in expected_keys:
+        assert (directory / f"{key}.html").is_file()
 
 
 def test_to_dataframe(tmp_wd, stochastic_case_result):
@@ -385,3 +380,12 @@ def test_serialization_deterministic_result(tmp_wd, deterministic_validation_cas
     result.to_hdf5("result.hdf5")
     serialized_result = ValidationCaseResult.from_hdf5("result.hdf5")
     assert_results_equal(result, serialized_result)
+
+
+def test_result_visualization(tmp_wd, deterministic_validation_case):
+    """Check that a validation case result can be visualized once loaded from a
+    file."""
+    check_result_visualization(deterministic_validation_case.result, "visualization")
+    tables = deterministic_validation_case.result.tabulate()
+    assert "integrated_metrics" in tables
+    assert "element_wise_metrics" in tables
