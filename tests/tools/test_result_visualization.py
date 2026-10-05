@@ -153,6 +153,14 @@ def test_save_figures(tmp_wd):
     assert all(path.is_file() for path in paths)
 
 
+def test_save_figures_as_images(tmp_wd):
+    """Plotly figures are exported as images with kaleido."""
+    figure, _ = plt.subplots()
+    paths = save_figures({"x": Figure(), "y": figure}, "dir", file_format="svg")
+    assert [path.name for path in paths] == ["x.svg", "y.svg"]
+    assert all(path.stat().st_size > 0 for path in paths)
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
