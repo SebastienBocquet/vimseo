@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from vimseo.core.model_settings import IntegratedModelSettings
     from vimseo.material.material import Material
     from vimseo.material.material_registry import MaterialInfo
+    from vimseo.tools.base_result import BaseResult
 
 LOGGER = logging.getLogger(__name__)
 
@@ -246,6 +247,24 @@ def get_available_tools():
     class_names = ToolsFactory().class_names
     class_names.remove("BaseTool")
     return class_names
+
+
+def load_tool_result(uri: str | Path, archive_root: str | Path = "") -> BaseResult:
+    """Load a tool result, to visualize it for instance.
+
+    Args:
+        uri: The URI of the tool result: the path to a result file, the path to the
+            directory of a tool run in an archive, or ``tool-run:{tool_run_id}``.
+        archive_root: The root directory of the archive of the tool results,
+            used by ``tool-run:{tool_run_id}``. If empty, use the one of the
+            configuration.
+
+    Returns:
+        The tool result.
+    """
+    from vimseo.storage_management.tool_archive.uri import load_tool_result
+
+    return load_tool_result(uri, archive_root)
 
 
 def print_config():
