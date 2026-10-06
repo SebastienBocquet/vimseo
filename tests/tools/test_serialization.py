@@ -26,6 +26,7 @@ from pathlib import Path
 
 import h5py
 import numpy as np
+import openturns as ot
 import pandas as pd
 import pytest
 from gemseo.algos.design_space import DesignSpace
@@ -755,6 +756,81 @@ class TestParameterSpaceCodec:
 class _FakeObject:
     def __init__(self):
         self.value = 42
+
+
+def _correlated_joint_distribution():
+    correlation = ot.CorrelationMatrix(2)
+    correlation[0, 1] = -0.25
+    return ot.JointDistribution(
+        [ot.Uniform(0.0, 3.0), ot.Uniform(1.0, 3.0)], ot.NormalCopula(correlation)
+    )
+
+
+def _has_pickle(group: h5py.Group) -> bool:
+    """Whether an HDF5 group contains a value serialized in pickle format."""
+    found = []
+
+    def visit(_, node):
+        if node.attrs.get("__type__") == "pickle":
+            found.append(node)
+
+    group.visititems(visit)
+    return bool(found)
+
+
+class TestOpenTurnsDistributions:
+    @pytest.mark.parametrize(
+        "distribution",
+        [
+            ot.Normal(1.0, 2.0),
+            ot.Uniform(0.0, 5.0),
+            ot.WeibullMin(2.0, 1.5, 0.0),
+            ot.TruncatedDistribution(ot.Normal(0.0, 1.0), -1.0, 2.0),
+            ot.TruncatedDistribution(
+                ot.Normal(0.0, 1.0), 1.0, ot.TruncatedDistribution.LOWER
+            ),
+            ot.ComposedDistribution([ot.Uniform(0.0, 5.0)] * 2),
+            _correlated_joint_distribution(),
+        ],
+    )
+    def test_roundtrip_in_clear(self, tmp_hdf5, distribution):
+        """A distribution is written in clear and built back identically."""
+        with h5py.File(tmp_hdf5, "w") as f:
+            serialize_value(f, "distribution", distribution)
+        with h5py.File(tmp_hdf5, "r") as f:
+            assert f["distribution"].attrs["__type__"] == "ot_distribution"
+            assert not _has_pickle(f)
+            rt = deserialize_value(f, "distribution")
+        assert str(rt) == str(distribution)
+        assert list(rt.getParameter()) == list(distribution.getParameter())
+
+    def test_list_of_marginals(self, tmp_hdf5):
+        marginals = [ot.Uniform(0.0, 5.0), ot.Normal(1.0, 2.0)]
+        with h5py.File(tmp_hdf5, "w") as f:
+            serialize_value(f, "marginals", marginals)
+        with h5py.File(tmp_hdf5, "r") as f:
+            assert not _has_pickle(f)
+            rt = deserialize_value(f, "marginals")
+        assert [str(m) for m in rt] == [str(m) for m in marginals]
+
+    def test_not_describable_falls_back_to_pickle(self, tmp_hdf5):
+        distribution = ot.UserDefined(ot.Sample([[0.0], [1.0], [3.0]]))
+        with h5py.File(tmp_hdf5, "w") as f:
+            serialize_value(f, "distribution", distribution)
+        with h5py.File(tmp_hdf5, "r") as f:
+            assert f["distribution"].attrs["__type__"] == "pickle"
+            rt = deserialize_value(f, "distribution")
+        assert str(rt) == str(distribution)
+
+    def test_bayes_prior_in_settings(self, tmp_hdf5):
+        """The prior of a Bayes analysis, stored in its settings, is in clear."""
+        prior = _correlated_joint_distribution()
+        result = BayesAnalysisResult()
+        result.metadata.settings = {"likelihood_dist": "Normal", "prior_dist": prior}
+        rt = roundtrip(result, tmp_hdf5)
+        with h5py.File(tmp_hdf5, "r") as f:
+            assert not _has_pickle(f["metadata"])
+        assert str(rt.metadata.settings["prior_dist"]) == str(prior)
 
 
 class TestPickleFallback:

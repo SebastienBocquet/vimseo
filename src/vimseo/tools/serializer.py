@@ -41,6 +41,9 @@ from vimseo.tools.space.random_variable_interface import add_distributions_from_
 from vimseo.tools.space.random_variable_interface import deterministic_to_dict
 from vimseo.tools.space.random_variable_interface import distributions_to_dict
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
+from vimseo.utilities.ot_distribution_io import is_ot_distribution
+from vimseo.utilities.ot_distribution_io import ot_distribution_from_dict
+from vimseo.utilities.ot_distribution_io import ot_distribution_to_dict
 
 if TYPE_CHECKING:
     import h5py
@@ -266,6 +269,25 @@ def _serialize_space(group: h5py.Group, key: str, space: DesignSpace) -> None:
         serialize_value(sub, "uncertain", uncertain)
 
 
+def _serialize_ot_distribution(group: h5py.Group, key: str, distribution) -> None:
+    """Serialize an OpenTURNS distribution in clear.
+
+    The distribution is described by :func:`ot_distribution_to_dict`. If it cannot
+    be described in clear, e.g. a ``DeconditionedDistribution``, it falls back to a
+    pickle blob.
+    """
+    try:
+        description = ot_distribution_to_dict(distribution)
+    except ValueError as error:
+        LOGGER.info(f"PICKLE fallback: key='{key}': {error}")
+        _pickle_fallback(group, key, distribution)
+        return
+
+    sub = group.require_group(key)
+    sub.attrs["__type__"] = "ot_distribution"
+    serialize_value(sub, "description", description)
+
+
 def serialize_value(group: h5py.Group, key: str, value: Any) -> None:
     """Recurcively serialize a value in an HDF5 group."""
 
@@ -384,6 +406,9 @@ def serialize_value(group: h5py.Group, key: str, value: Any) -> None:
         # (it is neither) and before the pickle fallback.
         _serialize_space(group, key, value)
 
+    elif is_ot_distribution(value):
+        _serialize_ot_distribution(group, key, value)
+
     else:
         _pickle_fallback(group, key, value)
 
@@ -492,6 +517,9 @@ def deserialize_value(node: h5py.Group | h5py.Dataset, key: str) -> Any:
     if type_ == "list":
         n = item.attrs["__len__"]
         return [deserialize_value(item, str(i)) for i in range(n)]
+
+    if type_ == "ot_distribution":
+        return ot_distribution_from_dict(deserialize_value(item, "description"))
 
     if type_ in ("dataclass", "pydantic"):
         cls = _import_class(item.attrs["__class__"])

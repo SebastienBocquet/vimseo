@@ -207,6 +207,16 @@ def to_cell(value: Any) -> Any:
     if hasattr(value, "value") and isinstance(value.value, (int, float, str)):
         # An enumeration.
         return value.value
+    from vimseo.utilities.ot_distribution_io import is_ot_distribution
+
+    if is_ot_distribution(value):
+        # str() is the short form of an OpenTURNS object, e.g. Normal(mu = 0, ...).
+        text = str(value)
+        return (
+            text
+            if len(text) <= _MAX_TEXT_LENGTH
+            else f"{text[: _MAX_TEXT_LENGTH - 3]}..."
+        )
     text = repr(value.tolist() if isinstance(value, ndarray) else value)
     if len(text) > _MAX_TEXT_LENGTH:
         return f"{text[: _MAX_TEXT_LENGTH - 3]}..."
