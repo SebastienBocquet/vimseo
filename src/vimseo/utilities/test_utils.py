@@ -21,6 +21,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from importlib.metadata import EntryPoint
+
+    from streamlit.testing.v1 import AppTest
+
     from vimseo.tools.base_result import BaseResult
 
 LOGGER = logging.getLogger(__name__)
@@ -95,3 +99,83 @@ def check_result_visualization(
     assert set(loaded_tables) == set(tables)
     for key, table in tables.items():
         assert loaded_tables[key].shape == table.shape, key
+
+
+DASHBOARD_TIMEOUT = 300
+"""The timeout of an execution of a dashboard in a test, in seconds."""
+
+
+def get_dashboard_entry_points(distribution_name: str) -> list[EntryPoint]:
+    """Return the commands launching the dashboards of a distribution.
+
+    Args:
+        distribution_name: The name of the distribution, e.g. ``"vimseo"``.
+
+    Returns:
+        The entry points of the ``dashboard_*`` commands, sorted by name.
+    """
+    from importlib.metadata import entry_points
+
+    return sorted(
+        (
+            entry_point
+            for entry_point in entry_points(group="console_scripts")
+            if entry_point.name.startswith("dashboard_")
+            and entry_point.dist is not None
+            and entry_point.dist.name.replace("_", "-") == distribution_name
+        ),
+        key=lambda entry_point: entry_point.name,
+    )
+
+
+def get_dashboard_script(entry_point: EntryPoint) -> Path | None:
+    """Return the script launched by a dashboard command, without launching it.
+
+    The command is executed with ``runpy.run_module`` replaced by a spy recording the
+    arguments of ``streamlit run``.
+
+    Args:
+        entry_point: The entry point of the command.
+
+    Returns:
+        The path to the script, or ``None`` if the command does not launch a
+        Streamlit script.
+    """
+    import runpy
+    from unittest import mock
+
+    calls = []
+    with (
+        mock.patch.object(sys, "argv", list(sys.argv)),
+        mock.patch.object(
+            runpy, "run_module", side_effect=lambda *_, **__: calls.append(sys.argv[:])
+        ),
+    ):
+        entry_point.load()()
+
+    if not calls:
+        return None
+    program, command, script = calls[0][:3]
+    if (program, command) != ("streamlit", "run"):
+        msg = f"{entry_point.name} does not run a Streamlit script: {calls[0]}."
+        raise ValueError(msg)
+    return Path(script)
+
+
+def run_dashboard(script: str | Path) -> AppTest:
+    """Execute a dashboard script as Streamlit would, without a browser.
+
+    Args:
+        script: The path to the script.
+
+    Returns:
+        The executed application, whose widgets can be actioned and checked.
+    """
+    import matplotlib
+    from streamlit.testing.v1 import AppTest
+
+    # The figures are created without display.
+    matplotlib.use("Agg")
+    app = AppTest.from_file(str(script), default_timeout=DASHBOARD_TIMEOUT)
+    app.run()
+    return app
