@@ -225,3 +225,13 @@ def test_without_model_plots(tmp_wd, mock_model_doe):
     """Without vector outputs, no curve is shown."""
     figures = mock_model_doe.result.visualize()
     assert not any(key.startswith("curves_") for key in figures)
+
+
+def test_scatter_matrix_variable_names(mesh_size_study):
+    """The variables of the scatter matrix can be selected among the proposed ones."""
+    choices = mesh_size_study.get_visualization_choices()
+    assert choices["scatter_matrix_variable_names"] == ["x", "x_1", "cpu_time"]
+    figure = mesh_size_study.visualize(scatter_matrix_variable_names=["x", "cpu_time"])[
+        "scatter_matrix"
+    ]
+    assert len(figure.axes) == 4

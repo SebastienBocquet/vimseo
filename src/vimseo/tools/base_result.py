@@ -138,6 +138,17 @@ class BaseResult(metaclass=GoogleDocstringInheritanceMeta):
             return settings_class(**options)
         return settings_class(**{**settings.model_dump(), **options})
 
+    def get_visualization_choices(self) -> dict[str, list[str]]:
+        """Return the values available for the settings of the visualization.
+
+        It is meant for the settings selecting names, e.g. variable names, so that a
+        user interface can propose them.
+
+        Returns:
+            The names available for some settings, bound to the names of the settings.
+        """
+        return {}
+
     def _create_figures(
         self, settings: BaseVisualizationSettings
     ) -> Mapping[str, Figure | Mapping]:

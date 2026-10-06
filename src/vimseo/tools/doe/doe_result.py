@@ -50,6 +50,11 @@ class DOEVisualizationSettings(BaseVisualizationSettings):
         description="The names of the outputs to visualize. "
         "If empty, use all the outputs.",
     )
+    scatter_matrix_variable_names: tuple[str, ...] = Field(
+        default=(),
+        description="The names of the scalar variables of the scatter matrix. "
+        "If empty, use all the scalar inputs and outputs.",
+    )
 
 
 @dataclass
@@ -73,6 +78,36 @@ class DOEResult(BaseResult):
         msg.add(str(self.dataset))
         return str(msg)
 
+    def _get_input_and_output_names(self) -> tuple[list[str], list[str]]:
+        """Return the names of the inputs and of the informative outputs.
+
+        The metadata of the model, except the CPU time, are not informative.
+        """
+        input_names = (
+            self.dataset.get_variable_names(IODataset.INPUT_GROUP)
+            if IODataset.INPUT_GROUP in self.dataset.group_names
+            else []
+        )
+        output_names = [
+            name
+            for name in self.dataset.variable_names
+            if name not in input_names
+            and (name not in set(MetaDataNames) or name == MetaDataNames.cpu_time)
+        ]
+        return input_names, output_names
+
+    def get_visualization_choices(self) -> dict[str, list[str]]:
+        if self.dataset is None or self.dataset.empty:
+            return {}
+        data = self.dataset.to_dict_of_arrays(by_group=False)
+        input_names, output_names = self._get_input_and_output_names()
+        return {
+            "scatter_matrix_variable_names": get_scalar_names(
+                data, dict.fromkeys([*input_names, *output_names])
+            ),
+            "output_names": output_names,
+        }
+
     def _create_figures(self, settings: DOEVisualizationSettings) -> dict[str, Figure]:
         if self.dataset is None or self.dataset.empty:
             return {}
@@ -80,23 +115,17 @@ class DOEResult(BaseResult):
         from vimseo.tools.post_tools.plot_parameters import create_plot
 
         data = self.dataset.to_dict_of_arrays(by_group=False)
-        group_names = self.dataset.group_names
-        input_names = (
-            self.dataset.get_variable_names(IODataset.INPUT_GROUP)
-            if IODataset.INPUT_GROUP in group_names
-            else []
-        )
-        output_names = list(settings.output_names) or [
-            name
-            for name in self.dataset.variable_names
-            if name not in input_names
-            # The metadata of the model, except the CPU time, are not informative.
-            and (name not in set(MetaDataNames) or name == MetaDataNames.cpu_time)
-        ]
+        input_names, output_names = self._get_input_and_output_names()
+        output_names = list(settings.output_names) or output_names
 
         figures = {}
         scatter_matrix = create_scatter_matrix(
-            data, get_scalar_names(data, dict.fromkeys([*input_names, *output_names]))
+            data,
+            get_scalar_names(
+                data,
+                settings.scatter_matrix_variable_names
+                or dict.fromkeys([*input_names, *output_names]),
+            ),
         )
         if scatter_matrix is not None:
             figures["scatter_matrix"] = scatter_matrix
