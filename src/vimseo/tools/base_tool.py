@@ -424,6 +424,14 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         self._set_run_to_results(run)
         self._archive(self._tool_archive.publish_tool_result, self.result)
 
+    def _republish_result(self) -> None:
+        """Publish again the result of the last execution in the archive.
+
+        It is meant for the tools completing their result after :meth:`execute`,
+        whose archived result would otherwise miss these completions.
+        """
+        self._archive(self._tool_archive.publish_tool_result, self.result)
+
     @staticmethod
     def _archive(archive_method, *args) -> None:
         """Call a method of the archive of the tool results.

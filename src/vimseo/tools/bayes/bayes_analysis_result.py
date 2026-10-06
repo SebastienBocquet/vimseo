@@ -28,7 +28,6 @@ from numpy import ndarray
 from numpy import percentile
 from openturns import DeconditionedDistribution
 from openturns import Sample
-from openturns import dist
 from pandas import DataFrame
 from prettytable import PrettyTable
 from pydantic import Field
@@ -75,6 +74,10 @@ class BayesAnalysisResult(BaseResult):
     ndim: int | None = None
     """The dimension of the calibration problem."""
 
+    parameter_names: tuple[str, ...] = ()
+    """The names of the free parameters of the probabilistic model, i.e. the ones
+    which are calibrated, in the order of the components of the samples."""
+
     processed_samples: ndarray | None = None
     """The MCMC samples after burnin or thining."""
 
@@ -89,13 +92,22 @@ class BayesAnalysisResult(BaseResult):
     """Twice the opposite of the log marginal likelihood, a Bayesian validation
     criterion."""
 
-    def _get_likelihood_distribution(self):
-        """Return the probabilistic model which is calibrated."""
-        return getattr(dist, self.metadata.settings["likelihood_dist"])()
+    def plot_mcmc_chains(self) -> Figure:
+        """Plot the raw MCMC chains, to determine the burn-in.
 
-    def get_parameter_names(self) -> list[str]:
-        """Return the names of the parameters of the probabilistic model."""
-        return list(self._get_likelihood_distribution().getParameterDescription())
+        Returns:
+            The chains of each parameter versus the step number.
+        """
+        from matplotlib.pyplot import subplots
+
+        fig, axes = subplots(self.ndim, sharex=True, squeeze=False)
+        for i, ax in enumerate(axes[:, 0]):
+            ax.plot(self.raw_samples[:, :, i], "k", alpha=0.3)
+            ax.set_xlim(0, len(self.raw_samples))
+            ax.yaxis.set_label_coords(-0.1, 0.5)
+            ax.set_ylabel(self.parameter_names[i])
+        axes[-1, 0].set_xlabel("step number")
+        return fig
 
     def plot_posterior_distribution(self) -> Figure:
         """Plot the posterior distribution of the parameters.
@@ -106,7 +118,7 @@ class BayesAnalysisResult(BaseResult):
         from matplotlib.pyplot import subplots
 
         ndim = self.ndim
-        parameter_names = self.get_parameter_names()
+        parameter_names = self.parameter_names
         fig, axes = subplots(ndim, ndim, squeeze=False)
         for i in range(ndim):
             for j in range(ndim):
@@ -151,8 +163,7 @@ class BayesAnalysisResult(BaseResult):
             x_disc,
             pdf / max(pdf),
             label="posterior predictive distribution for "
-            + self._get_likelihood_distribution().getName()
-            + " model.",
+            f"{self.metadata.settings['likelihood_dist']} model.",
             **options,
         )
         ax1.set_ylabel("PDF")
@@ -164,6 +175,8 @@ class BayesAnalysisResult(BaseResult):
         self, settings: BayesVisualizationSettings
     ) -> dict[str, Figure]:
         figures = {}
+        if self.raw_samples is not None and self.ndim:
+            figures["mcmc_chains"] = self.plot_mcmc_chains()
         if self.processed_samples is not None and self.ndim:
             figures["posterior_samples"] = self.plot_posterior_distribution()
         if self.posterior_predictive is not None and self.data is not None:
@@ -185,12 +198,6 @@ class BayesAnalysisResult(BaseResult):
             )
         if self.processed_samples is not None and self.processed_samples.size:
             samples = self.processed_samples.reshape(len(self.processed_samples), -1)
-            try:
-                index = self.get_parameter_names()
-            except (KeyError, AttributeError, TypeError):
-                index = None
-            if index is None or len(index) != samples.shape[1]:
-                index = [f"parameter_{i}" for i in range(samples.shape[1])]
             tables["posterior"] = DataFrame(
                 {
                     "mean": samples.mean(axis=0),
@@ -199,7 +206,7 @@ class BayesAnalysisResult(BaseResult):
                     "median": percentile(samples, 50, axis=0),
                     "percentile_95": percentile(samples, 95, axis=0),
                 },
-                index=index,
+                index=list(self.parameter_names),
             )
         return tables
 
