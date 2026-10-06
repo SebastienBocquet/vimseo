@@ -149,6 +149,9 @@ def test_tan_open_hole_execution_needs_mesh_extra(tmp_wd):
     Its ``PostFieldExtraction`` step reads the flux field it just wrote back with
     pyvista (line extraction), so ``execute()`` -- unlike ``create_model()`` --
     requires the ``mesh`` extra.
+
+    The test runs in an empty directory: a cache of the model left in the current
+    directory would bypass the execution.
     """
     from vimseo.api import create_model
 
