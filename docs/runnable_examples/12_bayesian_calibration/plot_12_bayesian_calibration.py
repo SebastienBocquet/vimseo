@@ -25,7 +25,6 @@ under uncertainties of a model.
 # %%
 from __future__ import annotations
 
-from gemseo.datasets.dataset import Dataset
 from numpy import random
 from openturns import ComposedDistribution
 from openturns import Uniform
@@ -48,6 +47,11 @@ N_MCMC = 100
 # We start loading the experimental data
 # that will be processed to calibrate models:
 data_modulus = random.logistic(150000, 8000, 8)  # ruff: ignore[numpy-legacy-random]
+
+# %%
+# Both tools used below, the statistics tool and the Bayes tool, take these data in
+# the same form: a mapping of the variable name to its measured values.
+measured_data = {"young_modulus": data_modulus}
 
 
 # %%
@@ -75,9 +79,8 @@ analysis_w = BayesTool(working_directory="weibullmin_model")
 # of the model parameters.
 # The result of the frequentist estimate for the Normal model:
 statistic_tool = StatisticsTool()
-dataset = Dataset.from_array(data_modulus.reshape(-1, 1))
 results_normal = statistic_tool.execute(
-    dataset=dataset, tested_distributions=["Normal"]
+    dataset=measured_data, tested_distributions=["Normal"]
 )
 
 # %%
@@ -88,7 +91,7 @@ prior_normal = ComposedDistribution([Uniform(110000, 160000), Uniform(2000, 1200
 # Similarly for the Weibull Min model:
 # the frequentist estimate:
 results_weibull = statistic_tool.execute(
-    dataset=dataset, tested_distributions=["WeibullMin"]
+    dataset=measured_data, tested_distributions=["WeibullMin"]
 )
 
 # %%
@@ -102,7 +105,7 @@ prior_weibull = ComposedDistribution([
 # %%
 # And for the Log Normal model:
 results_lognormal = statistic_tool.execute(
-    dataset=dataset, tested_distributions=["LogNormal"]
+    dataset=measured_data, tested_distributions=["LogNormal"]
 )
 
 # %%
@@ -121,7 +124,7 @@ prior_lognormal = ComposedDistribution([
 analysis_n.execute(
     likelihood_dist=Models.NORMAL,
     prior_dist=prior_normal,
-    data=data_modulus,
+    data=measured_data,
     n_mcmc=N_MCMC,
 )
 analysis_n.save_results()
@@ -132,7 +135,7 @@ analysis_n.result
 analysis_w.execute(
     likelihood_dist=Models.WEIBULL_MIN,
     prior_dist=prior_weibull,
-    data=data_modulus,
+    data=measured_data,
     n_mcmc=N_MCMC,
 )
 analysis_w.save_results()
@@ -143,7 +146,7 @@ analysis_w.result
 analysis_l.execute(
     likelihood_dist=Models.LOG_NORMAL,
     prior_dist=prior_lognormal,
-    data=data_modulus,
+    data=measured_data,
     n_mcmc=N_MCMC,
 )
 analysis_l.save_results()
@@ -279,7 +282,7 @@ analysis_w_b = BayesTool(working_directory="weibullmin_2_frozen")
 analysis_w_b.execute(
     likelihood_dist=Models.WEIBULL_MIN,
     prior_dist=prior_weibull_b,
-    data=data_modulus,
+    data=measured_data,
     n_mcmc=N_MCMC,
     frozen_variables=dict_frozen,
 )
@@ -290,7 +293,7 @@ analysis_l_b = BayesTool(working_directory="lognormal_2_frozen")
 analysis_l_b.execute(
     likelihood_dist=Models.LOG_NORMAL,
     prior_dist=prior_lognormal_b,
-    data=data_modulus,
+    data=measured_data,
     n_mcmc=N_MCMC,
     frozen_variables=dict_frozen,
 )

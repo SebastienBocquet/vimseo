@@ -16,17 +16,21 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Annotated
+from typing import Any
 
 from emcee import EnsembleSampler
+from gemseo.datasets.dataset import Dataset
 from gemseo.mlearning.transformers.scaler.min_max_scaler import MinMaxScaler
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from gemseo.utils.matplotlib_figure import save_show_figure
 from matplotlib.pyplot import subplots
 from numpy import append
 from numpy import array
+from numpy import asarray
 from numpy import delete
 from numpy import exp
 from numpy import floor
@@ -53,6 +57,8 @@ from openturns import SymbolicFunction
 from openturns import TruncatedDistribution
 from openturns import UserDefined
 from openturns import dist
+from pandas import DataFrame
+from pydantic import BeforeValidator
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import SkipValidation
@@ -63,10 +69,10 @@ from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.bayes.bayes_analysis_result import BayesAnalysisResult
+from vimseo.utilities.datasets import to_dataset
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from collections.abc import Mapping
 
     from matplotlib.pyplot import Axes
     from matplotlib.pyplot import Figure
@@ -121,12 +127,44 @@ class BayesSettings(BaseSettings):
     )
 
 
+def _coerce_to_sample(data: Any) -> Any:
+    """Convert user data to the 1-D sample of a single scalar variable.
+
+    Args:
+        data: The data to convert, either a mapping, a DataFrame or a Dataset holding a
+            single scalar variable, or a sequence of values.
+
+    Returns:
+        The data as a 1-D array when it can be converted, and unchanged otherwise.
+
+    Raises:
+        ValueError: When the data hold several variables or a vector variable.
+    """
+    if isinstance(data, (Dataset, DataFrame, Mapping)):
+        dataset = to_dataset(data)
+        if dataset.shape[1] != 1:
+            msg = (
+                "The data of a Bayes analysis must hold a single scalar variable, "
+                f"got the variables {dataset.variable_names} with "
+                f"{dataset.shape[1]} components; select the variable to calibrate on."
+            )
+            raise ValueError(msg)
+        return dataset.to_numpy().ravel()
+
+    if isinstance(data, (list, tuple)):
+        return asarray(data, dtype=float)
+
+    return data
+
+
 class BayesInputs(BaseInputs):
     """The inputs of a Bayes analysis."""
 
-    data: ndarray = Field(
+    data: Annotated[ndarray, BeforeValidator(_coerce_to_sample)] = Field(
         default=array([]),
-        description="The data from which the inference is carried out.",
+        description="The data from which the inference is carried out: "
+        "the sample of a single scalar variable, as an array, a list, "
+        "a mapping such as ``{'young_modulus': [...]}``, a DataFrame or a Dataset.",
     )
     x0s: ndarray = Field(
         default=array([]),

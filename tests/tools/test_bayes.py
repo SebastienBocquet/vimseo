@@ -22,6 +22,7 @@ import pytest
 from matplotlib.figure import Figure
 from matplotlib.pyplot import Axes
 from numpy import array
+from numpy import column_stack
 from numpy import inf
 from numpy import log
 from numpy import max as np_max
@@ -32,10 +33,13 @@ from numpy.testing import assert_array_equal
 from openturns import ComposedDistribution
 from openturns import Dirac
 from openturns import Uniform
+from pandas import DataFrame
 
 from vimseo.tools.base_result import assert_results_equal
+from vimseo.tools.bayes.bayes_analysis import BayesInputs
 from vimseo.tools.bayes.bayes_analysis import BayesTool
 from vimseo.tools.bayes.bayes_analysis_result import BayesAnalysisResult
+from vimseo.utilities.datasets import to_dataset
 
 random.seed(1)  # ruff: ignore[numpy-legacy-random]
 
@@ -350,3 +354,40 @@ def test_serialization(tmp_wd, bayes_analysis):
     bayes_analysis.result.to_hdf5("result.hdf5")
     serialized_result = BayesAnalysisResult.from_hdf5("result.hdf5")
     assert_results_equal(bayes_analysis.result, serialized_result)
+
+
+@pytest.mark.parametrize(
+    "to_user_data",
+    [
+        lambda data: data,
+        list,
+        lambda data: {"young_modulus": data},
+        lambda data: DataFrame({"young_modulus": data}),
+        lambda data: to_dataset({"young_modulus": data}),
+    ],
+)
+def test_data_forms(data, to_user_data):
+    """Check that the data can be passed in the forms accepted by the other tools."""
+    assert_array_equal(BayesInputs(data=to_user_data(data)).data, data)
+
+
+def test_data_mapping_execution(tmp_wd, model, prior, data):
+    """Check that a mapping is accepted on the keyword argument path of execute."""
+    analysis = BayesTool()
+    analysis.execute(
+        likelihood_dist=model, prior_dist=prior, data={"x": data}, n_mcmc=10
+    )
+    assert_array_equal(array(analysis._data).ravel(), data)
+
+
+@pytest.mark.parametrize(
+    "user_data",
+    [
+        {"x": [1.0, 2.0], "y": [3.0, 4.0]},
+        {"x": column_stack([[1.0, 2.0], [3.0, 4.0]])},
+    ],
+)
+def test_data_not_a_single_scalar_variable(user_data):
+    """Check that data that are not the sample of a single scalar variable raise."""
+    with pytest.raises(ValueError, match="must hold a single scalar variable"):
+        BayesInputs(data=user_data)
