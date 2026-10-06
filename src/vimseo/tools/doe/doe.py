@@ -126,6 +126,8 @@ class DOETool(BaseAnalysisTool):
         **options,
     ) -> DOEResult:
         model = options["model"]
+        # The description of the model, holding its figures (``PLOTS``).
+        self.result.metadata.model = getattr(model, "description", None)
         doe_name = (
             f"DOE_{model.name}_{model.load_case.name}_{options['algo']}_"
             f"{options['n_samples']}"
