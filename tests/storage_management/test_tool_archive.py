@@ -41,6 +41,9 @@ from vimseo.tools.base_result import assert_results_equal
 from vimseo.tools.base_tool import BaseTool
 from vimseo.tools.bayes.bayes_analysis import BayesTool
 from vimseo.tools.calibration.direct_measure_calibration_step import DirectMeasures
+from vimseo.tools.design_value.design_value_tool import DesignValueInputs
+from vimseo.tools.design_value.design_value_tool import DesignValueSettings
+from vimseo.tools.design_value.design_value_tool import DesignValueTool
 from vimseo.tools.doe.custom_doe import CustomDOETool
 from vimseo.tools.doe.doe import DOETool
 from vimseo.tools.doe.doe_result import DOEResult
@@ -509,3 +512,31 @@ def test_mlflow_tool_run_without_simulation(archive_root):
         "mlflow.note.content"
     ]
     assert "simulations" not in description
+
+
+def test_mlflow_tool_run_without_model_linked_to_simulations(
+    archive_root, parameter_space
+):
+    """A design value has no model in its result, but the simulations of its DOE are
+    linked to it: they are searched in all the experiments."""
+    pytest.importorskip("mlflow")
+    model = _create_mlflow_model(archive_root)
+    tool = DesignValueTool(archive_manager="MlflowArchive", archive_root=archive_root)
+    tool.execute(
+        inputs=DesignValueInputs(model=model, parameter_space=parameter_space),
+        settings=DesignValueSettings(output_names=["y1"], n_samples=N_SAMPLES),
+    )
+    assert tool.result.metadata.model is None
+
+    archive = open_tool_archive("MlflowArchive", archive_root)
+    (summary,) = archive.search_tool_runs(tool_name="DesignValueTool")
+    description = archive._client.get_run(summary["mlflow_run_id"]).data.tags[
+        "mlflow.note.content"
+    ]
+    simulations = _get_simulation_runs(archive, model)
+    assert len(simulations) == N_SAMPLES
+    for simulation in simulations:
+        assert f"/runs/{simulation.info.run_id})" in description
+        assert summary["tool_run_id"] in json.loads(
+            simulation.data.tags["vimseo.tool_run_ids"]
+        )

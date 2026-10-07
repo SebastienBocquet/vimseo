@@ -253,40 +253,47 @@ class MlflowToolArchive(BaseToolArchive):
             # its summary are archived anyway.
             LOGGER.exception("The tool run could not be linked to its simulations.")
 
-    def _get_simulation_runs(self, result: BaseResult) -> tuple[str, dict[str, Run]]:
-        """Return the MLflow runs of the simulations of a tool result.
+    def _get_simulation_experiment_ids(self, result: BaseResult) -> list[str]:
+        """Return the ids of the MLflow experiments holding the simulations.
 
-        The simulations are searched in the MLflow experiment of the model of the
-        result, in the database of this archive.
-
-        Returns:
-            The id of the experiment of the simulations, and their MLflow runs bound
-            to their vimseo ``run_id``. Empty if the result has no model, no
-            simulation, or if its simulations are not in this database.
+        It is the experiment of the model of the result if it is known and in the
+        database of this archive, else all the experiments except the one of the
+        tool runs: a tool, like a design value, may have no model in its result
+        while its subtools ran simulations.
         """
         from vimseo.config.global_configuration import _configuration as config
 
-        simulation_run_ids = set(result.metadata.simulation_run_ids)
         model = result.metadata.model
-        if not simulation_run_ids or model is None:
-            return "", {}
-
-        experiment_name = (
-            config.database.experiment_name or f"{model.name}_{model.load_case.name}"
-        )
-        experiment = self._client.get_experiment_by_name(experiment_name)
-        if experiment is None:
-            LOGGER.debug(
-                f"The simulations of the tool run {self._tool_run_id} are not in the "
-                f"MLflow database {self._uri}."
+        if model is not None:
+            experiment = self._client.get_experiment_by_name(
+                config.database.experiment_name
+                or f"{model.name}_{model.load_case.name}"
             )
-            return "", {}
+            if experiment is not None:
+                return [experiment.experiment_id]
+        return [
+            experiment.experiment_id
+            for experiment in self._client.search_experiments()
+            if experiment.name != self.EXPERIMENT_NAME
+        ]
 
+    def _get_simulation_runs(self, result: BaseResult) -> dict[str, Run]:
+        """Return the MLflow runs of the simulations of a tool result.
+
+        Returns:
+            The MLflow runs of the simulations found in the database of this archive,
+            bound to their vimseo ``run_id``.
+        """
+        simulation_run_ids = set(result.metadata.simulation_run_ids)
+        if not simulation_run_ids:
+            return {}
+
+        experiment_ids = self._get_simulation_experiment_ids(result)
         runs = {}
         page_token = None
-        while True:
+        while experiment_ids:
             page = self._client.search_runs(
-                [experiment.experiment_id], max_results=1000, page_token=page_token
+                experiment_ids, max_results=1000, page_token=page_token
             )
             for run in page:
                 simulation_run_id = run.data.tags.get(_SIMULATION_RUN_ID_TAG, "")
@@ -294,7 +301,13 @@ class MlflowToolArchive(BaseToolArchive):
                     runs[simulation_run_id] = run
             page_token = page.token
             if not page_token:
-                return experiment.experiment_id, runs
+                break
+        if not runs:
+            LOGGER.debug(
+                f"The simulations of the tool run {self._tool_run_id} are not in the "
+                f"MLflow database {self._uri}."
+            )
+        return runs
 
     def _add_tool_run_to_simulation(self, run: Run) -> None:
         """Add the current tool run to the tool runs which used a simulation."""
@@ -328,7 +341,7 @@ class MlflowToolArchive(BaseToolArchive):
         ``vimseo.tool_run_ids``, including the ones which retrieved it from the
         cache of the model.
         """
-        experiment_id, simulation_runs = self._get_simulation_runs(result)
+        simulation_runs = self._get_simulation_runs(result)
         for run in simulation_runs.values():
             self._add_tool_run_to_simulation(run)
 
@@ -358,13 +371,18 @@ class MlflowToolArchive(BaseToolArchive):
                 search_filter = quote(
                     f"tags.`{_tag('tool_run_ids')}` LIKE '%{self._tool_run_id}%'"
                 )
-                lines.append(
-                    f"    - [all the simulations of this tool run]"
+                experiment_ids = sorted({
+                    run.info.experiment_id for run in simulation_runs.values()
+                })
+                lines.extend(
+                    f"    - [all the simulations of this tool run in experiment "
+                    f"{self._client.get_experiment(experiment_id).name}]"
                     f"(#/experiments/{experiment_id}?searchFilter={search_filter})"
+                    for experiment_id in experiment_ids
                 )
                 lines.extend(
                     f"    - [{simulation_run_id}]"
-                    f"({self._get_run_link(experiment_id, run.info.run_id)})"
+                    f"({self._get_run_link(run.info.experiment_id, run.info.run_id)})"
                     for simulation_run_id, run in list(simulation_runs.items())[
                         :_MAX_SIMULATION_LINKS
                     ]
