@@ -146,7 +146,15 @@ class MlflowToolArchive(BaseToolArchive):
         return f"{tool_name}{cls.SUMMARY_SUFFIX}"
 
     def _search_runs(self, filter_string: str = "") -> list[Run]:
-        """Return all the MLflow runs of the tool runs matching a filter."""
+        """Return all the MLflow runs of the tool runs matching a filter.
+
+        Searching does not create the experiment of the tool runs.
+        """
+        if self._experiment_id == "":
+            experiment = self._client.get_experiment_by_name(self.EXPERIMENT_NAME)
+            if experiment is None:
+                return []
+            self._experiment_id = experiment.experiment_id
         runs = []
         page_token = None
         while True:
