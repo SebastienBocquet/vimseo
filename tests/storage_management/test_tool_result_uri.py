@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from vimseo.api import load_tool_result
+from vimseo.storage_management.tool_archive import open_tool_archive
 from vimseo.storage_management.tool_archive.directory_tool_archive import (
     DirectoryToolArchive,
 )
@@ -77,9 +78,25 @@ def test_load_from_unknown_tool_run_id(space_tool, archive_root):
         load_tool_result("tool-run:foo", archive_root=archive_root)
 
 
-def test_load_from_mlflow_run():
-    with pytest.raises(NotImplementedError, match="cannot be loaded from MLflow yet"):
-        load_tool_result("runs:/0123456789")
+def test_load_from_mlflow_run(tmp_wd):
+    """A tool result is loaded from the id of its MLflow run."""
+    pytest.importorskip("mlflow")
+    tool = SpaceTool(archive_manager="MlflowArchive", archive_root="mlflow")
+    tool.execute(
+        distribution_name="OTTriangularDistribution",
+        space_builder_name="FromCenterAndCov",
+        center_values={"x": 0.5, "y": 1.0},
+        cov=0.05,
+    )
+    (summary,) = open_tool_archive("MlflowArchive", "mlflow").search_tool_runs()
+    result = load_tool_result(summary["uri"], archive_root="mlflow")
+    assert result.metadata.run_id == tool.result.metadata.run_id
+
+
+def test_load_from_unknown_mlflow_run(tmp_wd):
+    pytest.importorskip("mlflow")
+    with pytest.raises(KeyError, match="No MLflow run"):
+        load_tool_result("runs:/0123456789", archive_root="mlflow")
 
 
 def test_load_from_unsupported_scheme():

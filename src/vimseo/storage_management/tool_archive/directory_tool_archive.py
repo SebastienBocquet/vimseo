@@ -19,32 +19,19 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import fields
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import vimseo
 from vimseo.storage_management.base_storage_manager import PersistencyPolicy
 from vimseo.storage_management.directory_storage import DirectoryArchive
 from vimseo.storage_management.tool_archive.base_tool_archive import BaseToolArchive
-from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
+from vimseo.storage_management.tool_archive.base_tool_archive import create_summary
+from vimseo.storage_management.tool_archive.base_tool_archive import summary_to_json
 
 if TYPE_CHECKING:
     from vimseo.tools.base_result import BaseResult
 
 LOGGER = logging.getLogger(__name__)
-
-
-def _to_json_value(value: object) -> object:
-    """Convert a value that :mod:`json` cannot encode, without ever failing.
-
-    The settings of a tool can hold any object, like a model.
-    """
-    try:
-        return EnhancedJSONEncoder().default(value)
-    except TypeError:
-        return repr(value)
 
 
 class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
@@ -138,36 +125,16 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
     def _write_summary(
         self, status: str, result: BaseResult | None = None, error: str = ""
     ) -> None:
-        summary = {
-            "tool_run_id": self._tool_run_id,
-            "tool_name": self._tool_name,
-            "status": status,
-            "parent_run_id": self._parent_run_id,
-            "datetime": datetime.now().isoformat(" "),
-            "vimseo_version": vimseo.__version__,
-        }
-        if error != "":
-            summary["error"] = error
-        if result is not None:
-            summary["result_class"] = type(result).__name__
-            summary.update({
-                field.name: getattr(result.metadata, field.name)
-                for field in fields(result.metadata)
-                if field.name not in ("generic", "model", "run_id", "parent_run_id")
-            })
-            model = result.metadata.model
-            summary["model"] = (
-                None
-                if model is None
-                else {"name": model.name, "load_case": model.load_case.name}
-            )
-        try:
-            text = json.dumps(summary, indent=2, default=_to_json_value)
-        except TypeError:
-            # A key which is not a string, in the settings for example.
-            text = json.dumps(summary, indent=2, default=_to_json_value, skipkeys=True)
+        summary = create_summary(
+            self._tool_name,
+            self._tool_run_id,
+            self._parent_run_id,
+            status,
+            result=result,
+            error=error,
+        )
         (self._job_directory / self.get_summary_file_name(self._tool_name)).write_text(
-            text
+            summary_to_json(summary)
         )
 
     def _find_run_directory(self, tool_run_id: str, tool_name: str = "") -> Path:
@@ -214,7 +181,12 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
         ):
             summary = json.loads(path.read_text())
             if status == "" or summary["status"] == status:
-                summaries.append({**summary, "directory": str(path.parent)})
+                summaries.append({
+                    **summary,
+                    "directory": str(path.parent),
+                    # The directory of the run is a URI of its result.
+                    "uri": str(path.parent),
+                })
         return summaries
 
     def find_tool_runs_of_simulation(self, simulation_run_id: str) -> list[str]:

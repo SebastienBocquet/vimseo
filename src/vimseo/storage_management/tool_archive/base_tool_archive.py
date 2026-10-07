@@ -17,13 +17,98 @@
 
 from __future__ import annotations
 
+import json
 from abc import abstractmethod
+from dataclasses import fields
+from datetime import datetime
 from typing import TYPE_CHECKING
+from typing import Any
 
 from docstring_inheritance import GoogleDocstringInheritanceMeta
 
+import vimseo
+from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
+
 if TYPE_CHECKING:
     from vimseo.tools.base_result import BaseResult
+
+
+def _to_json_value(value: Any) -> Any:
+    """Convert a value that :mod:`json` cannot encode, without ever failing.
+
+    The settings of a tool can hold any object, like a model.
+    """
+    try:
+        return EnhancedJSONEncoder().default(value)
+    except TypeError:
+        return repr(value)
+
+
+def create_summary(
+    tool_name: str,
+    tool_run_id: str,
+    parent_run_id: str,
+    status: str,
+    result: BaseResult | None = None,
+    error: str = "",
+) -> dict[str, Any]:
+    """Create the summary of a tool run.
+
+    The summary describes a tool run without its result, so that the runs can be
+    searched without loading any result.
+
+    Args:
+        tool_name: The name of the tool.
+        tool_run_id: The unique identifier of the tool run.
+        parent_run_id: The identifier of the run of the tool executing this tool.
+        status: The status of the run.
+        result: The result of the tool, if any.
+        error: The message of the error which ended the run, if any.
+
+    Returns:
+        The summary: ``tool_run_id``, ``tool_name``, ``status``, ``parent_run_id``,
+        ``datetime``, ``vimseo_version``, plus ``error`` if any, plus
+        ``result_class``, the fields of the metadata of the result (``settings``,
+        ``simulation_run_ids``, ``child_tool_run_ids``...) and ``model`` if there is a
+        result.
+    """
+    summary = {
+        "tool_run_id": tool_run_id,
+        "tool_name": tool_name,
+        "status": status,
+        "parent_run_id": parent_run_id,
+        "datetime": datetime.now().isoformat(" "),
+        "vimseo_version": vimseo.__version__,
+    }
+    if error != "":
+        summary["error"] = error
+    if result is not None:
+        summary["result_class"] = type(result).__name__
+        summary.update({
+            field.name: getattr(result.metadata, field.name)
+            for field in fields(result.metadata)
+            if field.name not in ("generic", "model", "run_id", "parent_run_id")
+        })
+        model = result.metadata.model
+        summary["model"] = (
+            None
+            if model is None
+            else {"name": model.name, "load_case": model.load_case.name}
+        )
+    return summary
+
+
+def summary_to_json(summary: dict[str, Any]) -> str:
+    """Convert the summary of a tool run to JSON, without ever failing.
+
+    Args:
+        summary: The summary, see :func:`create_summary`.
+    """
+    try:
+        return json.dumps(summary, indent=2, default=_to_json_value)
+    except TypeError:
+        # A key which is not a string, in the settings for example.
+        return json.dumps(summary, indent=2, default=_to_json_value, skipkeys=True)
 
 
 class BaseToolArchive(metaclass=GoogleDocstringInheritanceMeta):

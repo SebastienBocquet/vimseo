@@ -105,6 +105,20 @@ Available tool categories: DOE, sensitivity analysis, calibration, verification 
 - `"MlflowArchive"` — stores model runs in an MLflow tracking server. Requires the `mlflow`
   extra, and is imported lazily so that the model layer does not depend on mlflow.
 
+The **tool results** are archived separately, by `open_tool_archive()` in
+[tool_archive/__init__.py](src/vimseo/storage_management/tool_archive/__init__.py), selected
+by the `archive_manager` setting of a tool, else `config.tool_archive_manager`, else
+`config.run_archive_manager` (`"none"` disables it; the tests disable it in `conftest.py`):
+- `DirectoryToolArchive` — `{root}/tools/{tool_name}/{tool_run_id}/` holds the result HDF5
+  and a JSON summary.
+- `MlflowToolArchive` — one MLflow run per tool run in the experiment `tools`, the run of a
+  subtool nested in the run of its parent. The result HDF5 and the summary are artifacts,
+  the searchable fields are `vimseo.*` tags and the settings are params.
+
+A tool run is identified by its `tool_run_id` (`result.metadata.run_id`); its simulations
+carry it too. `load_tool_result(uri)` reads a result from a file, a tool run directory,
+`tool-run:{tool_run_id}` or `runs:/{mlflow_run_id}`.
+
 Scratch storage is a separate mechanism: `DirectoryScratch`
 ([scratch_storage.py](src/vimseo/storage_management/scratch_storage.py)) is always used and
 is not selectable through `archive_manager`.

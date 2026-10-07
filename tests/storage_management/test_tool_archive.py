@@ -78,9 +78,18 @@ def archive_root(tmp_wd):
     return tmp_wd / "tool_archive"
 
 
+@pytest.fixture(params=["DirectoryArchive", "MlflowArchive"])
+def manager(request) -> str:
+    """The name of an archive manager of the tool results."""
+    if request.param == "MlflowArchive":
+        pytest.importorskip("mlflow")
+    return request.param
+
+
 @pytest.fixture
-def archive(archive_root) -> DirectoryToolArchive:
-    return DirectoryToolArchive(archive_root)
+def archive(archive_root, manager):
+    """An archive of the tool results, for each backend."""
+    return open_tool_archive(manager, archive_root)
 
 
 @pytest.fixture
@@ -92,10 +101,12 @@ def parameter_space():
     return parameter_space
 
 
-def execute_doe(archive_root, parameter_space) -> tuple[DOETool, MockModel]:
+def execute_doe(
+    archive_root, parameter_space, manager="DirectoryArchive"
+) -> tuple[DOETool, MockModel]:
     model = MockModel("LC1")
     model.cache = None
-    tool = DOETool(archive_manager="DirectoryArchive", archive_root=archive_root)
+    tool = DOETool(archive_manager=manager, archive_root=archive_root)
     tool.execute(
         model=model,
         parameter_space=parameter_space,
@@ -106,7 +117,7 @@ def execute_doe(archive_root, parameter_space) -> tuple[DOETool, MockModel]:
     return tool, model
 
 
-def test_result_is_archived_after_execution(archive_root, archive, parameter_space):
+def test_result_is_archived_after_execution(archive_root, parameter_space):
     tool, _ = execute_doe(archive_root, parameter_space)
     run_id = tool.result.metadata.run_id
 
@@ -127,8 +138,10 @@ def test_result_is_archived_after_execution(archive_root, archive, parameter_spa
     assert summary["settings"]["algo"] == "OT_OPT_LHS"
 
 
-def test_archived_result_is_exactly_the_result(archive_root, archive, parameter_space):
-    tool, _ = execute_doe(archive_root, parameter_space)
+def test_archived_result_is_exactly_the_result(
+    archive_root, archive, manager, parameter_space
+):
+    tool, _ = execute_doe(archive_root, parameter_space, manager)
 
     loaded = archive.get_tool_result(tool.result.metadata.run_id)
 
@@ -141,9 +154,9 @@ def test_get_tool_result_of_an_unknown_run(archive):
         archive.get_tool_result("unknown_run_id")
 
 
-def test_search_tool_runs(archive_root, archive, parameter_space):
-    first, _ = execute_doe(archive_root, parameter_space)
-    second, _ = execute_doe(archive_root, parameter_space)
+def test_search_tool_runs(archive_root, archive, manager, parameter_space):
+    first, _ = execute_doe(archive_root, parameter_space, manager)
+    second, _ = execute_doe(archive_root, parameter_space, manager)
 
     runs = archive.search_tool_runs()
     assert {run["tool_run_id"] for run in runs} == {
@@ -155,7 +168,7 @@ def test_search_tool_runs(archive_root, archive, parameter_space):
     assert archive.search_tool_runs(status="FAILED") == []
 
 
-def test_find_the_tool_runs_of_a_simulation(archive_root, archive):
+def test_find_the_tool_runs_of_a_simulation(archive_root, archive, manager):
     """Check the way from a simulation to the tool runs: a simulation retrieved from
     the cache is found by every tool run which used it."""
     model = MockModel("LC1")
@@ -163,7 +176,7 @@ def test_find_the_tool_runs_of_a_simulation(archive_root, archive):
         {IODataset.INPUT_GROUP: [Variable("x1", 0.5, is_constant_value=True)]}, 2
     )
     tools = [
-        CustomDOETool(archive_manager="DirectoryArchive", archive_root=archive_root)
+        CustomDOETool(archive_manager=manager, archive_root=archive_root)
         for _ in range(2)
     ]
     for tool in tools:
@@ -175,11 +188,13 @@ def test_find_the_tool_runs_of_a_simulation(archive_root, archive):
     assert archive.find_tool_runs_of_simulation("unknown_simulation") == []
 
 
-def test_find_the_simulations_of_a_tool_run(archive_root, archive, parameter_space):
+def test_find_the_simulations_of_a_tool_run(
+    archive_root, archive, manager, parameter_space
+):
     """Check the way from a tool run to its simulations, the other way of the link:
     the summary and the result give the same ones, which are the simulations of
     the model archive."""
-    tool, model = execute_doe(archive_root, parameter_space)
+    tool, model = execute_doe(archive_root, parameter_space, manager)
     run_id = tool.result.metadata.run_id
 
     (summary,) = archive.search_tool_runs()
@@ -193,31 +208,24 @@ def test_find_the_simulations_of_a_tool_run(archive_root, archive, parameter_spa
     assert set(summary["simulation_run_ids"]) == set(from_result) == archived
 
 
-def test_failed_tool_run_is_archived_as_failed(archive_root, archive):
-    tool = FailingTool(archive_manager="DirectoryArchive", archive_root=archive_root)
+def test_failed_tool_run_is_archived_as_failed(archive_root, archive, manager):
+    tool = FailingTool(archive_manager=manager, archive_root=archive_root)
     with pytest.raises(RuntimeError, match="boom"):
         tool.execute()
 
     (summary,) = archive.search_tool_runs()
     assert summary["status"] == "FAILED"
     assert summary["error"] == "RuntimeError: boom"
-    assert not (
-        archive_root
-        / "tools"
-        / "FailingTool"
-        / summary["tool_run_id"]
-        / DirectoryToolArchive.get_result_file_name("FailingTool")
-    ).exists()
-    with pytest.raises(KeyError, match="no result"):
+    with pytest.raises(KeyError, match="has no"):
         archive.get_tool_result(summary["tool_run_id"])
     assert archive.search_tool_runs(status="FAILED") == [summary]
 
 
-def test_subtools_are_archived_with_their_parent(archive_root, archive):
-    sub_tool = MyTool(archive_manager="DirectoryArchive", archive_root=archive_root)
+def test_subtools_are_archived_with_their_parent(archive_root, archive, manager):
+    sub_tool = MyTool(archive_manager=manager, archive_root=archive_root)
     composite = MyBaseCompositeTool(
         subtools=[sub_tool],
-        archive_manager="DirectoryArchive",
+        archive_manager=manager,
         archive_root=archive_root,
     )
     composite.execute()
@@ -231,12 +239,12 @@ def test_subtools_are_archived_with_their_parent(archive_root, archive):
     assert summaries[composite_id]["child_tool_run_ids"] == [sub_id]
 
 
-def test_subtools_inherit_the_archive_of_their_parent(archive_root, archive):
+def test_subtools_inherit_the_archive_of_their_parent(archive_root, archive, manager):
     """The subtools created without archive settings, as the composite tools do,
     archive their results with their parent, at any depth of nesting."""
     inner = MyBaseCompositeTool(name="inner", subtools=[MyTool()])
     outer = MyBaseCompositeTool(
-        subtools=[inner], archive_manager="DirectoryArchive", archive_root=archive_root
+        subtools=[inner], archive_manager=manager, archive_root=archive_root
     )
     outer.execute()
 
@@ -244,11 +252,13 @@ def test_subtools_inherit_the_archive_of_their_parent(archive_root, archive):
     assert names == {"MyBaseCompositeTool", "inner", "MyTool"}
 
 
-def test_explicit_archive_settings_of_a_subtool_are_kept(archive_root, archive):
+def test_explicit_archive_settings_of_a_subtool_are_kept(
+    archive_root, archive, manager
+):
     sub_tool = MyTool(archive_manager="none")
     composite = MyBaseCompositeTool(
         subtools=[sub_tool],
-        archive_manager="DirectoryArchive",
+        archive_manager=manager,
         archive_root=archive_root,
     )
     composite.execute()
@@ -338,3 +348,42 @@ def test_default_archive_root(tmp_wd):
 def test_unknown_archive_manager():
     with pytest.raises(ValueError, match="Unknown archive manager"):
         open_tool_archive("Unknown", "root")
+
+
+def test_mlflow_runs_of_subtools_are_nested(archive_root):
+    """In MLflow, the run of a subtool is nested in the run of its parent tool, in a
+    single experiment."""
+    pytest.importorskip("mlflow")
+    sub_tool = MyTool(archive_manager="MlflowArchive", archive_root=archive_root)
+    composite = MyBaseCompositeTool(
+        subtools=[sub_tool], archive_manager="MlflowArchive", archive_root=archive_root
+    )
+    composite.execute()
+
+    archive = open_tool_archive("MlflowArchive", archive_root)
+    summaries = {run["tool_run_id"]: run for run in archive.search_tool_runs()}
+    parent = summaries[composite.result.metadata.run_id]
+    child = summaries[sub_tool.result.metadata.run_id]
+    child_run = archive._client.get_run(child["mlflow_run_id"])
+    assert child_run.data.tags["mlflow.parentRunId"] == parent["mlflow_run_id"]
+    assert child_run.info.experiment_id == archive.experiment_id
+    # The result is also reachable from the id of its MLflow run.
+    assert_results_equal(
+        sub_tool.result,
+        archive.get_tool_result_of_mlflow_run(child["mlflow_run_id"]),
+    )
+
+
+def test_mlflow_result_published_again(archive_root, parameter_space):
+    """A result completed after the execution of the tool, then published again,
+    replaces the archived one."""
+    pytest.importorskip("mlflow")
+    tool, _ = execute_doe(archive_root, parameter_space, "MlflowArchive")
+    tool.result.metadata.misc["completed"] = True
+    tool._republish_result()
+
+    archive = open_tool_archive("MlflowArchive", archive_root)
+    loaded = archive.get_tool_result(tool.result.metadata.run_id)
+    assert loaded.metadata.misc["completed"]
+    (summary,) = archive.search_tool_runs()
+    assert summary["status"] == "FINISHED"

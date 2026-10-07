@@ -69,6 +69,47 @@ def _chunks(items: Sequence, size: int) -> Iterable[Sequence]:
         yield items[start : start + size]
 
 
+def get_tracking_uri(root_directory: Path | str = "") -> str:
+    """Return the tracking uri of MLflow from the configuration.
+
+    In ``Team`` mode, the credentials of the tracking server are also set in the
+    environment.
+
+    Args:
+        root_directory: The root directory of a local database, used in ``Local``
+            mode when the configuration defines no ``local_uri``.
+
+    Returns:
+        The tracking uri.
+
+    Raises:
+        ValueError: If the mode of the database is unknown.
+    """
+    if config.database.mode == "Team":
+        os.environ["MLFLOW_TRACKING_USERNAME"] = config.database.username
+        os.environ["MLFLOW_TRACKING_PASSWORD"] = config.database.password
+        os.environ["REQUESTS_CA_BUNDLE"] = (
+            config.database.ssl_certificate_file
+            if config.database.ssl_certificate_file != ""
+            else str((MLFLOW_CERTIFICATES_DIR / "irt_certificate.txt").absolute())
+        )
+        if config.database.use_insecure_tls == "True":
+            os.environ["MLFLOW_TRACKING_DATABASE_USE_INSECURE_TLS"] = "true"
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        return config.database.team_uri
+
+    if config.database.mode == "Local":
+        # TODO use root_directory instead of config.database.local_uri
+        return (
+            config.database.local_uri
+            if config.database.local_uri != ""
+            else f"file:///{Path(root_directory).absolute()!s}"
+        )
+
+    msg = f"Wrong value for config.database.mode: {config.database.mode}"
+    raise ValueError(msg)
+
+
 class MlflowArchive(BaseArchiveManager):
     """A database of model results stored in an MLFlow tracking backend."""
 
@@ -91,30 +132,7 @@ class MlflowArchive(BaseArchiveManager):
         self._model_name = model_name
         self._load_case_name = load_case_name
 
-        if config.database.mode == "Team":
-            self._uri = config.database.team_uri
-            os.environ["MLFLOW_TRACKING_USERNAME"] = config.database.username
-            os.environ["MLFLOW_TRACKING_PASSWORD"] = config.database.password
-            os.environ["REQUESTS_CA_BUNDLE"] = (
-                config.database.ssl_certificate_file
-                if config.database.ssl_certificate_file != ""
-                else str((MLFLOW_CERTIFICATES_DIR / "irt_certificate.txt").absolute())
-            )
-
-            if config.database.use_insecure_tls == "True":
-                os.environ["MLFLOW_TRACKING_DATABASE_USE_INSECURE_TLS"] = "true"
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-        elif config.database.mode == "Local":
-            # TODO use root_directory instead of config.database.local_uri
-            self._uri = (
-                config.database.local_uri
-                if config.database.local_uri != ""
-                else f"file:///{Path(root_directory).absolute()!s}"
-            )
-        else:
-            msg = f"Wrong value for config.database.mode: {config.database.mode}"
-            raise ValueError(msg)
+        self._uri = get_tracking_uri(root_directory)
 
         # This archive only relies on a client bound to its own tracking uri, and
         # never on the fluent API of MLflow (``mlflow.set_tracking_uri``,

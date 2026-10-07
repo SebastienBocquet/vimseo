@@ -26,6 +26,7 @@ from vimseo.storage_management.tool_archive.base_tool_archive import NullToolArc
 from vimseo.storage_management.tool_archive.directory_tool_archive import (
     DirectoryToolArchive,
 )
+from vimseo.utilities.optional_dependencies import import_optional
 
 LOGGER = logging.getLogger(__name__)
 
@@ -60,11 +61,13 @@ def open_tool_archive(name: str, root_directory: Path | str) -> BaseToolArchive:
         return DirectoryToolArchive(Path(root_directory))
 
     if name == ArchiveManager.Mlflow:
-        LOGGER.warning(
-            "The results of the tools cannot be archived with MLflow yet: they are "
-            "not archived."
+        # mlflow is shipped by the ``mlflow`` extra: it is imported lazily.
+        import_optional("mlflow", "mlflow", feature="The MLflow archive of the tools")
+        from vimseo.storage_management.tool_archive.mlflow_tool_archive import (
+            MlflowToolArchive,
         )
-        return NullToolArchive()
+
+        return MlflowToolArchive(root_directory)
 
     msg = (
         f"Unknown archive manager for the tool results: {name}. "

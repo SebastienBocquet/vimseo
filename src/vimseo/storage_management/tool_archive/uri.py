@@ -20,9 +20,9 @@ A tool result is identified by one of these URIs:
 - the path to a result file, ``path/to/{tool_name}_result.hdf5``,
 - the path to the directory of a tool run in a :class:`.DirectoryToolArchive`,
   ``{root}/tools/{tool_name}/{tool_run_id}``,
-- ``tool-run:{tool_run_id}``, a tool run in the :class:`.DirectoryToolArchive`
-  whose root directory is given separately,
-- ``runs:/{run_id}``, a tool run in an MLflow archive (not supported yet).
+- ``tool-run:{tool_run_id}``, a tool run in the archive of the tool results of the
+  configuration, whose root directory is given separately,
+- ``runs:/{run_id}``, the MLflow run of a tool run in an :class:`.MlflowToolArchive`.
 
 The schemes are resolved by functions registered in :data:`URI_RESOLVERS`, so that
 new archives can be plugged in.
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from vimseo.tools.base_result import BaseResult
 
 TOOL_RUN_SCHEME = "tool-run"
-"""The scheme of a tool run in a :class:`.DirectoryToolArchive`."""
+"""The scheme of a tool run in the archive of the configuration."""
 
 MLFLOW_RUN_SCHEME = "runs"
 """The scheme of a run in MLflow."""
@@ -68,30 +68,54 @@ def get_default_archive_root() -> str | Path:
     return config.database.local_uri or DEFAULT_ARCHIVE_ROOT
 
 
+def get_default_archive_manager() -> str:
+    """Return the archive manager of the tool results to read from by default.
+
+    It is the one used by the tools: the ``tool_archive_manager`` of the
+    configuration, else its ``run_archive_manager``. When the archive of the tool
+    results is disabled (``none``), it is the ``run_archive_manager``: disabling the
+    archive of the new tool runs does not prevent from reading the former ones.
+    """
+    from vimseo.config.global_configuration import _configuration as config
+    from vimseo.storage_management.tool_archive import NO_TOOL_ARCHIVE
+
+    manager = config.tool_archive_manager
+    if not manager or manager.lower() == NO_TOOL_ARCHIVE:
+        return config.run_archive_manager
+    return manager
+
+
 def _load_from_tool_run_id(tool_run_id: str, archive_root: str | Path) -> BaseResult:
-    """Load a tool result from a tool run of a :class:`.DirectoryToolArchive`.
+    """Load a tool result from a tool run of the archive of the configuration.
 
     Args:
         tool_run_id: The unique identifier of the tool run.
         archive_root: The root directory of the archive.
             If empty, use :func:`get_default_archive_root`.
     """
-    archive = DirectoryToolArchive(archive_root or get_default_archive_root())
+    from vimseo.storage_management.tool_archive import open_tool_archive
+
+    archive = open_tool_archive(
+        get_default_archive_manager(), archive_root or get_default_archive_root()
+    )
     return archive.get_tool_result(tool_run_id.strip("/"))
 
 
 def _load_from_mlflow_run(run_id: str, archive_root: str | Path) -> BaseResult:
-    """Load a tool result from an MLflow run.
+    """Load a tool result from an MLflow run of an :class:`.MlflowToolArchive`.
 
-    Raises:
-        NotImplementedError: Always, since the tool results are not archived in
-            MLflow yet.
+    Args:
+        run_id: The id of the MLflow run.
+        archive_root: The root directory of a local MLflow database.
+            If empty, use :func:`get_default_archive_root`.
     """
-    msg = (
-        "The tool results cannot be loaded from MLflow yet: "
-        "the MLflow archive of the tool results is not implemented."
+    from vimseo.storage_management import ArchiveManager
+    from vimseo.storage_management.tool_archive import open_tool_archive
+
+    archive = open_tool_archive(
+        ArchiveManager.Mlflow, archive_root or get_default_archive_root()
     )
-    raise NotImplementedError(msg)
+    return archive.get_tool_result_of_mlflow_run(run_id.strip("/"))
 
 
 URI_RESOLVERS: dict[str, Callable[[str, str | Path], BaseResult]] = {
