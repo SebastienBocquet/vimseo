@@ -21,6 +21,7 @@ import pytest
 from numpy import array
 
 from vimseo.api import create_model
+from vimseo.api import load_simulation_results
 from vimseo.core.model_metadata import MetaDataNames
 
 
@@ -64,3 +65,26 @@ def test_get_results_of_an_unknown_run_id(model):
     _run_id(model, 1.0)
     with pytest.raises(KeyError, match="No simulation with run_id"):
         model.archive_manager.get_results_by_run_id(["unknown"])
+
+
+def test_load_simulation_results(model, tmp_wd):
+    """The simulations are loaded without their model, as model results."""
+    first = _run_id(model, 1.0)
+    second = _run_id(model, 0.5)
+
+    results = load_simulation_results(
+        [second, first],
+        archive_manager=model.archive_manager.__class__.__name__,
+        archive_root=tmp_wd / "archive",
+    )
+
+    assert [result.metadata.report[MetaDataNames.run_id] for result in results] == [
+        second,
+        first,
+    ]
+    if model.archive_manager.__class__.__name__ == "MlflowArchive":
+        # Opening the archive to read it creates no experiment.
+        client = model.archive_manager._mlflow_client
+        assert "_" not in {
+            experiment.name for experiment in client.search_experiments()
+        }

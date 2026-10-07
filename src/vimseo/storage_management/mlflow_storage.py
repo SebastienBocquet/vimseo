@@ -146,7 +146,8 @@ class MlflowArchive(BaseArchiveManager):
             if config.database.experiment_name != ""
             else f"{self._model_name}_{self._load_case_name}"
         )
-        self._get_or_create_experiment_id(self._experiment_name)
+        # The experiment is created with the first run, so that opening the archive
+        # to read it does not create an empty experiment.
         self._run_is_open = False
 
     @property

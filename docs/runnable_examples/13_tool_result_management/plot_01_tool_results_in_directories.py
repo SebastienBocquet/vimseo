@@ -34,6 +34,7 @@ from pandas import DataFrame
 from vimseo import EXAMPLE_RUNS_DIR
 from vimseo.api import activate_logger
 from vimseo.api import create_model
+from vimseo.api import load_simulation_results
 from vimseo.api import load_tool_result
 from vimseo.core.model_settings import IntegratedModelSettings
 from vimseo.io.space_io import SpaceToolFileIO
@@ -174,6 +175,18 @@ DataFrame([
     }
     for simulation in simulations
 ])
+
+# %%
+# The simulations can also be loaded without creating their model, as
+# :class:`.ModelResult`, from the archive manager and the root of their archive:
+model_results = load_simulation_results(
+    metadata.simulation_run_ids,
+    archive_manager="DirectoryArchive",
+    archive_root=archive_root,
+)
+model_results[0].get_numeric_scalars(
+    variable_names=["young_modulus", "reaction_forces"]
+)
 
 # %%
 # From a simulation to its tool runs

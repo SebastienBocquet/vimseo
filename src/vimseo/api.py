@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import warnings
+from pathlib import Path
 
 from vimseo.problems.load_cases import DUMMY_LOAD_CASE_NAME
 
@@ -46,9 +47,10 @@ from vimseo.utilities.datasets import (  # ruff: ignore[module-import-not-at-top
 # isort: on
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from collections.abc import Iterable
 
     from vimseo.core.base_integrated_model import IntegratedModel
+    from vimseo.core.model_result import ModelResult
     from vimseo.core.model_settings import IntegratedModelSettings
     from vimseo.material.material import Material
     from vimseo.material.material_registry import MaterialInfo
@@ -247,6 +249,48 @@ def get_available_tools():
     class_names = ToolsFactory().class_names
     class_names.remove("BaseTool")
     return class_names
+
+
+def load_simulation_results(
+    run_ids: Iterable[str],
+    archive_manager: str = "",
+    archive_root: str | Path = "",
+) -> list[ModelResult]:
+    """Load archived simulations from their ``run_id``, without creating their model.
+
+    The ``run_id`` of a simulation is listed in the ``simulation_run_ids`` of the
+    metadata of a tool result. The whole archive is searched, whatever the experiment.
+
+    Args:
+        run_ids: The ``run_id`` of the simulations.
+        archive_manager: The archive manager of the simulations, ``"DirectoryArchive"``
+            or ``"MlflowArchive"``. If empty, use the ``run_archive_manager`` of the
+            configuration.
+        archive_root: The root directory of the archive. If empty, use the one of the
+            configuration.
+
+    Returns:
+        The results of the simulations, in the order of ``run_ids``.
+
+    Raises:
+        KeyError: If a simulation is not in the archive.
+    """
+    from vimseo.config.global_configuration import _configuration as config
+    from vimseo.core.model_result import ModelResult
+    from vimseo.storage_management import get_archive_class
+    from vimseo.storage_management.base_storage_manager import PersistencyPolicy
+    from vimseo.storage_management.tool_archive.uri import get_default_archive_root
+
+    archive_class = get_archive_class(archive_manager or config.run_archive_manager)
+    archive = archive_class(
+        PersistencyPolicy.DELETE_NEVER,
+        model_name="",
+        load_case_name="",
+        root_directory=Path(archive_root or get_default_archive_root()),
+    )
+    return [
+        ModelResult.from_data(data) for data in archive.get_results_by_run_id(run_ids)
+    ]
 
 
 def load_tool_result(uri: str | Path, archive_root: str | Path = "") -> BaseResult:
