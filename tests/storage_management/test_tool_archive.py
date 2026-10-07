@@ -24,6 +24,9 @@ from functools import partial
 import pytest
 from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.datasets.io_dataset import IODataset
+from numpy import array
+from openturns import ComposedDistribution
+from openturns import Uniform
 
 from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.model_metadata import MetaDataNames
@@ -35,6 +38,7 @@ from vimseo.storage_management.tool_archive.directory_tool_archive import (
 )
 from vimseo.tools.base_result import assert_results_equal
 from vimseo.tools.base_tool import BaseTool
+from vimseo.tools.bayes.bayes_analysis import BayesTool
 from vimseo.tools.calibration.direct_measure_calibration_step import DirectMeasures
 from vimseo.tools.doe.custom_doe import CustomDOETool
 from vimseo.tools.doe.doe import DOETool
@@ -387,3 +391,25 @@ def test_mlflow_result_published_again(archive_root, parameter_space):
     assert loaded.metadata.misc["completed"]
     (summary,) = archive.search_tool_runs()
     assert summary["status"] == "FINISHED"
+
+
+def test_openturns_settings_are_described_in_clear(archive_root, archive, manager):
+    """The prior of a Bayesian analysis, an OpenTURNS distribution, is described in
+    clear in the summary of the tool run, not by the address of a Python object."""
+    tool = BayesTool(archive_manager=manager, archive_root=archive_root)
+    tool.execute(
+        likelihood_dist="Normal",
+        prior_dist=ComposedDistribution([Uniform(0, 5)] * 2),
+        data=array([1.0, 2.0, 3.0]),
+        n_mcmc=2,
+    )
+
+    (summary,) = archive.search_tool_runs()
+    prior = summary["settings"]["prior_dist"]
+    assert "Swig" not in str(prior)
+    if manager == "MlflowArchive":
+        # An MLflow parameter, in short form.
+        assert prior.startswith("ComposedDistribution(Uniform(a = 0, b = 5)")
+    else:
+        assert prior["kind"] == "joint"
+        assert prior["marginals"][0]["settings"]["name"] == "Uniform"

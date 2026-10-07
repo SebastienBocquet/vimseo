@@ -36,8 +36,20 @@ if TYPE_CHECKING:
 def _to_json_value(value: Any) -> Any:
     """Convert a value that :mod:`json` cannot encode, without ever failing.
 
-    The settings of a tool can hold any object, like a model.
+    The settings of a tool can hold any object, like a model. An OpenTURNS
+    distribution, like the prior of a Bayesian analysis, is described in clear
+    (see :func:`.ot_distribution_to_dict`), else by its short form.
     """
+    from vimseo.utilities.ot_distribution_io import is_ot_distribution
+    from vimseo.utilities.ot_distribution_io import ot_distribution_to_dict
+
+    if is_ot_distribution(value):
+        try:
+            return json.loads(
+                json.dumps(ot_distribution_to_dict(value), cls=EnhancedJSONEncoder)
+            )
+        except (ValueError, TypeError):
+            return str(value)
     try:
         return EnhancedJSONEncoder().default(value)
     except TypeError:

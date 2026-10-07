@@ -37,6 +37,7 @@ from vimseo.storage_management.tool_archive.base_tool_archive import BaseToolArc
 from vimseo.storage_management.tool_archive.base_tool_archive import _to_json_value
 from vimseo.storage_management.tool_archive.base_tool_archive import create_summary
 from vimseo.storage_management.tool_archive.base_tool_archive import summary_to_json
+from vimseo.utilities.ot_distribution_io import is_ot_distribution
 
 if TYPE_CHECKING:
     from mlflow.entities import Run
@@ -241,8 +242,15 @@ class MlflowToolArchive(BaseToolArchive):
 
     @staticmethod
     def _to_param_value(value: Any) -> str:
-        """Convert a setting to the value of an MLflow parameter."""
-        text = json.dumps(value, default=_to_json_value)
+        """Convert a setting to the value of an MLflow parameter.
+
+        An OpenTURNS distribution is shown by its short form, e.g. ``Normal(mu = 0,
+        sigma = 1)``, readable in the user interface of MLflow.
+        """
+        if is_ot_distribution(value):
+            text = str(value)
+        else:
+            text = json.dumps(value, default=_to_json_value)
         if len(text) > _MAX_PARAM_LENGTH:
             text = f"{text[: _MAX_PARAM_LENGTH - 3]}..."
         return text
