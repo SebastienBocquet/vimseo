@@ -28,6 +28,7 @@ from numpy import array
 from openturns import ComposedDistribution
 from openturns import Uniform
 
+from vimseo.api import create_model
 from vimseo.config.global_configuration import _configuration as config
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.problems.mock.mock_pre_run_post.mock_main import MockModel
@@ -413,3 +414,98 @@ def test_openturns_settings_are_described_in_clear(archive_root, archive, manage
     else:
         assert prior["kind"] == "joint"
         assert prior["marginals"][0]["settings"]["name"] == "Uniform"
+
+
+def _create_mlflow_model(archive_root):
+    """A model whose simulations are in the MLflow database of the tool runs."""
+    return create_model(
+        "MockModel",
+        "LC1",
+        archive_manager="MlflowArchive",
+        directory_archive_root=archive_root,
+    )
+
+
+def _get_simulation_runs(archive, model):
+    """Return the MLflow runs of the simulations of a model."""
+    experiment = archive._client.get_experiment_by_name(
+        f"{model.name}_{model.load_case.name}"
+    )
+    return archive._client.search_runs([experiment.experiment_id])
+
+
+def test_mlflow_tool_runs_are_linked_to_their_simulations(archive_root):
+    """The tool run links to its simulations, and the simulations to the tool runs
+    which used them, including from the cache of the model."""
+    pytest.importorskip("mlflow")
+    model = _create_mlflow_model(archive_root)
+    input_dataset = generate_dataset(
+        {IODataset.INPUT_GROUP: [Variable("x1", 0.5, is_constant_value=True)]}, 2
+    )
+    tools = [
+        CustomDOETool(archive_manager="MlflowArchive", archive_root=archive_root)
+        for _ in range(2)
+    ]
+    for tool in tools:
+        tool.execute(model=model, input_dataset=input_dataset, output_names=["y1"])
+    first_id, second_id = (tool.result.metadata.run_id for tool in tools)
+
+    archive = open_tool_archive("MlflowArchive", archive_root)
+    (simulation,) = _get_simulation_runs(archive, model)
+    # The second tool run retrieved the simulation from the cache: it is linked too.
+    assert json.loads(simulation.data.tags["vimseo.tool_run_ids"]) == [
+        first_id,
+        second_id,
+    ]
+    experiment_id = simulation.info.experiment_id
+    found = archive._client.search_runs(
+        [experiment_id],
+        filter_string=f"tags.`vimseo.tool_run_ids` LIKE '%{second_id}%'",
+    )
+    assert [run.info.run_id for run in found] == [simulation.info.run_id]
+
+    summaries = {run["tool_run_id"]: run for run in archive.search_tool_runs()}
+    description = archive._client.get_run(
+        summaries[second_id]["mlflow_run_id"]
+    ).data.tags["mlflow.note.content"]
+    assert f"#/experiments/{experiment_id}/runs/{simulation.info.run_id}" in description
+    assert "1 simulations" in description
+
+
+def test_mlflow_subtool_runs_are_linked(archive_root):
+    """The description of a tool run links to its parent and to its subtools."""
+    pytest.importorskip("mlflow")
+    sub_tool = MyTool(archive_manager="MlflowArchive", archive_root=archive_root)
+    composite = MyBaseCompositeTool(
+        subtools=[sub_tool], archive_manager="MlflowArchive", archive_root=archive_root
+    )
+    composite.execute()
+
+    archive = open_tool_archive("MlflowArchive", archive_root)
+    summaries = {run["tool_run_id"]: run for run in archive.search_tool_runs()}
+    parent = summaries[composite.result.metadata.run_id]["mlflow_run_id"]
+    child = summaries[sub_tool.result.metadata.run_id]["mlflow_run_id"]
+
+    def description(run_id):
+        return archive._client.get_run(run_id).data.tags["mlflow.note.content"]
+
+    assert f"/runs/{child})" in description(parent)
+    assert f"/runs/{parent})" in description(child)
+
+
+def test_mlflow_tool_run_without_simulation(archive_root):
+    """A tool run without model nor simulation has a description without link."""
+    pytest.importorskip("mlflow")
+    tool = BayesTool(archive_manager="MlflowArchive", archive_root=archive_root)
+    tool.execute(
+        likelihood_dist="Normal",
+        prior_dist=ComposedDistribution([Uniform(0, 5)] * 2),
+        data=array([1.0, 2.0, 3.0]),
+        n_mcmc=2,
+    )
+    archive = open_tool_archive("MlflowArchive", archive_root)
+    (summary,) = archive.search_tool_runs()
+    description = archive._client.get_run(summary["mlflow_run_id"]).data.tags[
+        "mlflow.note.content"
+    ]
+    assert "simulations" not in description

@@ -25,6 +25,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 from typing import Any
+from urllib.parse import quote
 
 from mlflow.entities import Param
 from mlflow.entities import RunTag
@@ -54,6 +55,12 @@ _MAX_TAG_LENGTH = 5000
 
 _MAX_PARAM_LENGTH = 1000
 """The maximum length of the value of a parameter, below the limits of MLflow."""
+
+_MAX_SIMULATION_LINKS = 50
+"""The maximum number of simulations linked from the description of a tool run."""
+
+_SIMULATION_RUN_ID_TAG = "run_id"
+"""The tag of the MLflow run of a simulation holding its vimseo ``run_id``."""
 
 _IN_ARTIFACT = "in_artifact"
 """The value of a tag too long for MLflow, whose value is in the summary artifact."""
@@ -239,6 +246,137 @@ class MlflowToolArchive(BaseToolArchive):
                 self._client.log_batch(self._mlflow_run_id, params=params)
 
         self._client.set_terminated(self._mlflow_run_id, self.STATUS_FINISHED)
+        try:
+            self._link_simulations(result)
+        except Exception:  # ruff: ignore[blind-except]
+            # The links are a convenience of the user interface: the result and
+            # its summary are archived anyway.
+            LOGGER.exception("The tool run could not be linked to its simulations.")
+
+    def _get_simulation_runs(self, result: BaseResult) -> tuple[str, dict[str, Run]]:
+        """Return the MLflow runs of the simulations of a tool result.
+
+        The simulations are searched in the MLflow experiment of the model of the
+        result, in the database of this archive.
+
+        Returns:
+            The id of the experiment of the simulations, and their MLflow runs bound
+            to their vimseo ``run_id``. Empty if the result has no model, no
+            simulation, or if its simulations are not in this database.
+        """
+        from vimseo.config.global_configuration import _configuration as config
+
+        simulation_run_ids = set(result.metadata.simulation_run_ids)
+        model = result.metadata.model
+        if not simulation_run_ids or model is None:
+            return "", {}
+
+        experiment_name = (
+            config.database.experiment_name or f"{model.name}_{model.load_case.name}"
+        )
+        experiment = self._client.get_experiment_by_name(experiment_name)
+        if experiment is None:
+            LOGGER.debug(
+                f"The simulations of the tool run {self._tool_run_id} are not in the "
+                f"MLflow database {self._uri}."
+            )
+            return "", {}
+
+        runs = {}
+        page_token = None
+        while True:
+            page = self._client.search_runs(
+                [experiment.experiment_id], max_results=1000, page_token=page_token
+            )
+            for run in page:
+                simulation_run_id = run.data.tags.get(_SIMULATION_RUN_ID_TAG, "")
+                if simulation_run_id in simulation_run_ids:
+                    runs[simulation_run_id] = run
+            page_token = page.token
+            if not page_token:
+                return experiment.experiment_id, runs
+
+    def _add_tool_run_to_simulation(self, run: Run) -> None:
+        """Add the current tool run to the tool runs which used a simulation."""
+        tag = _tag("tool_run_ids")
+        tool_run_ids = json.loads(run.data.tags.get(tag, "[]"))
+        if self._tool_run_id in tool_run_ids:
+            return
+        tool_run_ids.append(self._tool_run_id)
+        truncated = False
+        while len(json.dumps(tool_run_ids)) > _MAX_TAG_LENGTH:
+            # Keep the most recent tool runs.
+            tool_run_ids.pop(0)
+            truncated = True
+        self._client.set_tag(run.info.run_id, tag, json.dumps(tool_run_ids))
+        if truncated:
+            self._client.set_tag(
+                run.info.run_id, _tag("tool_run_ids_truncated"), "true"
+            )
+
+    @staticmethod
+    def _get_run_link(experiment_id: str, run_id: str) -> str:
+        """Return the link to a run in the user interface of MLflow."""
+        return f"#/experiments/{experiment_id}/runs/{run_id}"
+
+    def _link_simulations(self, result: BaseResult) -> None:
+        """Link the tool run to its simulations and its tool runs, in both ways.
+
+        The description of the MLflow run of the tool run, shown by the user
+        interface, links to its parent and child tool runs and to its simulations.
+        Each simulation records the tool runs which used it in the tag
+        ``vimseo.tool_run_ids``, including the ones which retrieved it from the
+        cache of the model.
+        """
+        experiment_id, simulation_runs = self._get_simulation_runs(result)
+        for run in simulation_runs.values():
+            self._add_tool_run_to_simulation(run)
+
+        lines = [f"**{self._tool_name}** — tool run `{self._tool_run_id}`", ""]
+        run = self._client.get_run(self._mlflow_run_id)
+        parent_id = run.data.tags.get("mlflow.parentRunId", "")
+        if parent_id:
+            lines.append(
+                f"- Parent tool run: [{self._parent_run_id}]"
+                f"({self._get_run_link(self.experiment_id, parent_id)})"
+            )
+        children = self._search_runs(
+            f"tags.`{_tag('parent_run_id')}` = '{self._tool_run_id}'"
+        )
+        if children:
+            lines.append("- Tool runs of the subtools:")
+            lines.extend(
+                f"    - [{child.data.tags.get(_tag('tool_name'), '')}]"
+                f"({self._get_run_link(self.experiment_id, child.info.run_id)})"
+                for child in children
+            )
+
+        n_simulations = len(result.metadata.simulation_run_ids)
+        if n_simulations:
+            lines.append(f"- {n_simulations} simulations")
+            if simulation_runs:
+                search_filter = quote(
+                    f"tags.`{_tag('tool_run_ids')}` LIKE '%{self._tool_run_id}%'"
+                )
+                lines.append(
+                    f"    - [all the simulations of this tool run]"
+                    f"(#/experiments/{experiment_id}?searchFilter={search_filter})"
+                )
+                lines.extend(
+                    f"    - [{simulation_run_id}]"
+                    f"({self._get_run_link(experiment_id, run.info.run_id)})"
+                    for simulation_run_id, run in list(simulation_runs.items())[
+                        :_MAX_SIMULATION_LINKS
+                    ]
+                )
+                if len(simulation_runs) > _MAX_SIMULATION_LINKS:
+                    lines.append(
+                        f"    - ... and {len(simulation_runs) - _MAX_SIMULATION_LINKS}"
+                        " more"
+                    )
+        self._client.set_tag(
+            self._mlflow_run_id, "mlflow.note.content", "\n".join(lines)
+        )
 
     @staticmethod
     def _to_param_value(value: Any) -> str:
