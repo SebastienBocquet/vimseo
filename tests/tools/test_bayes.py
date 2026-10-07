@@ -441,3 +441,13 @@ def test_result_visualization(tmp_wd, processed_analysis):
     tables = processed_analysis.result.tabulate()
     assert set(tables["criteria"].index) == {"lppd", "ml"}
     assert "median" in tables["posterior"].columns
+
+
+def test_key_values(tmp_wd, processed_analysis):
+    key_values = processed_analysis.result.get_key_values()
+    assert set(key_values) == {
+        "lppd",
+        "ml",
+        "posterior_mean.mu_0",
+        "posterior_mean.sigma_0",
+    }

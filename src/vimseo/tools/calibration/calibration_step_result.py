@@ -33,6 +33,7 @@ from pydantic import PositiveInt
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
 from vimseo.tools.result_visualization import create_figure
+from vimseo.tools.result_visualization import flatten_numbers
 from vimseo.tools.result_visualization import to_cell
 from vimseo.utilities.model_data import MetricVariableType
 
@@ -244,3 +245,6 @@ class CalibrationStepResult(BaseResult):
                 columns=["prior", "posterior"],
             )
         return tables
+
+    def get_key_values(self) -> dict[str, float]:
+        return flatten_numbers({"posterior": self.posterior_parameters or {}})

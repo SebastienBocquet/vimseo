@@ -389,3 +389,15 @@ def test_result_visualization(tmp_wd, deterministic_validation_case):
     tables = deterministic_validation_case.result.tabulate()
     assert "integrated_metrics" in tables
     assert "element_wise_metrics" in tables
+
+
+def test_key_values(tmp_wd, deterministic_validation_case):
+    """The integrated metrics summarize a validation case."""
+    result = deterministic_validation_case.result
+    key_values = result.get_key_values()
+    assert key_values
+    for name, value in key_values.items():
+        metric_name, output_name = name.split(".")
+        assert value == pytest.approx(
+            result.integrated_metrics[metric_name][output_name]
+        )

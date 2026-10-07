@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import json
 import logging
+import re
+import time
 from datetime import datetime
 from itertools import starmap
 from pathlib import Path
@@ -27,6 +29,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from urllib.parse import quote
 
+from mlflow.entities import Metric
 from mlflow.entities import Param
 from mlflow.entities import RunTag
 from mlflow.exceptions import MlflowException
@@ -64,6 +67,20 @@ _SIMULATION_RUN_ID_TAG = "run_id"
 
 _IN_ARTIFACT = "in_artifact"
 """The value of a tag too long for MLflow, whose value is in the summary artifact."""
+
+
+_MAX_METRICS_PER_BATCH = 1000
+"""The maximum number of metrics logged by a single call to MLflow."""
+
+
+def _to_metric_name(name: str) -> str:
+    """Return a name valid for an MLflow metric.
+
+    MLflow accepts letters, digits, underscores, dashes, dots, spaces and slashes:
+    the other characters, e.g. the brackets of a component ``x[0]``, are replaced by
+    underscores.
+    """
+    return re.sub(r"[^\w\-. /]", "_", name)
 
 
 def _tag(name: str) -> str:
@@ -234,6 +251,18 @@ class MlflowToolArchive(BaseToolArchive):
             self._mlflow_run_id,
             tags=list(starmap(RunTag, tags.items())),
         )
+
+        # The numbers summarizing the result, to sort and compare the runs.
+        timestamp = int(time.time() * 1000)
+        metrics = [
+            Metric(_to_metric_name(name), value, timestamp, 0)
+            for name, value in summary.get("key_values", {}).items()
+        ]
+        for chunk in range(0, len(metrics), _MAX_METRICS_PER_BATCH):
+            self._client.log_batch(
+                self._mlflow_run_id,
+                metrics=metrics[chunk : chunk + _MAX_METRICS_PER_BATCH],
+            )
 
         # The parameters of a run cannot change: a result published again keeps
         # the settings logged the first time.
@@ -496,6 +525,7 @@ class MlflowToolArchive(BaseToolArchive):
             ),
             "vimseo_version": tags.get(_tag("vimseo_version"), ""),
             "settings": dict(run.data.params),
+            "key_values": dict(run.data.metrics),
             "mlflow_run_id": run.info.run_id,
             "uri": f"runs:/{run.info.run_id}",
         }

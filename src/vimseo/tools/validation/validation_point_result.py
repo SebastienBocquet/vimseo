@@ -32,6 +32,7 @@ from pydantic import Field
 from vimseo.tools.base_tool import BaseResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
 from vimseo.tools.result_visualization import create_figure
+from vimseo.tools.result_visualization import flatten_numbers
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
 if TYPE_CHECKING:
@@ -136,3 +137,6 @@ class ValidationPointResult(BaseResult):
                 line="45",
             )
         return figures
+
+    def get_key_values(self) -> dict[str, float]:
+        return flatten_numbers(self.integrated_metrics or {})

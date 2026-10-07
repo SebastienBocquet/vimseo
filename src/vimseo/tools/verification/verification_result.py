@@ -33,6 +33,7 @@ from pydantic import Field
 from vimseo.tools.base_tool import BaseResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
 from vimseo.tools.result_visualization import create_figure
+from vimseo.tools.result_visualization import flatten_numbers
 from vimseo.tools.result_visualization import to_cell
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
@@ -173,6 +174,9 @@ class VerificationResult(BaseResult):
                     )
                 )
         return figures
+
+    def get_key_values(self) -> dict[str, float]:
+        return flatten_numbers(self.integrated_metrics or {})
 
 
 @dataclass
@@ -341,6 +345,13 @@ class SolutionVerificationResult(VerificationResult):
             }
 
         return DataFrame.from_dict(rows, orient="index") if rows else None
+
+    def get_key_values(self) -> dict[str, float]:
+        key_values = super().get_key_values()
+        extrapolation = self._get_extrapolation_table()
+        if extrapolation is not None:
+            key_values.update(flatten_numbers(extrapolation["value"].to_dict()))
+        return key_values
 
 
 @dataclass

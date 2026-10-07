@@ -28,6 +28,7 @@ import dataclasses
 import logging
 import re
 from collections.abc import Mapping
+from math import isfinite
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
@@ -366,3 +367,55 @@ def settings_to_dataframe(settings: Mapping[str, Any]) -> DataFrame | None:
         {"value": [to_cell(value) for value in settings.values()]},
         index=list(settings),
     )
+
+
+def get_number(value: Any) -> float | None:
+    """Return a value as a finite number, if it is one.
+
+    Args:
+        value: The value, e.g. a number or an array of size one.
+
+    Returns:
+        The number, or ``None`` if the value is not a finite number.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, ndarray):
+        if value.size != 1 or value.dtype.kind not in "iuf":
+            return None
+        value = value.item()
+    if isinstance(value, generic):
+        value = value.item()
+    if isinstance(value, (int, float)) and isfinite(value):
+        return float(value)
+    return None
+
+
+def flatten_numbers(mapping: Mapping[str, Any], prefix: str = "") -> dict[str, float]:
+    """Flatten the numbers of nested mappings.
+
+    Args:
+        mapping: The mappings, e.g. ``{metric: {output: value}}``.
+        prefix: The prefix of the keys.
+
+    Returns:
+        The finite numbers, whose keys join the nested keys with dots,
+        e.g. ``{"metric.output": value}``. An array is flattened with the index of
+        its components, e.g. ``"metric.output.0"``.
+    """
+    numbers = {}
+    for key, value in mapping.items():
+        full_key = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(value, Mapping):
+            numbers.update(flatten_numbers(value, full_key))
+            continue
+        number = get_number(value)
+        if number is not None:
+            numbers[full_key] = number
+        elif isinstance(value, ndarray) and value.ndim == 1 and value.size > 1:
+            numbers.update({
+                f"{full_key}.{i}": number
+                for i, component in enumerate(value)
+                if (number := get_number(component)) is not None
+            })
+    return numbers

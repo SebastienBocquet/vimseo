@@ -32,6 +32,7 @@ from pydantic import Field
 from vimseo.tools.base_tool import BaseResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
 from vimseo.tools.result_visualization import create_figure
+from vimseo.tools.result_visualization import flatten_numbers
 from vimseo.tools.validation.validation_point_result import ValidationPointResult
 from vimseo.utilities.datasets import GROUP_SEPARATORS
 from vimseo.utilities.datasets import dataframe_to_dataset
@@ -224,3 +225,6 @@ class ValidationCaseResult(BaseResult):
                 IntegratedMetricBars, self.integrated_metrics, metric_name
             )
         return figures
+
+    def get_key_values(self) -> dict[str, float]:
+        return flatten_numbers(self.integrated_metrics or {})

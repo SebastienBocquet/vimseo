@@ -35,6 +35,7 @@ from pydantic import PositiveInt
 
 from vimseo.tools.base_tool import BaseResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
+from vimseo.tools.result_visualization import flatten_numbers
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -209,6 +210,19 @@ class BayesAnalysisResult(BaseResult):
                 index=list(self.parameter_names),
             )
         return tables
+
+    def get_key_values(self) -> dict[str, float]:
+        key_values = flatten_numbers({"lppd": self.lppd, "ml": self.ml})
+        if self.processed_samples is not None and self.processed_samples.size:
+            samples = self.processed_samples.reshape(len(self.processed_samples), -1)
+            key_values.update(
+                flatten_numbers({
+                    "posterior_mean": dict(
+                        zip(self.parameter_names, samples.mean(axis=0), strict=False)
+                    )
+                })
+            )
+        return key_values
 
 
 @dataclass

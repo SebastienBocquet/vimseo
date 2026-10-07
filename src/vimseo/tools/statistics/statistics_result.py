@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from collections.abc import Mapping
 from dataclasses import dataclass
 from json import dumps
 from typing import TYPE_CHECKING
@@ -29,6 +30,7 @@ from pydantic import Field
 
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
+from vimseo.tools.result_visualization import flatten_numbers
 from vimseo.tools.result_visualization import mapping_to_dataframe
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
@@ -128,3 +130,13 @@ class StatisticsResult(BaseResult):
                 criterion = getattr(self.analysis, "fitting_criterion", "criterion")
                 tables[f"fitting_criteria_{criterion}"] = table
         return tables
+
+    def get_key_values(self) -> dict[str, float]:
+        if not isinstance(self.statistics, Mapping):
+            return {}
+        names = {"mean": "mean", "compute_standard_deviation": "standard_deviation"}
+        return flatten_numbers({
+            name: self.statistics[key]
+            for key, name in names.items()
+            if key in self.statistics
+        })

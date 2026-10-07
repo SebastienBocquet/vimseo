@@ -81,8 +81,8 @@ def create_summary(
         The summary: ``tool_run_id``, ``tool_name``, ``status``, ``parent_run_id``,
         ``datetime``, ``vimseo_version``, plus ``error`` if any, plus
         ``result_class``, the fields of the metadata of the result (``settings``,
-        ``simulation_run_ids``, ``child_tool_run_ids``...) and ``model`` if there is a
-        result.
+        ``simulation_run_ids``, ``child_tool_run_ids``...), ``key_values`` (see
+        :meth:`.BaseResult.get_key_values`) and ``model`` if there is a result.
     """
     summary = {
         "tool_run_id": tool_run_id,
@@ -101,6 +101,7 @@ def create_summary(
             for field in fields(result.metadata)
             if field.name not in ("generic", "model", "run_id", "parent_run_id")
         })
+        summary["key_values"] = result.get_key_values()
         model = result.metadata.model
         summary["model"] = (
             None

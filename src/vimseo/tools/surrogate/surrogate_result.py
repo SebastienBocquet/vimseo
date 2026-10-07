@@ -32,6 +32,7 @@ from pydantic import Field
 
 from vimseo.tools.base_result import BaseResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
+from vimseo.tools.result_visualization import flatten_numbers
 from vimseo.tools.result_visualization import to_cell
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
@@ -181,3 +182,7 @@ class SurrogateResult(BaseResult):
             }
             tables["selection_qualities"] = DataFrame.from_dict(rows, orient="index")
         return tables
+
+    def get_key_values(self) -> dict[str, float]:
+        # The qualities of the selected surrogate model, by measure and method.
+        return flatten_numbers(self.qualities)

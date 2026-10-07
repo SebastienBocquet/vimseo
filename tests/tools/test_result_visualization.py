@@ -35,6 +35,7 @@ from vimseo.tools.doe.doe_result import DOEResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
 from vimseo.tools.result_visualization import fields_to_dataframes
 from vimseo.tools.result_visualization import flatten_figures
+from vimseo.tools.result_visualization import flatten_numbers
 from vimseo.tools.result_visualization import get_file_stem
 from vimseo.tools.result_visualization import mapping_to_dataframe
 from vimseo.tools.result_visualization import save_figures
@@ -262,3 +263,17 @@ def test_visualization_settings_are_flat(class_name):
         assert not (
             isinstance(annotation, type) and issubclass(annotation, BaseModel)
         ), name
+
+
+def test_flatten_numbers():
+    """The finite numbers of nested mappings are flattened, arrays by component."""
+    assert flatten_numbers({
+        "metric": {"y1": array([1.0]), "y2": 2, "y3": float("nan")},
+        "vector": array([3.0, 4.0]),
+        "text": "a",
+        "flag": True,
+    }) == {"metric.y1": 1.0, "metric.y2": 2.0, "vector.0": 3.0, "vector.1": 4.0}
+
+
+def test_base_result_has_no_key_value():
+    assert BaseResult().get_key_values() == {}

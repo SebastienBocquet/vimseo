@@ -138,6 +138,20 @@ class BaseResult(metaclass=GoogleDocstringInheritanceMeta):
             return settings_class(**options)
         return settings_class(**{**settings.model_dump(), **options})
 
+    def get_key_values(self) -> dict[str, float]:
+        """Return the few numbers summarizing the result.
+
+        They are for instance the integrated metrics of a validation, or the
+        criteria of a Bayesian analysis. They are logged as metrics by an MLflow
+        archive of the tool results, so that the tool runs can be sorted, filtered
+        and compared on them, and written in the summary of a directory archive.
+
+        Returns:
+            The finite numbers, bound to names whose levels are separated by dots,
+            e.g. ``"RelativeErrorMetric.reaction_forces"``.
+        """
+        return {}
+
     def get_visualization_choices(self) -> dict[str, list[str]]:
         """Return the values available for the settings of the visualization.
 

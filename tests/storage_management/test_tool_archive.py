@@ -540,3 +540,14 @@ def test_mlflow_tool_run_without_model_linked_to_simulations(
         assert summary["tool_run_id"] in json.loads(
             simulation.data.tags["vimseo.tool_run_ids"]
         )
+
+
+def test_key_values_are_archived(archive_root, archive, manager, parameter_space):
+    """The numbers summarizing a result are in the summary of its tool run, and are
+    MLflow metrics."""
+    execute_doe(archive_root, parameter_space, manager)
+    (summary,) = archive.search_tool_runs()
+    assert summary["key_values"] == {"n_samples": N_SAMPLES}
+    if manager == "MlflowArchive":
+        run = archive._client.get_run(summary["mlflow_run_id"])
+        assert run.data.metrics == {"n_samples": N_SAMPLES}

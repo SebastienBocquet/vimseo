@@ -166,3 +166,8 @@ class DOEResult(BaseResult):
                 )
             )
         return figures
+
+    def get_key_values(self) -> dict[str, float]:
+        if self.dataset is None:
+            return {}
+        return {"n_samples": float(len(self.dataset))}

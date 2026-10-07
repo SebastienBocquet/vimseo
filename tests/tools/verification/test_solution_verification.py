@@ -344,3 +344,10 @@ def test_result_visualization(tmp_wd, convergence_verificator):
     assert "extrapolated_value" in tables["extrapolation"].index
     assert "convergence_order" in tables["extrapolation"].index
     assert "extrapolated_value" in tables["cross_validation"].columns
+
+
+def test_key_values(tmp_wd, convergence_verificator):
+    """The extrapolated quantities summarize a solution verification."""
+    key_values = convergence_verificator.result.get_key_values()
+    assert "extrapolated_value" in key_values
+    assert "convergence_order" in key_values
