@@ -163,13 +163,9 @@ print("simulations:", metadata.simulation_run_ids)
 
 # %%
 # The simulations are in the archive of the model, where they are identified by the
-# same ``run_id``:
-simulation_ids = set(metadata.simulation_run_ids)
-simulations = [
-    simulation
-    for simulation in model.archive_manager.get_archived_results()
-    if str(simulation["outputs"]["run_id"][0]) in simulation_ids
-]
+# same ``run_id``. They are read back from it with ``get_results_by_run_id``, which
+# searches the whole archive:
+simulations = model.archive_manager.get_results_by_run_id(metadata.simulation_run_ids)
 DataFrame([
     {
         "run_id": str(simulation["outputs"]["run_id"][0])[:8],

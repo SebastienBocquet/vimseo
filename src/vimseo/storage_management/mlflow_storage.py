@@ -405,6 +405,27 @@ class MlflowArchive(BaseArchiveManager):
 
         return {"inputs": inputs, "outputs": outputs}
 
+    def get_results_by_run_id(self, run_ids: Iterable[str]) -> list[ModelDataType]:
+        from vimseo.storage_management.base_archive_storage import _order_results
+
+        run_ids = list(run_ids)
+        # The simulations of all the experiments, except the one of the tool runs.
+        experiment_ids = [
+            experiment.experiment_id
+            for experiment in self._mlflow_client.search_experiments()
+            if experiment.name != "tools"
+        ]
+        found = {}
+        for run_id in dict.fromkeys(run_ids):
+            runs = self._mlflow_client.search_runs(
+                experiment_ids,
+                filter_string=f"tags.{MetaDataNames.run_id} = '{run_id}'",
+                max_results=1,
+            )
+            if runs:
+                found[run_id] = self.get_result(runs[0].info.run_id)
+        return _order_results(run_ids, found, self._uri)
+
     def get_result(self, run_id: str = "") -> ModelDataType:
         run = self._mlflow_client.get_run(
             run_id if run_id != "" else self._current_run_id

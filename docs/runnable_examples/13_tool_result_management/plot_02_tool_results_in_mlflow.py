@@ -173,14 +173,13 @@ DataFrame([
 ])
 
 # %%
-# Conversely, a simulation is found from one of the ``simulation_run_ids`` of a tool
-# result by its tag ``run_id``:
+# Conversely, the simulations are read back from the ``simulation_run_ids`` of a tool
+# result with ``get_results_by_run_id``, which searches all the experiments of the
+# archive of the model. In the user interface, a simulation is found by the filter
+# ``tags.run_id = '{run_id}'``.
 simulation_id = replay.result.metadata.simulation_run_ids[0]
-(simulation,) = client.search_runs(
-    [simulations_experiment.experiment_id],
-    filter_string=f"tags.run_id = '{simulation_id}'",
-)
-model.archive_manager.get_result(simulation.info.run_id)["inputs"]
+(simulation,) = model.archive_manager.get_results_by_run_id([simulation_id])
+simulation["inputs"]
 
 # %%
 # From a simulation to its tool runs
