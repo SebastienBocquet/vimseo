@@ -241,6 +241,12 @@ assert len(runs) == 1
 runs
 
 # %%
+# Among the metadata, each simulation is identified by its ``run_id``, stored as the
+# tag ``run_id``. When the simulation is run by a tool, like a DOE, the tag
+# ``tool_run_id`` identifies the tool run. Since the results of the tools are archived
+# too, a tool run and its simulations can be found from one another: see the examples
+# of tool result management.
+#
 # Metadata could also be used in the query, for instance ``tags.user = "a_user"``.
 # Note that the result returned by ``get_result()`` has the following format:
 # ``{"inputs": input_data, "output": output_data}``.
