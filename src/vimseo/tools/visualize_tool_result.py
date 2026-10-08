@@ -94,7 +94,7 @@ def get_output_directory_name(result: BaseResult, uri: str) -> str:
         The class of the result, followed by the identifier of its tool run if any,
         else by the name of the file or directory of the URI.
     """
-    identifier = getattr(result.metadata, "run_id", "") or Path(uri).stem
+    identifier = getattr(result.metadata, "tool_run_id", "") or Path(uri).stem
     return get_file_stem(f"{type(result).__name__}_{identifier}")
 
 

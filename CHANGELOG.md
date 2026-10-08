@@ -51,7 +51,7 @@ and this project adheres to
 - Unique identifiers linking the simulations and the tool results. A simulation
   really run has a `run_id` metadata, and a `tool_run_id` metadata which is the
   run of the tool that executed it (empty otherwise). A tool result has
-  `metadata.run_id`, `metadata.parent_run_id`, `metadata.child_tool_run_ids` and
+  `metadata.tool_run_id`, `metadata.parent_tool_run_id`, `metadata.child_tool_run_ids` and
   `metadata.simulation_run_ids`, the latter including the simulations retrieved from
   the model cache. A simulation retrieved from the cache keeps the identifiers of the
   run which created it. The simulations executed by a thread or a process pool

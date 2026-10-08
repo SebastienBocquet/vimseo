@@ -57,20 +57,20 @@ def test_load_from_result_file(space_tool):
     for uri in (path, str(path)):
         result = load_tool_result(uri)
         assert isinstance(result, SpaceToolResult)
-        assert result.metadata.run_id == space_tool.result.metadata.run_id
+        assert result.metadata.tool_run_id == space_tool.result.metadata.tool_run_id
 
 
 def test_load_from_run_directory(space_tool, archive_root):
     (summary,) = DirectoryToolArchive(archive_root).search_tool_runs("SpaceTool")
     result = load_tool_result(summary["directory"])
-    assert result.metadata.run_id == space_tool.result.metadata.run_id
+    assert result.metadata.tool_run_id == space_tool.result.metadata.tool_run_id
 
 
 def test_load_from_tool_run_id(space_tool, archive_root):
-    run_id = space_tool.result.metadata.run_id
+    run_id = space_tool.result.metadata.tool_run_id
     result = load_tool_result(f"tool-run:{run_id}", archive_root=archive_root)
     assert isinstance(result, SpaceToolResult)
-    assert result.metadata.run_id == run_id
+    assert result.metadata.tool_run_id == run_id
 
 
 def test_load_from_unknown_tool_run_id(space_tool, archive_root):
@@ -90,7 +90,7 @@ def test_load_from_mlflow_run(tmp_wd):
     )
     (summary,) = open_tool_archive("MlflowArchive", "mlflow").search_tool_runs()
     result = load_tool_result(summary["uri"], archive_root="mlflow")
-    assert result.metadata.run_id == tool.result.metadata.run_id
+    assert result.metadata.tool_run_id == tool.result.metadata.tool_run_id
 
 
 def test_load_from_unknown_mlflow_run(tmp_wd):

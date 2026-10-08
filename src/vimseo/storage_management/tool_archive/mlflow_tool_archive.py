@@ -203,19 +203,19 @@ class MlflowToolArchive(BaseToolArchive):
         return runs[0] if runs else None
 
     def start_tool_run(
-        self, tool_name: str, tool_run_id: str, parent_run_id: str = ""
+        self, tool_name: str, tool_run_id: str, parent_tool_run_id: str = ""
     ) -> None:
         self._tool_name = tool_name
         self._tool_run_id = tool_run_id
-        self._parent_run_id = parent_run_id
+        self._parent_run_id = parent_tool_run_id
         tags = {
             _tag("tool_name"): tool_name,
             _tag("tool_run_id"): tool_run_id,
-            _tag("parent_run_id"): parent_run_id,
+            _tag("parent_tool_run_id"): parent_tool_run_id,
             _tag("vimseo_version"): vimseo.__version__,
         }
-        if parent_run_id:
-            parent_run = self._find_run(parent_run_id)
+        if parent_tool_run_id:
+            parent_run = self._find_run(parent_tool_run_id)
             if parent_run is not None:
                 # Nests the run in the run of its parent in the user interface.
                 tags["mlflow.parentRunId"] = parent_run.info.run_id
@@ -383,7 +383,7 @@ class MlflowToolArchive(BaseToolArchive):
                 f"({self._get_run_link(self.experiment_id, parent_id)})"
             )
         children = self._search_runs(
-            f"tags.`{_tag('parent_run_id')}` = '{self._tool_run_id}'"
+            f"tags.`{_tag('parent_tool_run_id')}` = '{self._tool_run_id}'"
         )
         if children:
             lines.append("- Tool runs of the subtools:")
@@ -519,7 +519,7 @@ class MlflowToolArchive(BaseToolArchive):
             "tool_run_id": tags.get(_tag("tool_run_id"), ""),
             "tool_name": tags.get(_tag("tool_name"), ""),
             "status": run.info.status,
-            "parent_run_id": tags.get(_tag("parent_run_id"), ""),
+            "parent_tool_run_id": tags.get(_tag("parent_tool_run_id"), ""),
             "datetime": datetime.fromtimestamp(run.info.start_time / 1000).isoformat(
                 " "
             ),

@@ -48,9 +48,14 @@ from vimseo.tools.doe.custom_doe import CustomDOETool
 activate_logger(level=logging.WARNING)
 
 # %%
-# Each execution of a tool is a *tool run*, identified by a unique ``tool_run_id``.
-# Its result is archived, as the simulations of a model are, and the archive keeps the
-# links between them:
+# Two kinds of runs are identified by unique identifiers:
+#
+# - each execution of a model is a *simulation*, identified by its ``run_id``,
+# - each execution of a tool is a *tool run*, identified by its ``tool_run_id``,
+#   stored in the metadata of its result: ``result.metadata.tool_run_id``.
+#
+# The result of a tool run is archived, as the simulations of a model are, and the
+# archive keeps the links between them:
 #
 # - a tool run knows the simulations it used, through their ``run_id``,
 #   including the ones retrieved from the cache of the model,
@@ -122,7 +127,7 @@ DataFrame([
         "tool": summary["tool_name"],
         "status": summary["status"],
         "tool_run_id": summary["tool_run_id"][:8],
-        "parent": summary["parent_run_id"][:8],
+        "parent": summary["parent_tool_run_id"][:8],
         "simulations": len(summary.get("simulation_run_ids", [])),
         "key_values": summary.get("key_values"),
     }
@@ -136,7 +141,7 @@ runs_by_id = {summary["tool_run_id"]: summary for summary in summaries}
 
 def print_tree(parent_id: str = "", indent: str = "") -> None:
     for summary in summaries:
-        if summary["parent_run_id"] == parent_id:
+        if summary["parent_tool_run_id"] == parent_id:
             print(f"{indent}- {summary['tool_name']} {summary['tool_run_id'][:8]}")
             print_tree(summary["tool_run_id"], indent + "    ")
 
@@ -146,7 +151,7 @@ print_tree()
 # %%
 # A tool run is a directory ``{root}/tools/{tool_name}/{tool_run_id}``, holding the
 # result in HDF5 format and the summary in JSON format:
-design_value_id = design_value.result.metadata.run_id
+design_value_id = design_value.result.metadata.tool_run_id
 run_directory = archive_root / "tools" / "DesignValueTool" / design_value_id
 sorted(path.name for path in run_directory.iterdir())
 
@@ -154,13 +159,13 @@ sorted(path.name for path in run_directory.iterdir())
 # From a tool run to its simulations
 # ----------------------------------
 # The result of a tool run, read from the archive, is the same as the result of the
-# tool. Its metadata give the identifiers of its tool run, of its parent and children,
-# and of its simulations:
+# tool. Its metadata give the ``tool_run_id`` of its tool run and of its children,
+# and the ``run_id`` of its simulations:
 result = tool_archive.get_tool_result(design_value_id)
 metadata = result.metadata
-print("tool run:", metadata.run_id)
-print("children:", metadata.child_tool_run_ids)
-print("simulations:", metadata.simulation_run_ids)
+print("tool_run_id:", metadata.tool_run_id)
+print("tool_run_id of the children:", metadata.child_tool_run_ids)
+print("run_id of the simulations:", metadata.simulation_run_ids)
 
 # %%
 # The simulations are in the archive of the model, where they are identified by the

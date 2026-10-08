@@ -59,7 +59,7 @@ def _to_json_value(value: Any) -> Any:
 def create_summary(
     tool_name: str,
     tool_run_id: str,
-    parent_run_id: str,
+    parent_tool_run_id: str,
     status: str,
     result: BaseResult | None = None,
     error: str = "",
@@ -72,13 +72,13 @@ def create_summary(
     Args:
         tool_name: The name of the tool.
         tool_run_id: The unique identifier of the tool run.
-        parent_run_id: The identifier of the run of the tool executing this tool.
+        parent_tool_run_id: The identifier of the run of the tool executing this tool.
         status: The status of the run.
         result: The result of the tool, if any.
         error: The message of the error which ended the run, if any.
 
     Returns:
-        The summary: ``tool_run_id``, ``tool_name``, ``status``, ``parent_run_id``,
+        The summary: ``tool_run_id``, ``tool_name``, ``status``, ``parent_tool_run_id``,
         ``datetime``, ``vimseo_version``, plus ``error`` if any, plus
         ``result_class``, the fields of the metadata of the result (``settings``,
         ``simulation_run_ids``, ``child_tool_run_ids``...), ``key_values`` (see
@@ -88,7 +88,7 @@ def create_summary(
         "tool_run_id": tool_run_id,
         "tool_name": tool_name,
         "status": status,
-        "parent_run_id": parent_run_id,
+        "parent_tool_run_id": parent_tool_run_id,
         "datetime": datetime.now().isoformat(" "),
         "vimseo_version": vimseo.__version__,
     }
@@ -99,7 +99,8 @@ def create_summary(
         summary.update({
             field.name: getattr(result.metadata, field.name)
             for field in fields(result.metadata)
-            if field.name not in ("generic", "model", "run_id", "parent_run_id")
+            if field.name
+            not in ("generic", "model", "tool_run_id", "parent_tool_run_id")
         })
         summary["key_values"] = result.get_key_values()
         model = result.metadata.model
@@ -153,14 +154,14 @@ class BaseToolArchive(metaclass=GoogleDocstringInheritanceMeta):
 
     @abstractmethod
     def start_tool_run(
-        self, tool_name: str, tool_run_id: str, parent_run_id: str = ""
+        self, tool_name: str, tool_run_id: str, parent_tool_run_id: str = ""
     ) -> None:
         """Start the archive of a tool run.
 
         Args:
             tool_name: The name of the tool.
             tool_run_id: The unique identifier of the tool run.
-            parent_run_id: The identifier of the run of the tool executing this tool.
+            parent_tool_run_id: The identifier of the run of the tool executing this tool.
         """
 
     @abstractmethod
@@ -205,7 +206,7 @@ class BaseToolArchive(metaclass=GoogleDocstringInheritanceMeta):
         Returns:
             A summary of each run, without its result: ``tool_run_id``,
             ``tool_name``, ``status``, ``result_class``, ``datetime``,
-            ``parent_run_id``, ``child_tool_run_ids``, ``simulation_run_ids``,
+            ``parent_tool_run_id``, ``child_tool_run_ids``, ``simulation_run_ids``,
             ``settings``...
         """
 
@@ -228,7 +229,7 @@ class NullToolArchive(BaseToolArchive):
     """An archive which archives nothing, to disable the archive of tool results."""
 
     def start_tool_run(
-        self, tool_name: str, tool_run_id: str, parent_run_id: str = ""
+        self, tool_name: str, tool_run_id: str, parent_tool_run_id: str = ""
     ) -> None:
         """Do nothing."""
 

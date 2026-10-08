@@ -46,14 +46,14 @@ class ToolResultMetadata(BaseMetadata):
     model: ModelDescription | None = None
     """A description of the model under analysis."""
 
-    run_id: str = ""
+    tool_run_id: str = ""
     """The unique identifier of the tool run which produced the result.
 
     The simulations executed by this run have it as their ``tool_run_id`` metadata,
     except those retrieved from the model cache (see
     :attr:`.simulation_run_ids`)."""
 
-    parent_run_id: str = ""
+    parent_tool_run_id: str = ""
     """The identifier of the run of the tool which executed this tool, if any."""
 
     child_tool_run_ids: tuple[str, ...] = ()

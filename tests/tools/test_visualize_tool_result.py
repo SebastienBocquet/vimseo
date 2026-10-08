@@ -63,17 +63,19 @@ def test_main_with_file(tmp_wd, space_tool):
     """The figures, tables and metadata of a result file are written."""
     uri = str(space_tool.working_directory / "SpaceTool_result.hdf5")
     assert main(["--uri", uri, "--output-dir", "out", "--option", "n_samples=5"]) == 0
-    directory = tmp_wd / "out" / f"SpaceToolResult_{space_tool.result.metadata.run_id}"
+    directory = (
+        tmp_wd / "out" / f"SpaceToolResult_{space_tool.result.metadata.tool_run_id}"
+    )
     assert (directory / "figures" / "scatter_matrix.png").is_file()
     assert (directory / "tables" / "parameter_space.csv").is_file()
     assert (directory / "tables" / "settings.csv").is_file()
     metadata = json.loads((directory / "metadata.json").read_text())
-    assert metadata["run_id"] == space_tool.result.metadata.run_id
+    assert metadata["tool_run_id"] == space_tool.result.metadata.tool_run_id
 
 
 def test_main_with_tool_run_id(tmp_wd, space_tool):
     """A result is loaded from its tool run id in an archive."""
-    run_id = space_tool.result.metadata.run_id
+    run_id = space_tool.result.metadata.tool_run_id
     assert (
         main([
             "--uri",

@@ -127,7 +127,7 @@ def execute_doe(
 
 def test_result_is_archived_after_execution(archive_root, parameter_space):
     tool, _ = execute_doe(archive_root, parameter_space)
-    run_id = tool.result.metadata.run_id
+    run_id = tool.result.metadata.tool_run_id
 
     # The files are named after the tool, as the results saved by the tool.
     directory = archive_root / "tools" / "DOETool" / run_id
@@ -151,7 +151,7 @@ def test_archived_result_is_exactly_the_result(
 ):
     tool, _ = execute_doe(archive_root, parameter_space, manager)
 
-    loaded = archive.get_tool_result(tool.result.metadata.run_id)
+    loaded = archive.get_tool_result(tool.result.metadata.tool_run_id)
 
     assert isinstance(loaded, DOEResult)
     assert_results_equal(tool.result, loaded)
@@ -168,8 +168,8 @@ def test_search_tool_runs(archive_root, archive, manager, parameter_space):
 
     runs = archive.search_tool_runs()
     assert {run["tool_run_id"] for run in runs} == {
-        first.result.metadata.run_id,
-        second.result.metadata.run_id,
+        first.result.metadata.tool_run_id,
+        second.result.metadata.tool_run_id,
     }
     assert archive.search_tool_runs(tool_name="DOETool") == runs
     assert archive.search_tool_runs(tool_name="AnotherTool") == []
@@ -189,7 +189,7 @@ def test_find_the_tool_runs_of_a_simulation(archive_root, archive, manager):
     ]
     for tool in tools:
         tool.execute(model=model, input_dataset=input_dataset, output_names=["y1"])
-    run_ids = {tool.result.metadata.run_id for tool in tools}
+    run_ids = {tool.result.metadata.tool_run_id for tool in tools}
     (simulation_id,) = tools[0].result.metadata.simulation_run_ids
 
     assert set(archive.find_tool_runs_of_simulation(simulation_id)) == run_ids
@@ -203,7 +203,7 @@ def test_find_the_simulations_of_a_tool_run(
     the summary and the result give the same ones, which are the simulations of
     the model archive."""
     tool, model = execute_doe(archive_root, parameter_space, manager)
-    run_id = tool.result.metadata.run_id
+    run_id = tool.result.metadata.tool_run_id
 
     (summary,) = archive.search_tool_runs()
     from_result = archive.get_tool_result(run_id).metadata.simulation_run_ids
@@ -238,12 +238,12 @@ def test_subtools_are_archived_with_their_parent(archive_root, archive, manager)
     )
     composite.execute()
 
-    composite_id = composite.result.metadata.run_id
-    sub_id = sub_tool.result.metadata.run_id
+    composite_id = composite.result.metadata.tool_run_id
+    sub_id = sub_tool.result.metadata.tool_run_id
     summaries = {run["tool_run_id"]: run for run in archive.search_tool_runs()}
 
     assert set(summaries) == {composite_id, sub_id}
-    assert summaries[sub_id]["parent_run_id"] == composite_id
+    assert summaries[sub_id]["parent_tool_run_id"] == composite_id
     assert summaries[composite_id]["child_tool_run_ids"] == [sub_id]
 
 
@@ -370,8 +370,8 @@ def test_mlflow_runs_of_subtools_are_nested(archive_root):
 
     archive = open_tool_archive("MlflowArchive", archive_root)
     summaries = {run["tool_run_id"]: run for run in archive.search_tool_runs()}
-    parent = summaries[composite.result.metadata.run_id]
-    child = summaries[sub_tool.result.metadata.run_id]
+    parent = summaries[composite.result.metadata.tool_run_id]
+    child = summaries[sub_tool.result.metadata.tool_run_id]
     child_run = archive._client.get_run(child["mlflow_run_id"])
     assert child_run.data.tags["mlflow.parentRunId"] == parent["mlflow_run_id"]
     assert child_run.info.experiment_id == archive.experiment_id
@@ -391,7 +391,7 @@ def test_mlflow_result_published_again(archive_root, parameter_space):
     tool._republish_result()
 
     archive = open_tool_archive("MlflowArchive", archive_root)
-    loaded = archive.get_tool_result(tool.result.metadata.run_id)
+    loaded = archive.get_tool_result(tool.result.metadata.tool_run_id)
     assert loaded.metadata.misc["completed"]
     (summary,) = archive.search_tool_runs()
     assert summary["status"] == "FINISHED"
@@ -451,7 +451,7 @@ def test_mlflow_tool_runs_are_linked_to_their_simulations(archive_root):
     ]
     for tool in tools:
         tool.execute(model=model, input_dataset=input_dataset, output_names=["y1"])
-    first_id, second_id = (tool.result.metadata.run_id for tool in tools)
+    first_id, second_id = (tool.result.metadata.tool_run_id for tool in tools)
 
     archive = open_tool_archive("MlflowArchive", archive_root)
     (simulation,) = _get_simulation_runs(archive, model)
@@ -486,8 +486,8 @@ def test_mlflow_subtool_runs_are_linked(archive_root):
 
     archive = open_tool_archive("MlflowArchive", archive_root)
     summaries = {run["tool_run_id"]: run for run in archive.search_tool_runs()}
-    parent = summaries[composite.result.metadata.run_id]["mlflow_run_id"]
-    child = summaries[sub_tool.result.metadata.run_id]["mlflow_run_id"]
+    parent = summaries[composite.result.metadata.tool_run_id]["mlflow_run_id"]
+    child = summaries[sub_tool.result.metadata.tool_run_id]["mlflow_run_id"]
 
     def description(run_id):
         return archive._client.get_run(run_id).data.tags["mlflow.note.content"]

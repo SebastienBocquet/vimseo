@@ -50,7 +50,7 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
 
     The summary lets the runs be searched without opening any result, and holds the
     links to the simulations (``simulation_run_ids``) and to the other tool runs
-    (``parent_run_id``, ``child_tool_run_ids``). The simulations themselves are in
+    (``parent_tool_run_id``, ``child_tool_run_ids``). The simulations themselves are in
     the archive of their model. A tool run which is still running, or which was
     interrupted, has the status ``"RUNNING"``.
 
@@ -85,11 +85,11 @@ class DirectoryToolArchive(DirectoryArchive, BaseToolArchive):
         return self._root_directory / self.TOOLS_DIRECTORY_NAME
 
     def start_tool_run(
-        self, tool_name: str, tool_run_id: str, parent_run_id: str = ""
+        self, tool_name: str, tool_run_id: str, parent_tool_run_id: str = ""
     ) -> None:
         self._tool_name = tool_name
         self._tool_run_id = tool_run_id
-        self._parent_run_id = parent_run_id
+        self._parent_run_id = parent_tool_run_id
         self.set_experiment(f"{self.TOOLS_DIRECTORY_NAME}/{tool_name}")
         self.set_run_name(tool_run_id)
         self.create_job_directory()

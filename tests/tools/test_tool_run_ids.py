@@ -68,14 +68,14 @@ def test_doe_result_is_linked_to_its_simulations(tmp_wd, parameter_space):
     )
 
     metadata = result.metadata
-    assert len(metadata.run_id) == 32
-    assert metadata.parent_run_id == ""
+    assert len(metadata.tool_run_id) == 32
+    assert metadata.parent_tool_run_id == ""
     assert metadata.child_tool_run_ids == ()
     assert len(metadata.simulation_run_ids) == N_SAMPLES
 
     simulations = archived_simulations(model)
     assert set(metadata.simulation_run_ids) == set(simulations)
-    assert set(simulations.values()) == {metadata.run_id}
+    assert set(simulations.values()) == {metadata.tool_run_id}
     assert current_tool_run() is None
 
 
@@ -91,10 +91,10 @@ def test_two_executions_of_a_tool_have_different_run_ids(tmp_wd, parameter_space
         "n_samples": N_SAMPLES,
     }
     first = doe_tool.execute(**options).metadata
-    first_run_id, first_simulations = first.run_id, first.simulation_run_ids
+    first_run_id, first_simulations = first.tool_run_id, first.simulation_run_ids
     second = doe_tool.execute(**options).metadata
 
-    assert second.run_id != first_run_id
+    assert second.tool_run_id != first_run_id
     assert set(second.simulation_run_ids).isdisjoint(first_simulations)
 
 
@@ -110,12 +110,12 @@ def test_simulations_used_by_two_tools_are_shared(tmp_wd):
         model=model, input_dataset=input_dataset, output_names=["y1"]
     )
     first_ids = first.metadata.simulation_run_ids
-    first_run_id = first.metadata.run_id
+    first_run_id = first.metadata.tool_run_id
     second = CustomDOETool().execute(
         model=model, input_dataset=input_dataset, output_names=["y1"]
     )
 
-    assert second.metadata.run_id != first_run_id
+    assert second.metadata.tool_run_id != first_run_id
     # The three samples are the same point: one simulation, used by both tools.
     assert len(first_ids) == 1
     assert second.metadata.simulation_run_ids == first_ids
@@ -129,10 +129,10 @@ def test_composite_tool_links_its_subtools(tmp_wd):
 
     composite_metadata = composite.result.metadata
     sub_metadata = sub_tool.result.metadata
-    assert composite_metadata.run_id != ""
-    assert composite_metadata.parent_run_id == ""
-    assert composite_metadata.child_tool_run_ids == (sub_metadata.run_id,)
-    assert sub_metadata.parent_run_id == composite_metadata.run_id
+    assert composite_metadata.tool_run_id != ""
+    assert composite_metadata.parent_tool_run_id == ""
+    assert composite_metadata.child_tool_run_ids == (sub_metadata.tool_run_id,)
+    assert sub_metadata.parent_tool_run_id == composite_metadata.tool_run_id
 
 
 def test_run_ids_survive_hdf5(tmp_wd, parameter_space):
@@ -150,7 +150,7 @@ def test_run_ids_survive_hdf5(tmp_wd, parameter_space):
 
     loaded = DOETool.load_results(doe_tool.working_directory / "DOETool_result.hdf5")
 
-    assert loaded.metadata.run_id == doe_tool.result.metadata.run_id
+    assert loaded.metadata.tool_run_id == doe_tool.result.metadata.tool_run_id
     assert (
         loaded.metadata.simulation_run_ids
         == doe_tool.result.metadata.simulation_run_ids

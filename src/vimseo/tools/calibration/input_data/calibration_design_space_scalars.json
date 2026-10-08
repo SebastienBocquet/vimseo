@@ -48,8 +48,8 @@
     },
     "report": {},
     "model": null,
-    "run_id": "b876e69fb8584f77bb370cdc8886c39b",
-    "parent_run_id": "",
+    "tool_run_id": "b876e69fb8584f77bb370cdc8886c39b",
+    "parent_tool_run_id": "",
     "child_tool_run_ids": [],
     "simulation_run_ids": []
   }

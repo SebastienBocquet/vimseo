@@ -115,7 +115,7 @@ by the `archive_manager` setting of a tool, else `config.tool_archive_manager`, 
   subtool nested in the run of its parent. The result HDF5 and the summary are artifacts,
   the searchable fields are `vimseo.*` tags and the settings are params.
 
-A tool run is identified by its `tool_run_id` (`result.metadata.run_id`); its simulations
+A tool run is identified by its `tool_run_id` (`result.metadata.tool_run_id`); its simulations
 carry it too. `load_tool_result(uri)` reads a result from a file, a tool run directory,
 `tool-run:{tool_run_id}` or `runs:/{mlflow_run_id}`.
 

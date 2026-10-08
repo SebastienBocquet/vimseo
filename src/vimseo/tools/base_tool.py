@@ -524,8 +524,10 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         """Set the identifiers of the current run and of its simulations to the
         metadata of the results."""
         metadata = self.result.metadata
-        metadata.run_id = run.tool_run_id
-        metadata.parent_run_id = "" if run.parent is None else run.parent.tool_run_id
+        metadata.tool_run_id = run.tool_run_id
+        metadata.parent_tool_run_id = (
+            "" if run.parent is None else run.parent.tool_run_id
+        )
         metadata.child_tool_run_ids = tuple(run.child_tool_run_ids)
         metadata.simulation_run_ids = tuple(run.simulation_run_ids)
 

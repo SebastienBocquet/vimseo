@@ -375,7 +375,7 @@ def test_post_republishes_the_result(tmp_wd, model, prior, data):
     analysis.execute(likelihood_dist=model, prior_dist=prior, data=data, n_mcmc=50)
     analysis.post(1, n_mcmc=50, nb_samples_ml=5, nb_samples_posterior=2)
     result = DirectoryToolArchive("archive").get_tool_result(
-        analysis.result.metadata.run_id
+        analysis.result.metadata.tool_run_id
     )
     assert result.processed_samples is not None
     assert result.metadata.misc["post"] == {

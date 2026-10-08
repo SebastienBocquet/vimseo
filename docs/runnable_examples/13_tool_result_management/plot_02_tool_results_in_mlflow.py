@@ -116,7 +116,7 @@ DataFrame([
     {
         "tool": summary["tool_name"],
         "tool_run_id": summary["tool_run_id"][:8],
-        "parent": summary["parent_run_id"][:8],
+        "parent": summary["parent_tool_run_id"][:8],
         "simulations": len(summary.get("simulation_run_ids", [])),
         "mlflow run": summary["mlflow_run_id"][:8],
         "metrics": summary["key_values"],
@@ -155,7 +155,7 @@ print(design_value_run.data.tags["mlflow.note.content"])
 simulations_experiment = client.get_experiment_by_name(
     "BendingTestAnalytical_ThreePoints"
 )
-replay_id = replay.result.metadata.run_id
+replay_id = replay.result.metadata.tool_run_id
 simulations = client.search_runs(
     [simulations_experiment.experiment_id],
     filter_string=f"tags.`vimseo.tool_run_ids` LIKE '%{replay_id}%'",

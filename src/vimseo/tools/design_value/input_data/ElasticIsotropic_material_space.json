@@ -34,8 +34,8 @@
     "settings": {},
     "report": {},
     "model": null,
-    "run_id": "efaba3a0337b4fa7987a5f90ea9e9521",
-    "parent_run_id": "",
+    "tool_run_id": "efaba3a0337b4fa7987a5f90ea9e9521",
+    "parent_tool_run_id": "",
     "child_tool_run_ids": [],
     "simulation_run_ids": []
   }

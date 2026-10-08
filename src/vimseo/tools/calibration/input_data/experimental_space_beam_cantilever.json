@@ -65,8 +65,8 @@
     },
     "report": {},
     "model": null,
-    "run_id": "a35bae056f9f4ee286dca6f970054fc7",
-    "parent_run_id": "",
+    "tool_run_id": "a35bae056f9f4ee286dca6f970054fc7",
+    "parent_tool_run_id": "",
     "child_tool_run_ids": [],
     "simulation_run_ids": []
   }
