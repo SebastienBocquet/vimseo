@@ -562,6 +562,11 @@ class IntegratedModel(GemseoDisciplineWrapper):
         input_data: StrKeyMapping = READ_ONLY_EMPTY_DICT,
     ) -> DisciplineData:
         output_data = super().execute(input_data)
+        # A cache created by a previous version does not hold the identifiers: the
+        # outputs are completed, so that all the output names can be requested.
+        for name in OPTIONAL_METADATA_NAMES:
+            if name not in output_data:
+                output_data[name] = array([""])
         # Done here and not in ``_run``, which is skipped when the outputs are
         # retrieved from the cache: the simulation is used by the tool all the same.
         record_simulation_from_outputs(output_data)

@@ -177,3 +177,26 @@ def test_run_ids_are_optional_outputs(model):
         assert name in model.output_grammar.names
         assert name not in required
     assert MetaDataNames.model in required
+
+
+def test_simulation_cached_without_run_id(tmp_wd):
+    """Check that a simulation retrieved from a cache created before the identifiers
+    existed has empty identifiers, so that all the outputs can be requested."""
+    reference = MockModel("LC1")
+    reference.cache = None
+    outputs = reference.execute({"x1": array([0.1])})
+    input_data = {**reference.default_input_data, "x1": array([0.1])}
+    model = MockModel("LC1")
+    model.cache.cache_outputs(
+        input_data,
+        {
+            name: outputs[name]
+            for name in reference.io.output_grammar.names
+            if name not in OPTIONAL_METADATA_NAMES
+        },
+    )
+
+    outputs = model.execute({"x1": array([0.1])})
+
+    assert run_id_of(outputs) == ""
+    assert tool_run_id_of(outputs) == ""
