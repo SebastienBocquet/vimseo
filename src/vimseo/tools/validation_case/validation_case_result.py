@@ -227,4 +227,25 @@ class ValidationCaseResult(BaseResult):
         return figures
 
     def get_key_values(self) -> dict[str, float]:
-        return flatten_numbers(self.integrated_metrics or {})
+        key_values = flatten_numbers(self.integrated_metrics or {})
+        if self.element_wise_metrics is None or not self.integrated_metrics:
+            return key_values
+
+        # The metrics of each validation point, e.g. "AreaMetric.y.point_0".
+        for metric_name, output_names in self.integrated_metrics.items():
+            if metric_name not in self.element_wise_metrics.group_names:
+                continue
+            variable_names = self.element_wise_metrics.get_variable_names(metric_name)
+            for output_name in output_names:
+                if output_name not in variable_names:
+                    continue
+                values = self.element_wise_metrics.get_view(
+                    group_names=metric_name, variable_names=output_name
+                ).to_numpy()
+                key_values.update(
+                    flatten_numbers({
+                        f"{metric_name}.{output_name}.point_{i}": value
+                        for i, value in enumerate(values[:, 0])
+                    })
+                )
+        return key_values

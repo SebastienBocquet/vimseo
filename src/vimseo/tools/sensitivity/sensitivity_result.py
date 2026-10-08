@@ -34,6 +34,7 @@ from pydantic import Field
 
 from vimseo.tools.base_tool import BaseResult
 from vimseo.tools.result_visualization import BaseVisualizationSettings
+from vimseo.tools.result_visualization import flatten_numbers
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
 if TYPE_CHECKING:
@@ -165,6 +166,13 @@ class SensitivityResult(BaseResult):
             if table is not None:
                 tables[f"indices_{index_name}"] = table
         return tables
+
+    def get_key_values(self) -> dict[str, float]:
+        # The indices by kind, output and input, e.g. "mu_star.y.x1".
+        return flatten_numbers({
+            name.removeprefix("indices_"): table.to_dict()
+            for name, table in self._create_tables().items()
+        })
 
 
 def _indices_to_dataframe(indices) -> DataFrame | None:

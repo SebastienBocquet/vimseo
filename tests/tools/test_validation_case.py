@@ -392,12 +392,18 @@ def test_result_visualization(tmp_wd, deterministic_validation_case):
 
 
 def test_key_values(tmp_wd, deterministic_validation_case):
-    """The integrated metrics summarize a validation case."""
+    """The integrated metrics and the metrics of each point summarize a validation
+    case."""
     result = deterministic_validation_case.result
     key_values = result.get_key_values()
-    assert key_values
-    for name, value in key_values.items():
-        metric_name, output_name = name.split(".")
-        assert value == pytest.approx(
-            result.integrated_metrics[metric_name][output_name]
-        )
+    n_points = len(result.element_wise_metrics)
+    for metric_name, values in result.integrated_metrics.items():
+        for output_name, value in values.items():
+            name = f"{metric_name}.{output_name}"
+            assert key_values[name] == pytest.approx(value)
+            point_values = result.element_wise_metrics.get_view(
+                group_names=metric_name, variable_names=output_name
+            ).to_numpy()[:, 0]
+            assert [
+                key_values[f"{name}.point_{i}"] for i in range(n_points)
+            ] == pytest.approx(point_values)

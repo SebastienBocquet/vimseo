@@ -212,3 +212,13 @@ def test_result_visualization(tmp_wd, sensitivity_tool):
     tables = sensitivity_tool.result.tabulate()
     assert "indices_mu_star" in tables
     assert "y1" in tables["indices_mu_star"].columns
+
+
+def test_key_values(tmp_wd, sensitivity_tool):
+    """The sensitivity indices summarize a sensitivity analysis."""
+    result = sensitivity_tool.result
+    key_values = result.get_key_values()
+    assert key_values["mu_star.y1.x1"] == pytest.approx(
+        float(result.indices.mu_star["y1"][0]["x1"][0])
+    )
+    assert all(name.count(".") == 2 for name in key_values)
