@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import h5py
 import pytest
 from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.datasets.io_dataset import IODataset
@@ -27,7 +26,6 @@ from vimseo.core.run_context import current_tool_run
 from vimseo.problems.mock.mock_pre_run_post.mock_main import MockModel
 from vimseo.tools.doe.custom_doe import CustomDOETool
 from vimseo.tools.doe.doe import DOETool
-from vimseo.tools.doe.doe_result import DOEResult
 from vimseo.tools.mock.mock_tool import MyBaseCompositeTool
 from vimseo.tools.mock.mock_tool import MyTool
 from vimseo.utilities.datasets import Variable
@@ -158,34 +156,3 @@ def test_run_ids_survive_hdf5(tmp_wd, parameter_space):
         == doe_tool.result.metadata.simulation_run_ids
     )
     assert isinstance(loaded.metadata.simulation_run_ids, tuple)
-
-
-def test_result_saved_without_run_ids_can_be_loaded(tmp_wd):
-    """Check the compatibility with a result written before the identifiers existed."""
-    result = DOEResult()
-    result.metadata.run_id = "an_id"
-    result.metadata.simulation_run_ids = ("a", "b")
-    path = tmp_wd / "legacy_result.hdf5"
-    result.to_hdf5(path)
-
-    # Remove the new fields, as in a file written by a previous version.
-    with h5py.File(path, "r+") as f:
-        metadata = f["metadata"]
-        for name in [
-            "run_id",
-            "parent_run_id",
-            "child_tool_run_ids",
-            "simulation_run_ids",
-        ]:
-            for key in [name, f"__type__{name}"]:
-                if key in metadata.attrs:
-                    del metadata.attrs[key]
-                if key in metadata:
-                    del metadata[key]
-
-    loaded = DOEResult.from_hdf5(path)
-
-    assert loaded.metadata.run_id == ""
-    assert loaded.metadata.parent_run_id == ""
-    assert loaded.metadata.child_tool_run_ids == ()
-    assert loaded.metadata.simulation_run_ids == ()

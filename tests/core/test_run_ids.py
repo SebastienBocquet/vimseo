@@ -22,9 +22,7 @@ import re
 import pytest
 from numpy import array
 
-from vimseo.core.model_metadata import OPTIONAL_METADATA_NAMES
 from vimseo.core.model_metadata import MetaDataNames
-from vimseo.core.model_result import ModelResult
 from vimseo.core.run_context import current_tool_run
 from vimseo.core.run_context import record_simulation
 from vimseo.core.run_context import record_simulation_from_outputs
@@ -145,35 +143,7 @@ def test_tool_run_is_closed_after_an_error():
 
 
 def test_outputs_without_run_id_are_not_recorded():
-    """Check the outputs of a cache created before the identifiers existed."""
+    """Check the outputs of a model whose outputs were restricted by a formulation."""
     with tool_run("a_tool") as run:
         record_simulation_from_outputs({"y1": array([1.0])})
     assert len(run.simulation_run_ids) == 0
-
-
-def test_result_without_run_ids_can_be_read(model):
-    """Check that a result archived by a version without the identifiers is read."""
-    outputs = model.execute({"x1": array([0.1])})
-    archived = model.archive_manager.get_archived_results()[0]
-    for name in OPTIONAL_METADATA_NAMES:
-        del archived["outputs"][name]
-
-    result = ModelResult.from_data(archived, model=model)
-
-    assert result.metadata.report[MetaDataNames.run_id] == ""
-    assert result.metadata.report[MetaDataNames.tool_run_id] == ""
-    assert result.metadata.report[MetaDataNames.model] == outputs["model"][0]
-
-
-def test_run_ids_are_optional_outputs(model):
-    """Check that a cache created before the identifiers existed is still valid.
-
-    Its outputs do not hold them, so they must not be required by the output grammar,
-    unlike the other metadata.
-    """
-    required = set(model.output_grammar.required_names)
-
-    for name in OPTIONAL_METADATA_NAMES:
-        assert name in model.output_grammar.names
-        assert name not in required
-    assert MetaDataNames.model in required

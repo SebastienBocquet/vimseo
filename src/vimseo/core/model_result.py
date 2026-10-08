@@ -29,7 +29,6 @@ from numpy import atleast_1d
 from numpy import ndarray
 
 from vimseo.api import create_model
-from vimseo.core.model_metadata import OPTIONAL_METADATA_NAMES
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.storage_management.base_storage_manager import PersistencyPolicy
 from vimseo.storage_management.directory_storage import DirectoryArchive
@@ -104,13 +103,7 @@ class ModelResult(BaseResult):
         result = ModelResult()
         result.metadata.model = model.description
         for name in MetaDataNames:
-            # The optional metadata are missing from an archive created by a previous
-            # version. Any other missing metadata is an error.
-            result.metadata.report[name] = (
-                archive_result["metadata"].get(name, "")
-                if name in OPTIONAL_METADATA_NAMES
-                else archive_result["metadata"][name]
-            )
+            result.metadata.report[name] = archive_result["metadata"][name]
         data = dict(archive_result["inputs"], **archive_result["outputs"])
         plotted_names = []
         for spec in model.plots:

@@ -57,15 +57,10 @@ class BaseToolFileIO(metaclass=GoogleDocstringInheritanceMeta):
         metadata.settings = data["metadata"]["settings"]
         metadata.misc = data["metadata"]["misc"]
         metadata.report = data["metadata"]["report"]
-        # Missing from a file created by a previous version.
-        metadata.run_id = data["metadata"].get("run_id", "")
-        metadata.parent_run_id = data["metadata"].get("parent_run_id", "")
-        metadata.child_tool_run_ids = tuple(
-            data["metadata"].get("child_tool_run_ids", ())
-        )
-        metadata.simulation_run_ids = tuple(
-            data["metadata"].get("simulation_run_ids", ())
-        )
+        metadata.run_id = data["metadata"]["run_id"]
+        metadata.parent_run_id = data["metadata"]["parent_run_id"]
+        metadata.child_tool_run_ids = tuple(data["metadata"]["child_tool_run_ids"])
+        metadata.simulation_run_ids = tuple(data["metadata"]["simulation_run_ids"])
         model = data["metadata"]["model"]
         if model is None:
             metadata.model = None

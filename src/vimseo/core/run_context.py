@@ -47,7 +47,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
     from collections.abc import Mapping
 
 RUN_ID_NAME = "run_id"
@@ -93,7 +93,7 @@ def current_tool_run() -> ToolRunContext | None:
 
 
 @contextmanager
-def tool_run(tool_name: str) -> Iterator[ToolRunContext]:
+def tool_run(tool_name: str) -> Generator[ToolRunContext, None, None]:
     """Execute a block as a tool run.
 
     The run is a child of the current tool run, if any. When it ends, it is
@@ -128,8 +128,8 @@ def record_simulation(run_id: str) -> None:
 def record_simulation_from_outputs(output_data: Mapping) -> None:
     """Record the simulation which produced some model outputs.
 
-    Nothing is recorded if the outputs hold no ``run_id``, which is the case of an
-    output retrieved from a cache created before the identifiers existed.
+    Nothing is recorded if the outputs hold no ``run_id``, which is the case when a
+    GEMSEO formulation has restricted the outputs of the model, e.g. in a calibration.
 
     Args:
         output_data: The outputs of a model.

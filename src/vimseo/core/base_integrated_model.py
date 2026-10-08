@@ -55,7 +55,6 @@ from vimseo.core.gemseo_discipline_wrapper import GemseoDisciplineWrapper
 from vimseo.core.load_case_factory import LoadCaseFactory
 from vimseo.core.model_description import ModelDescription
 from vimseo.core.model_metadata import DEFAULT_METADATA
-from vimseo.core.model_metadata import OPTIONAL_METADATA_NAMES
 from vimseo.core.model_metadata import MetaData
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.model_settings import IntegratedModelSettings
@@ -397,10 +396,6 @@ class IntegratedModel(GemseoDisciplineWrapper):
         self.output_grammar.update_from_data(DEFAULT_METADATA)
         for name in DEFAULT_METADATA:
             self.output_grammar.required_names.add(name)
-        # Unlike the other metadata, these are missing from the cache of a model
-        # created by a previous version.
-        for name in OPTIONAL_METADATA_NAMES:
-            self.output_grammar.required_names.discard(name)
         for field_name in self.FIELDS_FROM_FILE:
             self.output_grammar.update_from_data({field_name: array(["names"])})
             self.output_grammar.required_names.add(field_name)

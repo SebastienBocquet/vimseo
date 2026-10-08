@@ -118,9 +118,3 @@ DEFAULT_METADATA = {
         MetaDataNames.tool_run_id: array(["a1b2c3d4e5f60718293a4b5c6d7e8f90"]),
     }.items()
 }
-
-OPTIONAL_METADATA_NAMES = (MetaDataNames.run_id, MetaDataNames.tool_run_id)
-"""The metadata which may be missing from a result.
-
-They were added after the others: a model cache or an archive created by a previous
-version does not hold them."""
