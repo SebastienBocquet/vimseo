@@ -19,6 +19,7 @@ The figures and the tables of each tool result are written in a directory::
 
     visualize_tool_result --uri path/to/SensitivityTool_result.hdf5
     visualize_tool_result --uri tool-run:1b2c... --archive-root my_archive
+    visualize_tool_result --uri runs:/9f8e... --archive-root my_mlflow_archive
     visualize_tool_result --uri result.hdf5 --option output_names='["y1"]'
 """
 
@@ -165,14 +166,23 @@ def _create_parser() -> argparse.ArgumentParser:
         action="append",
         required=True,
         help="The URI of a tool result: the path to a result file, the path to the "
-        "directory of a tool run in an archive, or tool-run:{tool_run_id}. "
+        "directory of a tool run in an archive, tool-run:{tool_run_id} or "
+        "runs:/{mlflow_run_id}. "
         "Can be repeated.",
     )
     parser.add_argument(
         "--archive-root",
         default="",
         help="The root directory of the archive of the tool results, "
-        "used by tool-run:{tool_run_id}. By default, the one of the configuration.",
+        "used by tool-run:{tool_run_id} and runs:/{mlflow_run_id}. "
+        "By default, the one of the configuration.",
+    )
+    parser.add_argument(
+        "--archive-manager",
+        default="",
+        choices=["", "DirectoryArchive", "MlflowArchive"],
+        help="The manager of the archive used by tool-run:{tool_run_id}. "
+        "By default, it is guessed from the content of the root directory.",
     )
     parser.add_argument(
         "--output-dir",
@@ -225,7 +235,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error(str(error))
 
     for uri in args.uri:
-        result = load_tool_result(uri, args.archive_root)
+        result = load_tool_result(uri, args.archive_root, args.archive_manager)
         if args.list_options:
             print(f"{uri} ({type(result).__name__}):")
             print(

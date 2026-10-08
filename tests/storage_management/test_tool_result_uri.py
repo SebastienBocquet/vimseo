@@ -26,6 +26,8 @@ from vimseo.storage_management.tool_archive import open_tool_archive
 from vimseo.storage_management.tool_archive.directory_tool_archive import (
     DirectoryToolArchive,
 )
+from vimseo.storage_management.tool_archive.uri import get_default_archive_manager
+from vimseo.storage_management.tool_archive.uri import guess_archive_manager
 from vimseo.tools.space.space_tool import SpaceTool
 from vimseo.tools.space.space_tool_result import SpaceToolResult
 
@@ -114,3 +116,40 @@ def test_load_from_directory_without_result(tmp_wd):
     directory.mkdir(parents=True)
     with pytest.raises(FileNotFoundError, match="does not contain the result file"):
         load_tool_result(directory)
+
+
+def test_load_from_tool_run_id_in_mlflow(tmp_wd):
+    """The manager of the archive of tool-run:{tool_run_id} is guessed from its root
+    directory, or given explicitly."""
+    pytest.importorskip("mlflow")
+    tool = SpaceTool(archive_manager="MlflowArchive", archive_root="mlflow")
+    tool.execute(
+        distribution_name="OTTriangularDistribution",
+        space_builder_name="FromCenterAndCov",
+        center_values={"x": 0.5, "y": 1.0},
+        cov=0.05,
+    )
+    tool_run_id = tool.result.metadata.tool_run_id
+    uri = f"tool-run:{tool_run_id}"
+    for manager in ("", "MlflowArchive"):
+        result = load_tool_result(uri, archive_root="mlflow", archive_manager=manager)
+        assert result.metadata.tool_run_id == tool_run_id
+
+
+@pytest.mark.parametrize(
+    ("content", "expected"),
+    [("tools", "DirectoryArchive"), ("0/meta.yaml", "MlflowArchive")],
+)
+def test_guess_archive_manager(tmp_wd, content, expected):
+    path = tmp_wd / "root" / content
+    path.parent.mkdir(parents=True)
+    if content == "tools":
+        path.mkdir()
+    else:
+        path.touch()
+    assert guess_archive_manager(tmp_wd / "root") == expected
+
+
+def test_guess_archive_manager_from_configuration(tmp_wd):
+    """Without known content, the archive manager is the one of the configuration."""
+    assert guess_archive_manager(tmp_wd) == get_default_archive_manager()

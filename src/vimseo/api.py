@@ -293,22 +293,29 @@ def load_simulation_results(
     ]
 
 
-def load_tool_result(uri: str | Path, archive_root: str | Path = "") -> BaseResult:
+def load_tool_result(
+    uri: str | Path, archive_root: str | Path = "", archive_manager: str = ""
+) -> BaseResult:
     """Load a tool result, to visualize it for instance.
 
     Args:
         uri: The URI of the tool result: the path to a result file, the path to the
-            directory of a tool run in an archive, or ``tool-run:{tool_run_id}``.
+            directory of a tool run in an archive, ``tool-run:{tool_run_id}`` or
+            ``runs:/{mlflow_run_id}``.
         archive_root: The root directory of the archive of the tool results,
-            used by ``tool-run:{tool_run_id}``. If empty, use the one of the
-            configuration.
+            used by ``tool-run:{tool_run_id}`` and ``runs:/{mlflow_run_id}``.
+            If empty, use the one of the configuration.
+        archive_manager: The manager of the archive used by
+            ``tool-run:{tool_run_id}``, ``"DirectoryArchive"`` or
+            ``"MlflowArchive"``. If empty, guess it from the content of the root
+            directory.
 
     Returns:
         The tool result.
     """
     from vimseo.storage_management.tool_archive.uri import load_tool_result
 
-    return load_tool_result(uri, archive_root)
+    return load_tool_result(uri, archive_root, archive_manager)
 
 
 def print_config():

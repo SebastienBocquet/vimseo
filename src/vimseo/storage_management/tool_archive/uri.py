@@ -20,8 +20,8 @@ A tool result is identified by one of these URIs:
 - the path to a result file, ``path/to/{tool_name}_result.hdf5``,
 - the path to the directory of a tool run in a :class:`.DirectoryToolArchive`,
   ``{root}/tools/{tool_name}/{tool_run_id}``,
-- ``tool-run:{tool_run_id}``, a tool run in the archive of the tool results of the
-  configuration, whose root directory is given separately,
+- ``tool-run:{tool_run_id}``, a tool run in an archive of the tool results, whose
+  root directory and manager are given separately,
 - ``runs:/{run_id}``, the MLflow run of a tool run in an :class:`.MlflowToolArchive`.
 
 The schemes are resolved by functions registered in :data:`URI_RESOLVERS`, so that
@@ -85,29 +85,59 @@ def get_default_archive_manager() -> str:
     return manager
 
 
-def _load_from_tool_run_id(tool_run_id: str, archive_root: str | Path) -> BaseResult:
-    """Load a tool result from a tool run of the archive of the configuration.
+def guess_archive_manager(archive_root: str | Path) -> str:
+    """Return the manager of an archive of the tool results from its content.
+
+    Args:
+        archive_root: The root directory of the archive.
+
+    Returns:
+        ``"DirectoryArchive"`` if the root directory holds a ``tools`` directory,
+        ``"MlflowArchive"`` if it is a local MLflow database, whose default
+        experiment is described by ``0/meta.yaml``, else the archive manager of
+        the configuration (see :func:`get_default_archive_manager`).
+    """
+    from vimseo.storage_management import ArchiveManager
+
+    root = Path(archive_root)
+    if (root / DirectoryToolArchive.TOOLS_DIRECTORY_NAME).is_dir():
+        return ArchiveManager.Directory
+    if (root / "0" / "meta.yaml").is_file():
+        return ArchiveManager.Mlflow
+    return get_default_archive_manager()
+
+
+def _load_from_tool_run_id(
+    tool_run_id: str, archive_root: str | Path, archive_manager: str
+) -> BaseResult:
+    """Load a tool result from a tool run of an archive.
 
     Args:
         tool_run_id: The unique identifier of the tool run.
         archive_root: The root directory of the archive.
             If empty, use :func:`get_default_archive_root`.
+        archive_manager: The manager of the archive.
+            If empty, use :func:`guess_archive_manager`.
     """
     from vimseo.storage_management.tool_archive import open_tool_archive
 
+    archive_root = archive_root or get_default_archive_root()
     archive = open_tool_archive(
-        get_default_archive_manager(), archive_root or get_default_archive_root()
+        archive_manager or guess_archive_manager(archive_root), archive_root
     )
     return archive.get_tool_result(tool_run_id.strip("/"))
 
 
-def _load_from_mlflow_run(run_id: str, archive_root: str | Path) -> BaseResult:
+def _load_from_mlflow_run(
+    run_id: str, archive_root: str | Path, archive_manager: str
+) -> BaseResult:
     """Load a tool result from an MLflow run of an :class:`.MlflowToolArchive`.
 
     Args:
         run_id: The id of the MLflow run.
         archive_root: The root directory of a local MLflow database.
             If empty, use :func:`get_default_archive_root`.
+        archive_manager: Unused, the archive being an MLflow one.
     """
     from vimseo.storage_management import ArchiveManager
     from vimseo.storage_management.tool_archive import open_tool_archive
@@ -118,12 +148,12 @@ def _load_from_mlflow_run(run_id: str, archive_root: str | Path) -> BaseResult:
     return archive.get_tool_result_of_mlflow_run(run_id.strip("/"))
 
 
-URI_RESOLVERS: dict[str, Callable[[str, str | Path], BaseResult]] = {
+URI_RESOLVERS: dict[str, Callable[[str, str | Path, str], BaseResult]] = {
     TOOL_RUN_SCHEME: _load_from_tool_run_id,
     MLFLOW_RUN_SCHEME: _load_from_mlflow_run,
 }
-"""The functions loading a tool result from the path of a URI and a root directory,
-bound to the scheme of the URI."""
+"""The functions loading a tool result from the path of a URI, the root directory and
+the manager of an archive, bound to the scheme of the URI."""
 
 
 def _load_from_path(path: Path) -> BaseResult:
@@ -154,7 +184,9 @@ def _load_from_path(path: Path) -> BaseResult:
     raise FileNotFoundError(msg)
 
 
-def load_tool_result(uri: str | Path, archive_root: str | Path = "") -> BaseResult:
+def load_tool_result(
+    uri: str | Path, archive_root: str | Path = "", archive_manager: str = ""
+) -> BaseResult:
     """Load a tool result from a URI.
 
     Args:
@@ -162,6 +194,10 @@ def load_tool_result(uri: str | Path, archive_root: str | Path = "") -> BaseResu
         archive_root: The root directory of the archive of the tool results,
             used by the URIs which only identify a tool run.
             If empty, use :func:`get_default_archive_root`.
+        archive_manager: The manager of the archive of the tool results,
+            used by ``tool-run:{tool_run_id}``, e.g. ``"MlflowArchive"``.
+            If empty, guess it from the content of the root directory
+            (see :func:`guess_archive_manager`).
 
     Returns:
         The tool result.
@@ -185,4 +221,4 @@ def load_tool_result(uri: str | Path, archive_root: str | Path = "") -> BaseResu
         )
         raise ValueError(msg)
 
-    return URI_RESOLVERS[scheme](match.group("path"), archive_root)
+    return URI_RESOLVERS[scheme](match.group("path"), archive_root, archive_manager)
