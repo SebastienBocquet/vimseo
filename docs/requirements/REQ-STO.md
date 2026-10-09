@@ -21,7 +21,7 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test — `tests/storage_management/`.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-009
 
 ### REQ-STO-002 — A simulation and a tool run are uniquely identified
 
@@ -56,7 +56,7 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test — `tests/storage_management/test_tool_archive.py`.
-- **Satisfied by:** SPEC-004, SPEC-005
+- **Satisfied by:** SPEC-004, SPEC-005, SPEC-011
 
 ### REQ-STO-005 — A subtool is archived like its parent
 
@@ -67,7 +67,7 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** SPEC-004, SPEC-005
+- **Satisfied by:** SPEC-004, SPEC-005, SPEC-011
 
 ### REQ-STO-006 — An archive does not alter the global state of its backend
 
@@ -78,7 +78,7 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** SPEC-002, SPEC-005
+- **Satisfied by:** SPEC-002, SPEC-005, SPEC-011
 
 ### REQ-STO-007 — The key values of a tool result are searchable
 
@@ -89,3 +89,15 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Status:** Proposed
 - **Verification:** Test.
 - **Satisfied by:** SPEC-005
+
+### REQ-STO-008 — The runs of an archive are grouped by study
+
+- **Statement:** The system shall group the simulations and the tool runs of an archive
+  by study, with the same meaning for every archive manager, and shall find a run from
+  its identifier whatever its study.
+- **Rationale:** Several studies (e.g. one per layup) share an archive, or an MLflow
+  server shared by a team, without mixing their runs nor losing the links between them.
+- **Priority:** Must
+- **Status:** Proposed
+- **Verification:** Test — `tests/storage_management/`.
+- **Satisfied by:** SPEC-011, SPEC-005

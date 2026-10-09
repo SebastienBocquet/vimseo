@@ -157,13 +157,17 @@ Adapt the generic guidance of the commands to VIMSEO:
 | SPEC-001 | Serialization in clear | Retro | REQ-SER-001..003, REQ-RES-004, REQ-NFR-001 | — |
 | SPEC-002 | MLflow run archive isolated from the global MLflow state | Retro | REQ-STO-006 | — |
 | SPEC-003 | Identifiers of the simulations and of the tool runs | Retro | REQ-STO-002, REQ-STO-003, REQ-MOD-004 | — |
-| SPEC-004 | Archive of the tool results in local directories | Retro | REQ-STO-003..005, REQ-TOOL-003, REQ-DEP-002, REQ-NFR-001, REQ-NFR-004 | SPEC-001, SPEC-003 |
-| SPEC-005 | Archive of the tool results in MLflow | Retro | REQ-STO-003..007, REQ-DEP-002 | SPEC-002, SPEC-004 |
+| SPEC-004 | Archive of the tool results in local directories (+ iteration 1: symmetric settings, archive manager naming; iteration 2: working directory created on demand) | Draft | REQ-STO-003..005, REQ-TOOL-003, REQ-DEP-002, REQ-NFR-001, REQ-NFR-004, REQ-UX-004 | SPEC-001, SPEC-003 |
+| SPEC-005 | Archive of the tool results in MLflow (+ iteration 1: tool runs in the experiment of their study, SPEC-011) | Draft | REQ-STO-003..008, REQ-DEP-002 | SPEC-002, SPEC-004 |
 | SPEC-006 | Visualize and tabulate a result without its tool | Retro | REQ-RES-001..004, REQ-RES-006, REQ-TOOL-002 | — |
-| SPEC-007 | Load results and simulations from a URI; CLI | Retro | REQ-RES-005, REQ-UX-001, REQ-UX-002 | SPEC-004, SPEC-005, SPEC-006 |
+| SPEC-007 | Load results and simulations from a URI; CLI (+ iteration 1: names of the loading API) | Draft | REQ-RES-005, REQ-UX-001, REQ-UX-002, REQ-UX-004 | SPEC-004, SPEC-005, SPEC-006 |
 | SPEC-008 | Plots declared by the load cases | Retro | REQ-MOD-003 | — |
+| SPEC-009 | `JobBundle`, an explorer of the archived simulations | Retro | REQ-STO-001, REQ-UX-001, REQ-UX-005 | — |
+| SPEC-010 | Data management examples and a symmetric roundtrip of the results | Draft | REQ-RES-001, REQ-RES-005, REQ-UX-001, REQ-UX-004..006 | SPEC-004, SPEC-006, SPEC-007, SPEC-009 |
+| SPEC-011 | Studies, the grouping of the simulations and of the tool runs of an archive | Draft | REQ-STO-004..006, REQ-STO-008 | SPEC-002, SPEC-004, SPEC-005, SPEC-007 |
 
-The files are in `spdd/prompt/`, named `SPEC-NNN-*.md`.
+The files are in `spdd/prompt/`, named `SPEC-NNN-*.md`. The analyses produced by
+`/spdd-analysis` are in `spdd/analysis/`.
 
 ### Commits outside the canvases
 

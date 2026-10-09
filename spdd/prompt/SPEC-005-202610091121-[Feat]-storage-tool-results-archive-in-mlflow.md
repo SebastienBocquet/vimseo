@@ -1,8 +1,8 @@
 ---
 id: SPEC-005
 title: Archive of the tool results in MLflow
-status: Retro
-requirements: [REQ-STO-003, REQ-STO-004, REQ-STO-005, REQ-STO-006, REQ-STO-007, REQ-DEP-002]
+status: Draft
+requirements: [REQ-STO-003, REQ-STO-004, REQ-STO-005, REQ-STO-006, REQ-STO-007, REQ-STO-008, REQ-DEP-002]
 depends_on: [SPEC-002, SPEC-003, SPEC-004]
 commits: [c7bf6e46, a72aa633, 0b07370e, a896103b, a6812864, c189adf4]
 owner: Sebastien Bocquet
@@ -19,14 +19,17 @@ owner: Sebastien Bocquet
   between a tool run and its simulations, both ways.
 - Expose the few numbers summarizing a result (key values) as MLflow metrics, to sort
   and filter the tool runs.
+- Archive the tool runs of a study in the MLflow experiment of that study, next to its
+  simulations, instead of a fixed experiment `tools` (iteration 1, SPEC-011).
 - Out of scope: the `MlflowArchive` of the simulations (SPEC-002), the URI resolution
   (SPEC-007), the definition of the key values of each result class beyond
   `get_key_values` (SPEC-006).
 
 Acceptance criteria:
 
-- Given `archive_manager="MlflowArchive"`, when a tool runs, then the experiment
-  `tools` has an MLflow run named after the tool with the tags `vimseo.tool_name`,
+- Given `archive_manager="MlflowArchive"`, when a tool runs, then the experiment of
+  its study (SPEC-011) has an MLflow run named after the tool with the tags
+  `vimseo.kind=tool_run`, `vimseo.study_name`, `vimseo.tool_name`,
   `vimseo.tool_run_id`, `vimseo.parent_tool_run_id`, `vimseo.vimseo_version`, the
   artifacts `{tool_name}_result.hdf5` and `{tool_name}_result_metadata.json`, the
   settings as params and the key values as metrics.
@@ -35,8 +38,10 @@ Acceptance criteria:
 - Given a tool run using simulations archived in the same database, then the
   description of its run links to them, and each simulation has the tool run in its
   tag `vimseo.tool_run_ids`, even when read from the cache.
-- Given a database without the experiment `tools`, when searching, then no run is
+- Given a database without the experiment of a study, when searching, then no run is
   returned and no experiment is created.
+- Given a tool run and its simulations in different studies, then they are linked in
+  both ways (iteration 1).
 - The behaviour tests of the archive pass on both backends.
 
 ## Entities
@@ -49,8 +54,8 @@ class BaseToolArchive {
     <<abstract>>
 }
 class MlflowToolArchive {
-    +EXPERIMENT_NAME = "tools"
     +str uri
+    +str study_name
     +str experiment_id
     -MlflowClient _client
     -str _mlflow_run_id
@@ -59,7 +64,7 @@ class MlflowToolArchive {
     +end_tool_run(status, error)
     +get_tool_result(tool_run_id, tool_name) BaseResult
     +get_tool_result_of_mlflow_run(mlflow_run_id) BaseResult
-    +search_tool_runs(tool_name, status) list~dict~
+    +search_tool_runs(tool_name, status, study_name) list~dict~
     +find_tool_runs_of_simulation(simulation_run_id) list~str~
     -_link_simulations(result)
 }
@@ -67,13 +72,13 @@ class BaseResult {
     +get_key_values() dict~str,float~
 }
 class MlflowRun {
-    tags: vimseo.*
+    tags: vimseo.kind=tool_run, vimseo.*
     params: settings
     metrics: key values
     artifacts: result.hdf5, summary.json
 }
 class SimulationRun {
-    tags: run_id, tool_run_id, vimseo.tool_run_ids
+    tags: vimseo.kind=simulation, run_id, tool_run_id, vimseo.tool_run_ids
 }
 
 BaseToolArchive <|-- MlflowToolArchive
@@ -86,7 +91,9 @@ MlflowToolArchive --> BaseResult : reads key values
 ## Approach
 
 1. Mapping a tool run to MLflow:
-   - One MLflow run per tool run, in the experiment `tools`, named after the tool.
+   - One MLflow run per tool run, in the experiment of its study (SPEC-011), next to
+     the simulations of the study and told apart by the tag `vimseo.kind=tool_run`,
+     named after the tool. Before iteration 1, the experiment was always `tools`.
    - Searchable fields are tags prefixed by `vimseo.`; the settings are params (so that
      MLflow compares runs); the key values are metrics; the result HDF5 and the JSON
      summary are artifacts, as in the directory archive.
@@ -103,10 +110,11 @@ MlflowToolArchive --> BaseResult : reads key values
      changing them); an OpenTURNS distribution is shown by its short form.
    - Metric names are sanitized; metrics are logged in batches of 1000.
 4. Links between tool runs and simulations:
-   - The simulations are searched in the experiment of the model of the result
-     (`config.database.experiment_name` or `{model}_{load_case}`), else in all the
-     experiments except `tools` — a tool without a model, like a design value, has
-     simulations run by its subtools.
+   - The simulations (tag `vimseo.kind=simulation`) are searched in the experiment of
+     the study of the tool run, else in all the experiments — a tool run may use,
+     through the cache, simulations of another study. Before iteration 1, they were
+     searched in the experiment `config.database.experiment_name` or
+     `{model}_{load_case}`, else in all the experiments except `tools`.
    - Each simulation run gets the tool run in its tag `vimseo.tool_run_ids` (the most
      recent are kept if too long, with `vimseo.tool_run_ids_truncated`).
    - The description (`mlflow.note.content`) of the tool run links to its parent, its
@@ -148,10 +156,11 @@ MlflowToolArchive --> BaseResult : reads key values
 
 ### Create backend - `MlflowToolArchive`
 
-1. `__init__(root_directory="")`: tracking URI, client; lazy `experiment_id`
-   (created on first write).
-2. `_search_runs(filter_string)`: return `[]` if the experiment does not exist;
-   paginate by 1000.
+1. `__init__(root_directory="", study_name="")`: tracking URI, client; lazy
+   `experiment_id` of the study (created on first write).
+2. `_search_runs(filter_string, study_name=None)`: the experiment of the study, or all
+   the experiments; always filtered by `vimseo.kind=tool_run`; return `[]` if the
+   experiment does not exist; paginate by 1000.
 3. `start_tool_run`: tags, `mlflow.parentRunId` from the parent's run if found,
    `create_run`.
 4. `publish_tool_result`: summary; artifacts in a temporary directory; tags
@@ -184,6 +193,19 @@ MlflowToolArchive --> BaseResult : reads key values
 1. Parametrize the behaviour tests of `tests/storage_management/test_tool_archive.py`
    on both backends; add the nesting, linking, no-experiment and metrics tests.
 
+### Iteration 1 - the tool runs in the experiment of their study (SPEC-011)
+
+The operations are specified in SPEC-011 ("Update tool archives",
+`mlflow_tool_archive.py`); in short:
+
+1. Remove `EXPERIMENT_NAME`; `experiment_id` is the one of the experiment of the study.
+2. `start_tool_run` adds the tags `vimseo.kind=tool_run` and `vimseo.study_name`.
+3. `_find_run`, `get_tool_result`, `find_tool_runs_of_simulation` search all the
+   experiments; `search_tool_runs(..., study_name="")` all of them or one study.
+4. `_get_simulation_experiment_ids` no longer reads `config.database.experiment_name`.
+5. Tests: the experiment `tools` of `test_tool_archive.py` becomes the experiment of
+   the study; add the cross-study linking test.
+
 ## Norms
 
 1. The shared norms of `docs/specs/index.md`.
@@ -194,7 +216,7 @@ MlflowToolArchive --> BaseResult : reads key values
 
 ## Safeguards
 
-1. Functional: searching never creates the experiment `tools`.
+1. Functional: searching never creates an experiment.
 2. Functional: a result published again replaces its artifacts and keeps its first
    params.
 3. Functional: a linking error does not fail the publication.

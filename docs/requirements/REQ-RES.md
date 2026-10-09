@@ -22,7 +22,7 @@ tabulated long after, and far from, the tool run which produced it.
 - **Status:** Proposed
 - **Verification:** Test — every result class; Example —
   `13_tool_result_management`.
-- **Satisfied by:** SPEC-006
+- **Satisfied by:** SPEC-006, SPEC-010
 
 ### REQ-RES-002 — A result is tabulated
 
@@ -62,7 +62,7 @@ tabulated long after, and far from, the tool run which produced it.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test — `tests/storage_management/test_tool_result_uri.py`.
-- **Satisfied by:** SPEC-007
+- **Satisfied by:** SPEC-007, SPEC-010
 
 ### REQ-RES-006 — The figures are exported as static images
 
