@@ -190,11 +190,11 @@ def mesh_size_study(tmp_wd):
     return CustomDOETool().execute(model=model, input_dataset=input_dataset)
 
 
-def test_doe_result_has_model_description(mesh_size_study):
-    """The description of the model, holding its figures, is stored in the result."""
+def test_doe_result_has_model_figures(mesh_size_study):
+    """The description of the model and its figures are stored in the result."""
     assert mesh_size_study.metadata.model.name == "MockCurves"
-    assert [plot.get_key() for plot in mesh_size_study.metadata.model.plots] == [
-        ("y_axis", "y")
+    assert [plot.get_key() for plot in mesh_size_study.plots] == [
+        ("x_history", "y_history")
     ]
 
 
@@ -204,7 +204,7 @@ def test_parametric_study_figures(mesh_size_study):
     figures = mesh_size_study.visualize()
     assert "scatter_matrix" in figures
     assert "scalar_outputs_vs_x" in figures
-    curves = figures["curves_y_vs_y_axis"]
+    curves = figures["curves_y_history_vs_x_history"]
     assert [line.name for line in curves.data] == ["x = 1", "x = 2", "x = 3"]
     check_result_visualization(mesh_size_study, "visualization")
 
@@ -214,7 +214,7 @@ def test_without_varying_input(mesh_size_study):
     mesh_size_study.dataset.loc[:, ("inputs", "x", 0)] = 1.0
     figures = mesh_size_study.visualize()
     assert not any(key.startswith("scalar_outputs_vs") for key in figures)
-    assert [line.name for line in figures["curves_y_vs_y_axis"].data] == [
+    assert [line.name for line in figures["curves_y_history_vs_x_history"].data] == [
         "sample 0",
         "sample 1",
         "sample 2",

@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from dataclasses import field
 from json import dumps
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -32,6 +33,7 @@ from vimseo.tools.doe.doe_plots import create_scalar_outputs_figure
 from vimseo.tools.doe.doe_plots import create_scatter_matrix
 from vimseo.tools.doe.doe_plots import get_scalar_names
 from vimseo.tools.doe.doe_plots import get_varying_names
+from vimseo.tools.post_tools.plot_parameters import Plot
 from vimseo.tools.result_visualization import BaseVisualizationSettings
 from vimseo.utilities.json_grammar_utils import EnhancedJSONEncoder
 
@@ -67,6 +69,12 @@ class DOEResult(BaseResult):
 
     dataset: Dataset | None = None
     """The dataset resulting from the DOE."""
+
+    plots: list[Plot] = field(default_factory=list)
+    """The figures of the model, from its ``PLOTS`` and the ones of its load case.
+
+    They are stored in the result since the description of the model does not hold
+    them."""
 
     def __str__(self):
         msg = MultiLineString()
@@ -153,7 +161,7 @@ class DOEResult(BaseResult):
         else:
             labels = [f"sample {i}" for i in range(len(self.dataset))]
 
-        if model is not None and model.plots:
+        if self.plots:
             figures.update(
                 create_curve_figures(
                     {
@@ -161,7 +169,7 @@ class DOEResult(BaseResult):
                         for name, values in data.items()
                         if name in input_names or name in output_names
                     },
-                    [create_plot(plot) for plot in model.plots],
+                    [create_plot(plot) for plot in self.plots],
                     labels,
                 )
             )

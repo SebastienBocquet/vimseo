@@ -58,7 +58,9 @@ class BaseResult {
 class BaseVisualizationSettings {
     flat fields, defaults = everything
 }
-class DOEResult
+class DOEResult {
+    +list~Plot~ plots
+}
 class DOEVisualizationSettings {
     +str abscissa_name
     +tuple output_names
@@ -108,6 +110,9 @@ sensitivity, statistics, surrogate, space tool.
    - The Bayesian post-processing is stored in the result (`metadata.misc["post"]`,
      observed data, free parameter names) and the result is published again in the
      archive (`_republish_result`).
+   - The DOE result stores the figures of the model (`DOEResult.plots`, from
+     `IntegratedModel.plots`): the model description no longer holds them since
+     upstream `3fa371bb` removed `ModelDescription.plots`.
 5. Loading without knowing the class: `load_result_file()` and
    `load_result_buffer()` read the class from the HDF5 attributes.
 6. Static export: `kaleido` (0.2.1; 0.1.0.post1 on Windows, where 0.2.1 hangs), as
@@ -160,7 +165,8 @@ sensitivity, statistics, surrogate, space tool.
 2. `BayesAnalysisResult`: `plot_mcmc_chains`, posterior and predictive plots; remove
    `BayesTool.plot_burnin`, `plot_posterior_distribution`,
    `plot_predictive_distribution`.
-3. `DOEResult`: store the model description; scatter matrix with
+3. `DOEResult`: store the model description and the figures of the model
+   (`plots`, set by `DOETool` and `CustomDOETool`); scatter matrix with
    `scatter_matrix_variable_names`; parametric study when a single input varies
    (`doe_plots.py`).
 
