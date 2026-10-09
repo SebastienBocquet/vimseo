@@ -20,8 +20,9 @@ tabulated long after, and far from, the tool run which produced it.
   may not have the model installed.
 - **Priority:** Must
 - **Status:** Proposed
-- **Verification:** Test — every result class.
-- **Satisfied by:** —
+- **Verification:** Test — every result class; Example —
+  `13_tool_result_management`.
+- **Satisfied by:** SPEC-006
 
 ### REQ-RES-002 — A result is tabulated
 
@@ -31,7 +32,7 @@ tabulated long after, and far from, the tool run which produced it.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-006
 
 ### REQ-RES-003 — The visualization is complete by default and can be narrowed
 
@@ -41,7 +42,7 @@ tabulated long after, and far from, the tool run which produced it.
 - **Priority:** Should
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-006
 
 ### REQ-RES-004 — A result is persisted and reloaded identically
 
@@ -51,7 +52,7 @@ tabulated long after, and far from, the tool run which produced it.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-001, SPEC-006
 
 ### REQ-RES-005 — A result is addressed by a URI
 
@@ -60,8 +61,8 @@ tabulated long after, and far from, the tool run which produced it.
 - **Rationale:** Users share and script results by reference, not by copying files.
 - **Priority:** Must
 - **Status:** Proposed
-- **Verification:** Test.
-- **Satisfied by:** —
+- **Verification:** Test — `tests/storage_management/test_tool_result_uri.py`.
+- **Satisfied by:** SPEC-007
 
 ### REQ-RES-006 — The figures are exported as static images
 
@@ -71,4 +72,4 @@ tabulated long after, and far from, the tool run which produced it.
 - **Priority:** Should
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-006

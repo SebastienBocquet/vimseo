@@ -44,9 +44,9 @@ Used once per feature developed without a canvas, e.g. the branch
 1. Generate the canvas from the code:
 
     ```text
-    /spdd-reasons-canvas SPEC-NNN retro-specification of the existing code, do not
+    /spdd-reasons-canvas SPEC-003 retro-specification of the existing code, do not
     change the code. Commits: <subjects of the commits>.
-    @src/vimseo/<key module>.py @src/vimseo/<other key module>.py
+    @src/vimseo/core/run_context.py @src/vimseo/core/base_integrated_model.py
     @docs/specs/index.md
     ```
 
@@ -154,5 +154,23 @@ Adapt the generic guidance of the commands to VIMSEO:
 
 | Spec | Feature | Status | Requirements | Depends on |
 |---|---|---|---|---|
+| SPEC-001 | Serialization in clear | Retro | REQ-SER-001..003, REQ-RES-004, REQ-NFR-001 | — |
+| SPEC-002 | MLflow run archive isolated from the global MLflow state | Retro | REQ-STO-006 | — |
+| SPEC-003 | Identifiers of the simulations and of the tool runs | Retro | REQ-STO-002, REQ-STO-003, REQ-MOD-004 | — |
+| SPEC-004 | Archive of the tool results in local directories | Retro | REQ-STO-003..005, REQ-TOOL-003, REQ-DEP-002, REQ-NFR-001, REQ-NFR-004 | SPEC-001, SPEC-003 |
+| SPEC-005 | Archive of the tool results in MLflow | Retro | REQ-STO-003..007, REQ-DEP-002 | SPEC-002, SPEC-004 |
+| SPEC-006 | Visualize and tabulate a result without its tool | Retro | REQ-RES-001..004, REQ-RES-006, REQ-TOOL-002 | — |
+| SPEC-007 | Load results and simulations from a URI; CLI | Retro | REQ-RES-005, REQ-UX-001, REQ-UX-002 | SPEC-004, SPEC-005, SPEC-006 |
+| SPEC-008 | Plots declared by the load cases | Retro | REQ-MOD-003 | — |
 
-The files are in `spdd/prompt/`, named `SPEC-NNN-*.md`. Add a row for each new canvas.
+The files are in `spdd/prompt/`, named `SPEC-NNN-*.md`.
+
+### Commits outside the canvases
+
+Small changes of `feat/result-visualization` which do not deserve a canvas:
+
+| Commit | Change | Requirement |
+|---|---|---|
+| `197005b6` | Job scheduler executors read the convergence files in their job directory | — |
+| `9cdc0594` | The dashboards show the VIMSEO logo | — |
+| `b5446693` | Every dashboard is checked to open without error | REQ-UX-003 |

@@ -31,8 +31,8 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Rationale:** Identifiers are the base of every link between archived objects.
 - **Priority:** Must
 - **Status:** Proposed
-- **Verification:** Test.
-- **Satisfied by:** —
+- **Verification:** Test — `tests/core/test_run_ids.py`, `tests/tools/test_tool_run_ids.py`.
+- **Satisfied by:** SPEC-003
 
 ### REQ-STO-003 — A tool result is traceable to the simulations it used
 
@@ -44,7 +44,7 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-003, SPEC-004, SPEC-005
 
 ### REQ-STO-004 — The tool results are archived
 
@@ -55,8 +55,8 @@ conclusion can be followed from the conclusion down to each simulation.
   after the session which produced them.
 - **Priority:** Must
 - **Status:** Proposed
-- **Verification:** Test.
-- **Satisfied by:** —
+- **Verification:** Test — `tests/storage_management/test_tool_archive.py`.
+- **Satisfied by:** SPEC-004, SPEC-005
 
 ### REQ-STO-005 — A subtool is archived like its parent
 
@@ -67,7 +67,7 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-004, SPEC-005
 
 ### REQ-STO-006 — An archive does not alter the global state of its backend
 
@@ -78,7 +78,7 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-002, SPEC-005
 
 ### REQ-STO-007 — The key values of a tool result are searchable
 
@@ -88,4 +88,4 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Priority:** Should
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-005

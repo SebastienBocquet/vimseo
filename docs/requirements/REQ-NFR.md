@@ -17,7 +17,7 @@
 - **Priority:** Should
 - **Status:** Proposed
 - **Verification:** Inspection.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-001, SPEC-004
 
 ### REQ-NFR-002 — Breaking changes are explicit
 
@@ -48,4 +48,4 @@
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Inspection — `conftest.py`.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-004

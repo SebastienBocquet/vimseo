@@ -30,7 +30,7 @@ validation, surrogate, statistics, Bayesian analysis, design value) on models or
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-006
 
 ### REQ-TOOL-003 — A tool can be composed of subtools
 
@@ -40,4 +40,4 @@ validation, surrogate, statistics, Bayesian analysis, design value) on models or
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-004

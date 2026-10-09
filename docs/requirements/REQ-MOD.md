@@ -39,7 +39,7 @@ A model wraps a simulation so that the VV&UQ tools can execute it as a black box
 - **Priority:** Should
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-008
 
 ### REQ-MOD-004 — A simulation is not run twice
 
@@ -49,4 +49,4 @@ A model wraps a simulation so that the VV&UQ tools can execute it as a black box
 - **Priority:** Should
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-003

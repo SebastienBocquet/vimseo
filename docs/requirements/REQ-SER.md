@@ -21,7 +21,7 @@ What is archived must remain readable by a human and by another version of VIMSE
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test — `tests/tools/test_serialization.py`.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-001
 
 ### REQ-SER-002 — Parameter spaces and distributions are serialized in clear
 
@@ -31,7 +31,7 @@ What is archived must remain readable by a human and by another version of VIMSE
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-001
 
 ### REQ-SER-003 — Reading an archive is tolerant to unknown types
 
@@ -41,4 +41,4 @@ What is archived must remain readable by a human and by another version of VIMSE
 - **Priority:** Should
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-001

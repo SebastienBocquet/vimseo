@@ -19,7 +19,7 @@ VIMSEO is used from Python, from the command line and from dashboards.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test — `tests/core/test_api.py`.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-007
 
 ### REQ-UX-002 — A tool result is visualized from the command line
 
@@ -29,7 +29,7 @@ VIMSEO is used from Python, from the command line and from dashboards.
 - **Priority:** Should
 - **Status:** Proposed
 - **Verification:** Test.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-007
 
 ### REQ-UX-003 — The dashboards open without error
 
@@ -38,5 +38,5 @@ VIMSEO is used from Python, from the command line and from dashboards.
 - **Rationale:** Dashboards are rarely tested by hand; regressions go unnoticed.
 - **Priority:** Should
 - **Status:** Proposed
-- **Verification:** Test.
+- **Verification:** Test — `tests/dashboards/`.
 - **Satisfied by:** —

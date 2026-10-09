@@ -35,7 +35,7 @@ VIMSEO installs and runs on HPC machines with no graphical stack.
 - **Priority:** Must
 - **Status:** Proposed
 - **Verification:** Test — `tests/test_optional_dependencies.py`.
-- **Satisfied by:** —
+- **Satisfied by:** SPEC-004, SPEC-005
 
 ### REQ-DEP-003 — VIMSEO runs on Linux and Windows
 
