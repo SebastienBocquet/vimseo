@@ -164,7 +164,7 @@ class CalibrationStep(BaseAnalysisTool):
         self.result = CalibrationStepResult()
         self._calibration = None
 
-    def get_metric_curve_names(
+    def _get_metric_curve_names(
         self,
         metric_variable_names: Iterable[str],
     ) -> list[tuple[str]]:
@@ -172,7 +172,7 @@ class CalibrationStep(BaseAnalysisTool):
         ``metric_variables``."""
         return get_metric_curve_names(metric_variable_names)
 
-    def get_metric_scalar_names(
+    def _get_metric_scalar_names(
         self,
         metric_variable_names: Iterable[str],
     ) -> list[tuple[str]]:
@@ -471,7 +471,7 @@ class CalibrationStep(BaseAnalysisTool):
             for load_case, reference_data in options["reference_data"].items():
                 for i in range(len(reference_data)):
                     result_dataframes[load_case].append({})
-                    for mesh_name, name in self.get_metric_curve_names(
+                    for mesh_name, name in self._get_metric_curve_names(
                         self._metric_variables
                     ):
                         if get_namespace(name) == load_case:

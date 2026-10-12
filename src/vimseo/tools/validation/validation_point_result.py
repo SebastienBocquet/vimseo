@@ -93,7 +93,7 @@ class ValidationPointResult(BaseResult):
         text.add(repr(self.simulated_data))
         return str(text)
 
-    def get_output_names(self) -> list[str]:
+    def _get_output_names(self) -> list[str]:
         """Return the names of the outputs compared to measured data."""
         names = self.metadata.report.get("measured_output_names")
         if names:
@@ -115,7 +115,7 @@ class ValidationPointResult(BaseResult):
         )
 
         figures = {}
-        for output_name in settings.output_names or self.get_output_names():
+        for output_name in settings.output_names or self._get_output_names():
             for comparison_type in ["PDF", "CDF"]:
                 figures[f"{comparison_type}_comparison_{output_name}"] = create_figure(
                     DistributionComparison,
