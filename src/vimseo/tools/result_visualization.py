@@ -104,7 +104,7 @@ def get_file_stem(key: str) -> str:
     return re.sub(r"[^\w\-.\[\]]+", "-", key).strip("-")
 
 
-def is_matplotlib_figure(figure: Any) -> bool:
+def _is_matplotlib_figure(figure: Any) -> bool:
     """Whether a figure is a matplotlib figure.
 
     Args:
@@ -135,7 +135,7 @@ def save_figures(
     paths = []
     for key, figure in figures.items():
         stem = get_file_stem(key)
-        if is_matplotlib_figure(figure):
+        if _is_matplotlib_figure(figure):
             extension = "png" if file_format == "html" else file_format
             path = directory_path / f"{stem}.{extension}"
             figure.savefig(path)
@@ -157,7 +157,7 @@ def show_figures(figures: Mapping[str, Figure]) -> None:
     """
     has_matplotlib_figure = False
     for figure in figures.values():
-        if is_matplotlib_figure(figure):
+        if _is_matplotlib_figure(figure):
             has_matplotlib_figure = True
         else:
             figure.show()
@@ -224,7 +224,7 @@ def to_cell(value: Any) -> Any:
     return text
 
 
-def is_scalar(value: Any) -> bool:
+def _is_scalar(value: Any) -> bool:
     """Whether a value is a scalar, that is a number, a boolean or a string.
 
     Args:
@@ -254,7 +254,7 @@ def mapping_to_dataframe(mapping: Mapping[str, Any]) -> DataFrame | None:
         return None
 
     values = list(mapping.values())
-    if all(is_scalar(value) or value is None for value in values):
+    if all(_is_scalar(value) or value is None for value in values):
         return DataFrame(
             {"value": [to_cell(value) for value in values]},
             index=[str(name) for name in mapping],
@@ -276,7 +276,7 @@ def mapping_to_dataframe(mapping: Mapping[str, Any]) -> DataFrame | None:
     return None
 
 
-def value_to_dataframe(value: Any) -> DataFrame | None:
+def _value_to_dataframe(value: Any) -> DataFrame | None:
     """Convert a value to a table, when its type allows it.
 
     Args:
@@ -338,10 +338,10 @@ def fields_to_dataframes(
         value = getattr(result, field.name)
         if value is None or (isinstance(value, str) and not value):
             continue
-        if is_scalar(value):
+        if _is_scalar(value):
             scalars[field.name] = value
             continue
-        table = value_to_dataframe(value)
+        table = _value_to_dataframe(value)
         if table is not None and not table.empty:
             tables[field.name] = table
 
@@ -369,7 +369,7 @@ def settings_to_dataframe(settings: Mapping[str, Any]) -> DataFrame | None:
     )
 
 
-def get_number(value: Any) -> float | None:
+def _get_number(value: Any) -> float | None:
     """Return a value as a finite number, if it is one.
 
     Args:
@@ -409,13 +409,13 @@ def flatten_numbers(mapping: Mapping[str, Any], prefix: str = "") -> dict[str, f
         if isinstance(value, Mapping):
             numbers.update(flatten_numbers(value, full_key))
             continue
-        number = get_number(value)
+        number = _get_number(value)
         if number is not None:
             numbers[full_key] = number
         elif isinstance(value, ndarray) and value.ndim == 1 and value.size > 1:
             numbers.update({
                 f"{full_key}.{i}": number
                 for i, component in enumerate(value)
-                if (number := get_number(component)) is not None
+                if (number := _get_number(component)) is not None
             })
     return numbers

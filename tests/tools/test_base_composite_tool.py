@@ -28,8 +28,8 @@ def test_composite_tool_settings_and_inputs_grammars(tmp_wd):
     """Check that Inputs and Settings grammars are correctly taken into account for a
     composite tool."""
     tool = MyBaseCompositeTool(subtools=[MyTool()])
-    assert tool.option_names == ["foo", "composite_foo"]
-    assert tool.settings_names == ["foo", "composite_foo"]
+    assert tool._option_names == ["foo", "composite_foo"]
+    assert tool._settings_names == ["foo", "composite_foo"]
     options = {"composite_foo": "composite_", "foo": "_"}
     tool.execute(**options)
     assert tool.options == options

@@ -73,7 +73,7 @@ class CodeVerificationAgainstModel(BaseVerification):
             **options,
         )
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: CodeVerificationAgainstModelInputs | None = None,

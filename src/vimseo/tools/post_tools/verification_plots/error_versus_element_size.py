@@ -42,7 +42,7 @@ class ErrorVersusElementSizePlotter(Plotter):
             else 1.0 / x_data[nb_meshes - 1] ** cv_order
         )
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         result: SolutionVerificationResult,

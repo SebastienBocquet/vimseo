@@ -31,7 +31,7 @@ class RelativeErrorVersusElementSizePlotter(Plotter):
     r"""A line plot showing the element size versus the relative error
     :math:`\frac{q - q_{extrap}}{q_{extrap}}`."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         result: SolutionVerificationResult,

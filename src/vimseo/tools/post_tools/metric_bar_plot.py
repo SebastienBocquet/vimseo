@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 class IntegratedMetricBars(Plotter):
     """Bar plot of the integrated value of a metric of a :class:`.VerificationResult`."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         integrated_metrics: Mapping[str, Mapping[str, float]],

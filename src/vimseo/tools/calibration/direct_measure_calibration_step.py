@@ -93,7 +93,7 @@ class DirectMeasures(BaseAnalysisTool):
         )
         self.result = DirectMeasuresResult()
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: DirectMeasuresInputs | None = None,

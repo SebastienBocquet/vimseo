@@ -81,7 +81,7 @@ class CodeVerificationAgainstModelFromParameterSpace(BaseVerification):
             **options,
         )
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: CodeVerificationAgainstModelFromPSInputs | None = None,

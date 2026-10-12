@@ -79,7 +79,7 @@ class ModelCreationTool(BaseAnalysisTool):
         )
         self.result = ModelCreationResult()
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(self, settings=ModelCreationSettings, **options) -> ModelCreationResult:
         model = create_model(options["name"], options["load_case"])
         model.default_input_data.update({

@@ -60,7 +60,7 @@ class InputsOnlyTool(BaseTool):
 
     _INPUTS = MyInputs
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(self, inputs: MyInputs | None = None, **options):
         """A mock run."""
 
@@ -68,7 +68,7 @@ class InputsOnlyTool(BaseTool):
 class NoGrammarTool(BaseTool):
     """A tool without inputs nor settings (no option grammar)."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(self, **options):
         """A mock run."""
 
@@ -86,8 +86,8 @@ def test_settings_and_inputs_as_kwargs(tmp_wd):
     """Check that Inputs and Settings grammars can be passed by keyword arguments and are
     correctly taken into account."""
     tool = MyTool()
-    assert tool.option_names == ["foo", "bar"]
-    assert tool.settings_names == ["foo"]
+    assert tool._option_names == ["foo", "bar"]
+    assert tool._settings_names == ["foo"]
     options = {"foo": "_", "bar": "_"}
     tool.execute(**options)
     assert tool.options == options
@@ -118,10 +118,10 @@ def test_settings_and_inputs_as_pydantic(tmp_wd):
 def test_inputs_only_tool_grammar_and_names():
     """An inputs-only tool builds its grammar from the inputs model."""
     tool = InputsOnlyTool()
-    assert tool.option_names == ["bar"]
+    assert tool._option_names == ["bar"]
     assert tool.input_names == ["bar"]
     # No settings model: settings_names and st_settings are empty/None.
-    assert tool.settings_names == []
+    assert tool._settings_names == []
     assert tool._st_settings is None
 
 
@@ -142,7 +142,7 @@ def test_settings_property_filters_options(tmp_wd):
     """The ``settings`` property only keeps the settings fields."""
     tool = MyTool()
     tool.execute(foo="x", bar="y")
-    assert tool.settings == {"foo": "x"}
+    assert tool._settings == {"foo": "x"}
 
 
 def test_execute_with_inputs_only(tmp_wd):

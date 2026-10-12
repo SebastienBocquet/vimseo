@@ -68,7 +68,7 @@ class ReaderFileDataFrame(BaseReaderFile):
         super().__init__(**options)
         self.result = DatasetResult()
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         settings: ReaderFileDataFrameSettings | None = None,

@@ -50,7 +50,7 @@ class ResultFileReaderTool(BaseReaderFile):
     def get_file_extension(self):
         return self._EXTENSION
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         settings: BaseFileReaderSettings | None = None,

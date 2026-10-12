@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 class DistributionComparison(Plotter):
     """Compare the simulated and reference distributions."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         result: ValidationPointResult,

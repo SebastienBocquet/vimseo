@@ -93,7 +93,7 @@ class SensitivityTool(BaseAnalysisTool):
         )
         self.result = SensitivityResult()
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: SensitivityToolInputs = None,
