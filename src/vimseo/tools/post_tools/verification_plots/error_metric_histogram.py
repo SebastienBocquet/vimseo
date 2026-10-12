@@ -31,7 +31,7 @@ class ErrorMetricHistogramPlotter(Plotter):
     """An histogram plot where the abscissa is the error value and the ordinate the
     number of verification points corresponding to this error."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         element_wise_metrics: Dataset,

@@ -168,7 +168,7 @@ class ReaderFileTecplot(BaseReaderFile):
         super().__init__(**options)
         self.result = FieldResult()
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         settings: ReaderFileTecplotSettings | None = None,

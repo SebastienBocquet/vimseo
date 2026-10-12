@@ -126,7 +126,7 @@ class OATSensitivityTool(BaseAnalysisTool):
         )
         self.result = OATSensitivityResult()
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: OATSensitivityInputs | None = None,

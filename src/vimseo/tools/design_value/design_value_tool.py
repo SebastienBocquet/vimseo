@@ -78,7 +78,7 @@ class DesignValueTool(BaseAnalysisTool):
         )
         self.result = DesignValueResult()
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: DesignValueInputs | None = None,

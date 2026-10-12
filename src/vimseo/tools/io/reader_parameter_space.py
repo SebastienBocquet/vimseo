@@ -37,7 +37,7 @@ class ParameterSpaceReader(BaseReaderFile):
         super().__init__(**options)
         self.result = SpaceToolResult()
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         settings: ParameterSpaceReaderFileSettings | None = None,

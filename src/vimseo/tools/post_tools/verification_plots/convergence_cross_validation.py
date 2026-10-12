@@ -41,7 +41,7 @@ class ConvergenceCrossValidationPlotter(Plotter):
     are superposed.
     """
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         result: SolutionVerificationResult,

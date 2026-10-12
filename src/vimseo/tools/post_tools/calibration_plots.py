@@ -36,7 +36,7 @@ class CalibrationCurves(Plotter):
     The simulated curves are shown before and after calibration.
     """
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         posterior_dataframes: list[Mapping[str:DataFrame]],

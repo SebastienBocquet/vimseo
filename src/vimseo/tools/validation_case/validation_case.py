@@ -103,7 +103,7 @@ class DeterministicValidationCase(BaseAnalysisTool):
 
         self.result = ValidationCaseResult()
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: DeterministicValidationCaseInputs | None = None,

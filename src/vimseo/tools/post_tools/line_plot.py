@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 class Lines(Plotter):
     """A generic line plot."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         dataset: IODataset,

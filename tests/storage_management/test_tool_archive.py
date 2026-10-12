@@ -76,7 +76,7 @@ N_SAMPLES = 3
 class FailingTool(MyTool):
     """A tool which raises."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(self, inputs=None, settings=None, **options):
         msg = "boom"
         raise RuntimeError(msg)

@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 class ErrorScatterMatrix(Plotter):
     """A scatter matrix plot of an error metric."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         df: DataFrame,

@@ -46,7 +46,7 @@ class MyTool(BaseTool):
     _SETTINGS = MySettings
     _INPUTS = MyInputs
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: MyInputs | None = None,
@@ -61,7 +61,7 @@ class MyToolNoInputs(BaseTool):
 
     _SETTINGS = MySettings
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         settings: MySettings | None = None,
@@ -79,7 +79,7 @@ class MyBaseCompositeTool(BaseCompositeTool):
 
     _SETTINGS = MyCompositeSettings
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: MyInputs | None = None,

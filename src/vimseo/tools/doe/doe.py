@@ -160,7 +160,7 @@ class DOETool(BaseAnalysisTool):
         self.__algo_settings = {}
         """The validated settings of the DOE algorithm of the last execution."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: DOEInputs | None = None,

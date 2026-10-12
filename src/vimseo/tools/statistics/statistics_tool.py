@@ -135,7 +135,7 @@ class StatisticsTool(BaseAnalysisTool):
         """
         return ParametricStatistics.build_distributions(distributions)
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: StatisticsInputs | None = None,
