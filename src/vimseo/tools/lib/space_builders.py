@@ -23,7 +23,6 @@
 from __future__ import annotations
 
 import abc
-import inspect
 import logging
 from typing import TYPE_CHECKING
 from typing import Any
@@ -106,8 +105,8 @@ class SpaceBuilder(BaseTool):
         So we manually add these variable names.
         """
         if self.__class__.__name__ == "FromCenterAndCov":
-            return [*list(self.grammar.names), "lower_bounds", "upper_bounds"]
-        return list(self.grammar.names)
+            return [*list(self._grammar.names), "lower_bounds", "upper_bounds"]
+        return list(self._grammar.names)
 
     @classmethod
     def _check_input_dimension(cls, model, input_names):
@@ -148,15 +147,12 @@ class SpaceBuilder(BaseTool):
             model: An :class:`~.IntegratedModel`.
         """
 
-    def get_builder_options(self):
-        return inspect.signature(self.build)
-
     def get_available_distributions(self):
         return self._AVAILABLE_DISTRIBUTIONS
 
     # TODO remove this method
     @classmethod
-    def filter_options(cls, distribution_name: str, **options):
+    def _filter_options(cls, distribution_name: str, **options):
         """Filter options to obtain an options compatible with the distribution to
         compute. Add a variable to the space.
 
@@ -189,7 +185,7 @@ class SpaceBuilder(BaseTool):
 
         settings = DistributionSettings(
             name=distribution_name[2:-12],
-            **self.filter_options(distribution_name, **options),
+            **self._filter_options(distribution_name, **options),
         )
 
         add_random_variable_interface(

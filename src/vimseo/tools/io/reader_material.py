@@ -29,7 +29,7 @@ class MaterialReaderFileSettings(BaseFileReaderSettings):
 
 
 class MaterialReader(BaseReaderFile):
-    results: MaterialResult
+    result: MaterialResult
 
     _EXTENSION = ".json"
 
@@ -39,7 +39,7 @@ class MaterialReader(BaseReaderFile):
         super().__init__(**options)
         self.result = MaterialResult()
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         settings: MaterialReaderFileSettings | None = None,

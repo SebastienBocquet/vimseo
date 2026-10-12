@@ -69,7 +69,7 @@ class CodeVerificationAgainstData(BaseVerification):
 
     # TODO: pass control_outputs arg. if None, use metric_name applied to all output
     #  variables.
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: CodeVerificationAgainstDataInputs | None = None,
@@ -106,7 +106,7 @@ class CodeVerificationAgainstData(BaseVerification):
                 model=model,
                 input_dataset=reference_data,
                 input_names=input_names,
-                output_names=self.get_extended_output_names(),
+                output_names=self._get_extended_output_names(),
             )
             .dataset
         )

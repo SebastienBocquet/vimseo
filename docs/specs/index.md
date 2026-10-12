@@ -160,10 +160,10 @@ Adapt the generic guidance of the commands to VIMSEO:
 | SPEC-004 | Archive of the tool results in local directories (+ iteration 1: symmetric settings, archive manager naming; iteration 2: working directory created on demand) | Draft | REQ-STO-003..005, REQ-TOOL-003, REQ-DEP-002, REQ-NFR-001, REQ-NFR-004, REQ-UX-004 | SPEC-001, SPEC-003 |
 | SPEC-005 | Archive of the tool results in MLflow (+ iteration 1: tool runs in the experiment of their study, SPEC-011) | Draft | REQ-STO-003..008, REQ-DEP-002 | SPEC-002, SPEC-004 |
 | SPEC-006 | Visualize and tabulate a result without its tool | Retro | REQ-RES-001..004, REQ-RES-006, REQ-TOOL-002 | — |
-| SPEC-007 | Load results and simulations from a URI; CLI (+ iteration 1: names of the loading API) | Draft | REQ-RES-005, REQ-UX-001, REQ-UX-002, REQ-UX-004 | SPEC-004, SPEC-005, SPEC-006 |
+| SPEC-007 | Load results and simulations from a URI; CLI (+ iteration 1: names of the loading API; iteration 2: `study_name`, URIs of the model results) | Draft | REQ-RES-005, REQ-UX-001, REQ-UX-002, REQ-UX-004 | SPEC-004, SPEC-005, SPEC-006, SPEC-011 |
 | SPEC-008 | Plots declared by the load cases | Retro | REQ-MOD-003 | — |
 | SPEC-009 | `JobBundle`, an explorer of the archived simulations | Retro | REQ-STO-001, REQ-UX-001, REQ-UX-005 | — |
-| SPEC-010 | Data management examples and a symmetric roundtrip of the results | Draft | REQ-RES-001, REQ-RES-005, REQ-UX-001, REQ-UX-004..006 | SPEC-004, SPEC-006, SPEC-007, SPEC-009 |
+| SPEC-010 | Data management examples and a symmetric roundtrip of the results (+ iteration 1: the same archive arguments everywhere, model result URIs; iteration 2: shared collection of results, declarative conditions, saved inspections, dashboard) | Draft | REQ-RES-001, REQ-RES-005, REQ-UX-001, REQ-UX-004..008, REQ-STO-009 | SPEC-004, SPEC-006, SPEC-007, SPEC-009, SPEC-011 |
 | SPEC-011 | Studies, the grouping of the simulations and of the tool runs of an archive | Draft | REQ-STO-004..006, REQ-STO-008 | SPEC-002, SPEC-004, SPEC-005, SPEC-007 |
 
 The files are in `spdd/prompt/`, named `SPEC-NNN-*.md`. The analyses produced by

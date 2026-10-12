@@ -133,7 +133,7 @@ class SurrogateSettings(BaseSettings):
 
 
 class SurrogateTool(BaseAnalysisTool):
-    results: SurrogateResult
+    result: SurrogateResult
 
     _INPUTS = SurrogateInputs
 
@@ -174,7 +174,7 @@ class SurrogateTool(BaseAnalysisTool):
         candidates.update(candidate)
         self.update_options(candidates=candidates)
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: SurrogateInputs | None = None,
@@ -232,7 +232,7 @@ class SurrogateTool(BaseAnalysisTool):
                 output_names=options["output_names"],
             )
 
-            self.result.selection_qualities = self.compute_selection_qualities()
+            self.result.selection_qualities = self._compute_selection_qualities()
 
         self.result.qualities = self.__compute_quality(
             self.result.model.regression_model
@@ -297,10 +297,10 @@ class SurrogateTool(BaseAnalysisTool):
     #     return quality
 
     @property
-    def quality(self) -> QualitiesType:
+    def _quality(self) -> QualitiesType:
         return self.result.qualities
 
-    def compute_selection_qualities(
+    def _compute_selection_qualities(
         self,
         quality_measures: Iterable[str] | None = None,
         eval_methods: Iterable[str] | None = None,

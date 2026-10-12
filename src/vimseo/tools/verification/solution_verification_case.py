@@ -74,7 +74,7 @@ class SolutionVerificationCase(BaseAnalysisTool):
         )
         self.result = SolutionVerificationCaseResult()
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         settings: SolutionVerificationCaseSettings | None = None,

@@ -126,7 +126,7 @@ class StatisticsTool(BaseAnalysisTool):
         self.result = StatisticsResult()
 
     @staticmethod
-    def build_distributions(distributions):
+    def _build_distributions(distributions):
         """Build distributions from a list of distributions names, a test level and the
         stored dataset.
 
@@ -135,7 +135,7 @@ class StatisticsTool(BaseAnalysisTool):
         """
         return ParametricStatistics.build_distributions(distributions)
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: StatisticsInputs | None = None,
@@ -177,7 +177,7 @@ class StatisticsTool(BaseAnalysisTool):
         )
 
         self.result.analysis = analysis
-        self.result.statistics = self.compute_all_statistics(as_df=False)
+        self.result.statistics = self._compute_all_statistics(as_df=False)
         self.result.best_fitting_distributions = {
             name: analysis.distributions[name].name
             for name in list(analysis.distributions.keys())
@@ -185,7 +185,7 @@ class StatisticsTool(BaseAnalysisTool):
         return self.result
 
     @staticmethod
-    def get_criteria(varname):
+    def _get_criteria(varname):
         """Get criteria for a given variable name.
 
         :param str varname: variable name.
@@ -193,7 +193,7 @@ class StatisticsTool(BaseAnalysisTool):
         return ParametricStatistics.get_criteria(varname)
 
     @staticmethod
-    def get_fitting_matrix():
+    def _get_fitting_matrix():
         """Get the fitting matrix.
 
         This matrix contains goodness-of-fit measures for each pair < variable,
@@ -202,21 +202,21 @@ class StatisticsTool(BaseAnalysisTool):
         return ParametricStatistics.get_fitting_matrix()
 
     @staticmethod
-    def get_available_distributions():
+    def _get_available_distributions():
         """Get available distributions."""
         return ParametricStatistics.get_fitting_matrix()
 
     @staticmethod
-    def get_available_criteria():
+    def _get_available_criteria():
         """Get available goodness-of-fit criteria."""
         return ParametricStatistics.get_available_criteria()
 
     @staticmethod
-    def get_significance_tests():
+    def _get_significance_tests():
         """Get significance adapter."""
         return ParametricStatistics.get_significance_tests()
 
-    def compute_all_statistics(self, as_df=True) -> OrderedDict | DataFrame:
+    def _compute_all_statistics(self, as_df=True) -> OrderedDict | DataFrame:
         """Provides a summary of the statistics currently available in gemseo.
 
         Args:

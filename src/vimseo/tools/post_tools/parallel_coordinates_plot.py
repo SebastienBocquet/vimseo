@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 class ParallelCoordinates(Plotter):
     """A Parallel coordinates plot of the error metrics."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         df: DataFrame,

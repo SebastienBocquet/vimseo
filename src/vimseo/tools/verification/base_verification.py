@@ -36,7 +36,6 @@ from vimseo.tools.verification.verification_result import CASE_DESCRIPTION_TYPE
 from vimseo.tools.verification.verification_result import VerificationResult
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
     from collections.abc import Mapping
     from pathlib import Path
 
@@ -44,17 +43,12 @@ if TYPE_CHECKING:
 REFERENCE_PREFIX = "Ref"
 
 
-def convergence_renaming(name):
-    """Rename an output variable of a convergence verification."""
-    return f"|{name}-extrapol|"
-
-
-def comparison_renaming(name, prefix=""):
+def _comparison_renaming(name, prefix=""):
     """Rename an output variable of a code verification."""
     return f"{prefix}[{name}]"
 
 
-def prepare_overall_dataset(
+def _prepare_overall_dataset(
     result, metric_names, output_names, renamer=None, add_output_data=True
 ):
     """Prepare the final dataset used in the dashboard.
@@ -140,11 +134,7 @@ class BaseCodeVerificationSettings(CustomDOESettings):
 class BaseVerification(BaseAnalysisTool):
     """A base class to implement code verification."""
 
-    results: VerificationResult
-
-    metric_names: Iterable[str]
-    """The name of the metrics used to compute the error between predictions and
-    references."""
+    result: VerificationResult
 
     def __init__(
         self,
@@ -225,7 +215,7 @@ class BaseVerification(BaseAnalysisTool):
     ) -> tuple[IODataset, Dataset]:
         """Concatenate the reference and DOE datasets, ensuring the output variable names
         are unique: the reference output variables are renamed according to
-        :meth:`comparison_renaming`.
+        :meth:`_comparison_renaming`.
         Concatenate the input variables (group ``IODataset.INPUT_GROUP`` of the
         reference dataset) with the metrics.
 
@@ -248,7 +238,7 @@ class BaseVerification(BaseAnalysisTool):
             group_names=IODataset.OUTPUT_GROUP, variable_names=self._output_names
         ).rename(
             columns={
-                name: comparison_renaming(name, REFERENCE_PREFIX)
+                name: _comparison_renaming(name, REFERENCE_PREFIX)
                 for name in reference_data.get_variable_names(
                     group_name=IODataset.OUTPUT_GROUP
                 )
@@ -276,7 +266,7 @@ class BaseVerification(BaseAnalysisTool):
     #  cpu time. Then, if ``output_names`` setting is left to default value,
     #  the output names will contain the cpu time, since obtained from
     #  model.get_output_data().
-    def get_extended_output_names(self):
+    def _get_extended_output_names(self):
         """Adds the CPU_TIME metadata variable name to the output names."""
         return (
             [*self._output_names, MetaDataNames.cpu_time]

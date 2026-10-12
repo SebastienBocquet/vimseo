@@ -205,9 +205,6 @@ class BayesTool(BaseAnalysisTool):
     _log_prior: Callable
     """The log-prior function."""
 
-    data: Sample
-    """The log-prior function."""
-
     def __init__(
         self,
         root_directory: str | Path = config.root_directory,
@@ -269,7 +266,7 @@ class BayesTool(BaseAnalysisTool):
 
         return self._dist_prior.computeLogPDF(x)
 
-    def log_posterior(
+    def _log_posterior(
         self,
         x: ndarray,
         func_prior: Callable,
@@ -298,7 +295,7 @@ class BayesTool(BaseAnalysisTool):
 
         return lik + lp
 
-    def sampling(
+    def _sampling(
         self,
         n_mcmc: int,
         data: ndarray,
@@ -316,7 +313,7 @@ class BayesTool(BaseAnalysisTool):
 
         prior_function = lambda x: self._log_prior(x)  # ruff: ignore[lambda-assignment]
 
-        log_posterior = lambda x: self.log_posterior(  # ruff: ignore[lambda-assignment]
+        log_posterior = lambda x: self._log_posterior(  # ruff: ignore[lambda-assignment]
             x, prior_function, likelihood_function
         )
 
@@ -328,7 +325,7 @@ class BayesTool(BaseAnalysisTool):
 
         return self._scaler.inverse_transform(sampler.get_chain())
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: BayesInputs | None = None,
@@ -420,7 +417,7 @@ class BayesTool(BaseAnalysisTool):
 
         self._scaler.fit(bounds)
 
-        raw_samples = self.sampling(
+        raw_samples = self._sampling(
             options["n_mcmc"],
             self._data,
         )
@@ -611,7 +608,7 @@ class BayesTool(BaseAnalysisTool):
         for k in range(len(self._data)):
             data_censored = Sample(delete(array(self._data).ravel(), k).reshape(-1, 1))
 
-            mcmc_samples = self.sampling(n_mcmc, data_censored)
+            mcmc_samples = self._sampling(n_mcmc, data_censored)
 
             samples_leave_k = self.cropping(
                 mcmc_samples, len(self._x0s), burnin, self.result.ndim

@@ -101,3 +101,15 @@ conclusion can be followed from the conclusion down to each simulation.
 - **Status:** Proposed
 - **Verification:** Test — `tests/storage_management/`.
 - **Satisfied by:** SPEC-011, SPEC-005
+
+### REQ-STO-009 — Archive maintenance is explicit
+
+- **Statement:** No exploration, selection, inspection nor dashboard action shall delete
+  archived runs; deleting runs shall only be possible through an explicit method of the
+  archive manager.
+- **Rationale:** Study scripts deleted duplicate runs silently at each start
+  (`JobBundle.remove_duplicate_jobs(delete_dirs=True)`); archives are evidence.
+- **Priority:** Must
+- **Status:** Proposed
+- **Verification:** Test; Inspection of the verbs of the collection.
+- **Satisfied by:** SPEC-010

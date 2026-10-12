@@ -59,7 +59,7 @@ def compute_nb_trajectories(nb_data, nb_meshes):
 class ConvergenceCase(Plotter):
     """A comparison of several convergence trajectories."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         convergence_data: DataFrame,
@@ -181,7 +181,7 @@ class ConvergenceCase(Plotter):
 
 
 class CpuTimeCompromiseCase(Plotter):
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         convergence_data: DataFrame,

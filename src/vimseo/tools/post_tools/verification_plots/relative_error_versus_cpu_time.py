@@ -32,7 +32,7 @@ class RelativeErrorVersusCpuTimePlotter(Plotter):
     """A line plot showing the relative error between the output values and the
     Richardson extrapolation, versus the element size."""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         result: SolutionVerificationResult,

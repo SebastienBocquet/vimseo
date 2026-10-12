@@ -38,7 +38,7 @@ class StreamlitReaderFileGemseoDatasetSettings(StreamlitBaseFileReaderSettings):
 class ReaderFileGemseoDataset(BaseReaderFile):
     """Reads a GEMSEO dataset."""
 
-    results: IODataset
+    result: DatasetResult
 
     _EXTENSION = ".csv"
 
@@ -53,7 +53,7 @@ class ReaderFileGemseoDataset(BaseReaderFile):
     def get_file_extension(self):
         return self._EXTENSION
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         settings: ReaderFileGemseoDatasetSettings | None = None,

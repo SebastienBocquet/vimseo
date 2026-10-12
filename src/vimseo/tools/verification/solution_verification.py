@@ -259,7 +259,7 @@ class DiscretizationSolutionVerification(BaseVerification):
         )
         self.result = SolutionVerificationResult()
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: SolutionVerificationInputs | None = None,
