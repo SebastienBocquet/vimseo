@@ -76,3 +76,28 @@ VIMSEO is used from Python, from the command line and from dashboards.
 - **Status:** Proposed
 - **Verification:** Inspection — review of the gallery `14_data_management`.
 - **Satisfied by:** SPEC-010
+
+### REQ-UX-007 — A set of results is compared by what varies between them
+
+- **Statement:** The system should let a user select a set of results with any
+  condition, without altering the set nor the archive, and show what varies between
+  them: the varying inputs, and the families of results varying along one input, with
+  irrelevant inputs ignored.
+- **Rationale:** It is the first analysis of every study script using `JobBundle`
+  (mesh convergence, sensitivity to a numerical parameter, cost versus accuracy).
+- **Priority:** Should
+- **Status:** Proposed
+- **Verification:** Test — `tests/results/`; Example — `14_data_management`.
+- **Satisfied by:** SPEC-010
+
+### REQ-UX-008 — An inspection of results is saved and replayed
+
+- **Statement:** The system should save the sequence of selections and views applied to
+  a set of results, as data, and replay it on the archive, including the results
+  archived since; predefined inspections should cover the usual analyses.
+- **Rationale:** Study scripts rewrite the same inspections; a saved inspection is
+  reproducible, shareable, and the state of a dashboard.
+- **Priority:** Could
+- **Status:** Proposed
+- **Verification:** Test — `tests/results/test_inspection.py`.
+- **Satisfied by:** SPEC-010
