@@ -174,7 +174,7 @@ class SurrogateTool(BaseAnalysisTool):
         candidates.update(candidate)
         self.update_options(candidates=candidates)
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: SurrogateInputs | None = None,

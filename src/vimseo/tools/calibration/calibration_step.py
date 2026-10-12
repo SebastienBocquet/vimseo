@@ -179,7 +179,7 @@ class CalibrationStep(BaseAnalysisTool):
         """Return the names of the scalars contained in ``metric_variables``."""
         return get_metric_scalar_names(metric_variable_names)
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: CalibrationStepInputs | None = None,

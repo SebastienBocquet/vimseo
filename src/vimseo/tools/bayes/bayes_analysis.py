@@ -328,7 +328,7 @@ class BayesTool(BaseAnalysisTool):
 
         return self._scaler.inverse_transform(sampler.get_chain())
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: BayesInputs | None = None,

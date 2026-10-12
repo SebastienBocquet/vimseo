@@ -48,7 +48,7 @@ class ConvergenceFitPlotter(Plotter):
     used instead of Richardson.
     """
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         result: SolutionVerificationResult,

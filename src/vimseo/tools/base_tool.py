@@ -126,8 +126,8 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         >>> tables = result.tabulate()
     """
 
-    results: BaseResult | None
-    """The results of the tool."""
+    result: BaseResult | None
+    """The result of the tool."""
 
     _root_directory: Path
     """The directory where execution results are written."""
@@ -207,9 +207,9 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         self._tool_archive = self._open_tool_archive(
             self._archive_manager, self._archive_root
         )
-        self.time = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+        self._time = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         self.result = BaseResult()
-        self.report_name = f"{self.__class__.__name__} Report"
+        self._report_name = f"{self.__class__.__name__} Report"
         root_directory = (
             Path(self.name)
             if options["root_directory"] == ""
@@ -266,7 +266,7 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         self._working_directory = value
 
     @property
-    def option_names(self):
+    def _option_names(self):
         """The names of the options that can be passed to ``execute()``."""
         if isinstance(self._opt_grammar, JSONGrammar):
             return self._opt_grammar.names
@@ -276,7 +276,7 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         return {
             name: option
             for name, option in options.items()
-            if name in self.option_names
+            if name in self._option_names
         }
 
     def _create_working_directory(self) -> None:
@@ -319,12 +319,12 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         return self._options
 
     @property
-    def grammar(self):
+    def _grammar(self):
         """The validation grammar."""
         return self._opt_grammar
 
     @property
-    def settings_names(self) -> Iterable[str]:
+    def _settings_names(self) -> Iterable[str]:
         if self._SETTINGS is not None:
             return list(self._SETTINGS.model_fields.keys())
         return []
@@ -336,11 +336,11 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         return []
 
     @property
-    def settings(self):
+    def _settings(self):
         return {
             name: value
             for name, value in self.options.items()
-            if name in self.settings_names
+            if name in self._settings_names
         }
 
     @property
@@ -388,7 +388,7 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
 
         return self._options
 
-    def validate(f):  # ruff: ignore[invalid-first-argument-name-for-method]
+    def _validate(f):  # ruff: ignore[invalid-first-argument-name-for-method]
         @functools.wraps(f)
         def decorated(self, *args, **options):
             self._create_working_directory()
@@ -536,7 +536,7 @@ class BaseTool(metaclass=GoogleDocstringInheritanceMeta):
         self.result.metadata.settings = {
             name: value
             for name, value in options.items()
-            if name in self.settings_names
+            if name in self._settings_names
         }
 
     def load_options_from_metadata(self, file_path: str | Path | None = None):

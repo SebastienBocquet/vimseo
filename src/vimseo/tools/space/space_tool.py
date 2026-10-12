@@ -309,7 +309,7 @@ class SpaceTool(BaseAnalysisTool):
                 self.result.parameter_space, distribution_name, model=model, **options
             )
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: SpaceToolInputs | None = None,

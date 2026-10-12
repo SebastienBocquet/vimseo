@@ -98,7 +98,7 @@ class CustomDOETool(BaseAnalysisTool):
         )
         self.result = DOEResult()
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: CustomDOEInputs | None = None,

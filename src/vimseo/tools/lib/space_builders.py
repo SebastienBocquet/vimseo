@@ -106,8 +106,8 @@ class SpaceBuilder(BaseTool):
         So we manually add these variable names.
         """
         if self.__class__.__name__ == "FromCenterAndCov":
-            return [*list(self.grammar.names), "lower_bounds", "upper_bounds"]
-        return list(self.grammar.names)
+            return [*list(self._grammar.names), "lower_bounds", "upper_bounds"]
+        return list(self._grammar.names)
 
     @classmethod
     def _check_input_dimension(cls, model, input_names):

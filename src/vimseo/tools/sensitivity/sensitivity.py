@@ -96,7 +96,7 @@ class SensitivityTool(BaseAnalysisTool):
         self.result = SensitivityResult()
         self.sensitivity_plot_factory = SensitivityPlotFactory()
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         inputs: SensitivityToolInputs = None,

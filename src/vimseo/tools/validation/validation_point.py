@@ -180,7 +180,7 @@ class StochasticValidationPoint(BaseAnalysisTool):
 
         return uncertain_space_with_measured_variables
 
-    @BaseCompositeTool.validate
+    @BaseCompositeTool._validate
     def execute(
         self,
         inputs: StochasticValidationPointInputs | None = None,

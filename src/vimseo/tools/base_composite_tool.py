@@ -69,7 +69,7 @@ class BaseCompositeTool(BaseTool):
         for tool in self._subtools.values():
             tool._inherit_archive_settings(self._archive_manager, self._archive_root)
 
-    def validate(f):  # ruff: ignore[invalid-first-argument-name-for-method]
+    def _validate(f):  # ruff: ignore[invalid-first-argument-name-for-method]
         @functools.wraps(f)
         def decorated(self, *args, **options):
             self._create_working_directory()

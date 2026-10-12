@@ -53,7 +53,7 @@ class PredictVsTrue(Plotter):
         )
         self.warning_msg = ""
 
-    @BaseTool.validate
+    @BaseTool._validate
     def execute(
         self,
         df: DataFrame,
