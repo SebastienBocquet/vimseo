@@ -150,8 +150,8 @@ class VerificationResult(BaseResult):
         from vimseo.tools.post_tools.verification_plots import (
             ErrorMetricHistogramPlotter,
         )
-        from vimseo.tools.verification.base_verification import comparison_renaming
-        from vimseo.tools.verification.base_verification import prepare_overall_dataset
+        from vimseo.tools.verification.base_verification import _comparison_renaming
+        from vimseo.tools.verification.base_verification import _prepare_overall_dataset
 
         figures = {}
         input_names = self.element_wise_metrics.get_variable_names(
@@ -162,13 +162,13 @@ class VerificationResult(BaseResult):
                 self.integrated_metrics[metric_name]
             )
             if input_names:
-                dataset = prepare_overall_dataset(
+                dataset = _prepare_overall_dataset(
                     self,
                     [metric_name],
                     self.simulation_and_reference.get_variable_names(
                         IODataset.OUTPUT_GROUP
                     ),
-                    renamer=comparison_renaming,
+                    renamer=_comparison_renaming,
                     add_output_data=True,
                 )
                 # The scalar errors versus the inputs, to see where the error is large.
@@ -176,7 +176,7 @@ class VerificationResult(BaseResult):
                 metric_names = [
                     name
                     for name in (
-                        comparison_renaming(output_name, metric_name)
+                        _comparison_renaming(output_name, metric_name)
                         for output_name in output_names
                     )
                     if sizes.get(name) == 1

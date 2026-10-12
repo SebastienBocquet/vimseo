@@ -103,9 +103,9 @@ class CodeVerificationAgainstModel(BaseVerification):
             .execute(
                 model=model,
                 input_dataset=input_dataset,
-                # TODO a method get_extended_output_names(),
+                # TODO a method _get_extended_output_names(),
                 #  to be used in DOE on model in all comparison tools
-                output_names=self.get_extended_output_names(),
+                output_names=self._get_extended_output_names(),
             )
             .dataset
         )

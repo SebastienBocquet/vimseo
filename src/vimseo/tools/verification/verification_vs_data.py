@@ -106,7 +106,7 @@ class CodeVerificationAgainstData(BaseVerification):
                 model=model,
                 input_dataset=reference_data,
                 input_names=input_names,
-                output_names=self.get_extended_output_names(),
+                output_names=self._get_extended_output_names(),
             )
             .dataset
         )

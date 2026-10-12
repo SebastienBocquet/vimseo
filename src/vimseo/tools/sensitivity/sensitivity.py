@@ -23,7 +23,6 @@ from gemseo.algos.doe.morris_doe.settings.morris_doe_settings import MorrisDOE_S
 from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.datasets.dataset import Dataset
 from gemseo.uncertainty import create_sensitivity_analysis
-from gemseo.uncertainty import get_available_sensitivity_analyses
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
@@ -37,7 +36,6 @@ from vimseo.tools.doe.doe import DOEInputs
 from vimseo.tools.doe.doe import DOESettings
 from vimseo.tools.doe.doe import DOETool
 from vimseo.tools.doe.doe_result import DOEResult
-from vimseo.tools.post_tools.sensitivity_plot_factory import SensitivityPlotFactory
 from vimseo.tools.sensitivity.doe_samples import UNSTRUCTURED_ALGO
 from vimseo.tools.sensitivity.doe_samples import check_no_nan_output
 from vimseo.tools.sensitivity.doe_samples import get_algo_settings
@@ -204,7 +202,7 @@ class SensitivityTool(BaseAnalysisTool):
     """Run a sensitivity analysis on the outputs of an :class:`~.IntegratedModel` over a
     :class:`~.gemseo.algos.parameter_space.ParameterSpace`."""
 
-    results: SensitivityResult
+    result: SensitivityResult
 
     _INPUTS = SensitivityToolInputs
 
@@ -227,7 +225,6 @@ class SensitivityTool(BaseAnalysisTool):
             **options,
         )
         self.result = SensitivityResult()
-        self.sensitivity_plot_factory = SensitivityPlotFactory()
 
     @BaseCompositeTool.validate
     def execute(
@@ -350,8 +347,3 @@ class SensitivityTool(BaseAnalysisTool):
                 algo_settings=algo_settings,
             ),
         )
-
-    @staticmethod
-    def get_available_sensitivity_analyses():
-        """Get the available sensitivity analysis."""
-        return get_available_sensitivity_analyses()
