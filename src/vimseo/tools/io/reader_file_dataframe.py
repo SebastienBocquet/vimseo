@@ -56,7 +56,7 @@ class StreamlitReaderFileDataFrameSettings(ReaderFileDataFrameSettings):
 
 
 class ReaderFileDataFrame(BaseReaderFile):
-    results: DatasetResult
+    result: DatasetResult
 
     _EXTENSION = ".csv"
 

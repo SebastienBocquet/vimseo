@@ -29,7 +29,7 @@ class MaterialReaderFileSettings(BaseFileReaderSettings):
 
 
 class MaterialReader(BaseReaderFile):
-    results: MaterialResult
+    result: MaterialResult
 
     _EXTENSION = ".json"
 

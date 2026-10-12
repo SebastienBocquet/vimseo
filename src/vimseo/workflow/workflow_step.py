@@ -52,7 +52,7 @@ class Output(metaclass=GoogleDocstringInheritanceMeta):
     attr_name: str = ""
 
 
-def deserialize_pydantic_settings(input_settings: Mapping[str, Any]):
+def _deserialize_pydantic_settings(input_settings: Mapping[str, Any]):
     """Reconstruct the fields of a ``BaseSettings`` as Pydantic model instance if they
     are of this type.
 
@@ -71,19 +71,19 @@ def deserialize_pydantic_settings(input_settings: Mapping[str, Any]):
     for name, value in settings.items():
         if isinstance(value, dict):
             if "__pydantic_model__" in value:
-                create_pydantic_model(name, value, settings)
+                _create_pydantic_model(name, value, settings)
             else:
                 for name_, value_ in value.items():
                     if isinstance(value_, dict):
                         if "__pydantic_model__" in value_:
-                            create_pydantic_model(name_, value_, settings[name])
+                            _create_pydantic_model(name_, value_, settings[name])
                         else:
                             for name__, value__ in value_.items():
                                 if (
                                     isinstance(value__, dict)
                                     and "__pydantic_model__" in value__
                                 ):
-                                    create_pydantic_model(
+                                    _create_pydantic_model(
                                         name__,
                                         value__,
                                         settings[name][name_],
@@ -91,7 +91,7 @@ def deserialize_pydantic_settings(input_settings: Mapping[str, Any]):
     return settings
 
 
-def serialize_pydantic_settings(
+def _serialize_pydantic_settings(
     input_settings: BaseSettings, attr_names: Iterable[str] = ()
 ):
     """Serialize (JSON compatible) a ``BaseSettings`` Pydantic model defining a tool
@@ -130,7 +130,7 @@ def get_pydantic_model_item(model: BaseModel):
     }
 
 
-def create_pydantic_model(name, value, tool_settings):
+def _create_pydantic_model(name, value, tool_settings):
     module, klass_name = value["__pydantic_model__"]
     del value["__pydantic_model__"]
     model = getattr(__import__(module, fromlist=[klass_name]), klass_name)
@@ -204,7 +204,7 @@ class WorkflowStep(Discipline):
             "inputs": [asdict(i) for i in self._inputs],
             "outputs": [asdict(output) for output in self._outputs],
             "tool_constructor_options": self._tool_constructor_options,
-            "tool_settings": serialize_pydantic_settings(self._tool_settings),
+            "tool_settings": _serialize_pydantic_settings(self._tool_settings),
         }
 
     @classmethod
@@ -233,11 +233,11 @@ class WorkflowStep(Discipline):
 
         if tool._SETTINGS:
             step_settings["tool_settings"] = tool._SETTINGS(
-                **deserialize_pydantic_settings(settings["tool_settings"])
+                **_deserialize_pydantic_settings(settings["tool_settings"])
             )
             tool.update_options(**step_settings["tool_settings"].model_dump())
         else:
-            step_settings["tool_settings"] = deserialize_pydantic_settings(
+            step_settings["tool_settings"] = _deserialize_pydantic_settings(
                 settings["tool_settings"]
             )
             tool.update_options(**step_settings["tool_settings"])
