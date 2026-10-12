@@ -88,14 +88,14 @@ class ValidationCaseResult(BaseResult):
 
     stochastic_point_results: Sequence[ValidationPointResult] = ()
 
-    def get_common_values(self, data_list: Sequence[list]) -> list:
+    def _get_common_values(self, data_list: Sequence[list]) -> list:
         """Get the common values across all lists in data_list."""
         common_values = set(data_list[0])
         for data in data_list[1:]:
             common_values.intersection_update(data)
         return sorted(common_values)
 
-    def add_averaged_point(
+    def _add_averaged_point(
         self,
         src_group_name: str,
         dataset: Dataset,
@@ -117,10 +117,10 @@ class ValidationCaseResult(BaseResult):
         self.stochastic_point_results = results
         self.metadata = results[0].metadata
 
-        metric_names = self.get_common_values([
+        metric_names = self._get_common_values([
             result.metadata.settings["metric_names"] for result in results
         ])
-        output_names = self.get_common_values([
+        output_names = self._get_common_values([
             result.metadata.report["measured_output_names"] for result in results
         ])
 
@@ -139,22 +139,22 @@ class ValidationCaseResult(BaseResult):
                     data[
                         f"{name}{GROUP_SEPARATORS[0]}{metric_name}{GROUP_SEPARATORS[1]}"
                     ].append(value)
-            self.add_averaged_point(
+            self._add_averaged_point(
                 IODataset.INPUT_GROUP,
                 result.simulated_data,
                 data,
                 IODataset.INPUT_GROUP,
             )
-            self.add_averaged_point(
+            self._add_averaged_point(
                 IODataset.OUTPUT_GROUP,
                 result.simulated_data,
                 data,
                 IODataset.OUTPUT_GROUP,
             )
-            self.add_averaged_point(
+            self._add_averaged_point(
                 IODataset.INPUT_GROUP, result.measured_data, data, "ReferenceInputs"
             )
-            self.add_averaged_point(
+            self._add_averaged_point(
                 IODataset.OUTPUT_GROUP, result.measured_data, data, "ReferenceOutputs"
             )
 

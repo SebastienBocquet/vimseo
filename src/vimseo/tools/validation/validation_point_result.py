@@ -93,7 +93,7 @@ class ValidationPointResult(BaseResult):
         text.add(repr(self.simulated_data))
         return str(text)
 
-    def get_output_names(self) -> list[str]:
+    def _get_output_names(self) -> list[str]:
         """Return the names of the outputs compared to measured data."""
         names = self.metadata.report.get("measured_output_names")
         if names:
@@ -105,7 +105,7 @@ class ValidationPointResult(BaseResult):
     def get_plot_choices(self) -> dict[str, list[str]]:
         if self.measured_data is None or self.simulated_data is None:
             return {}
-        return {"output_names": self.get_output_names()}
+        return {"output_names": self._get_output_names()}
 
     def _create_figures(
         self, settings: ValidationPointVisualizationSettings
@@ -120,7 +120,7 @@ class ValidationPointResult(BaseResult):
         )
 
         figures = {}
-        for output_name in settings.output_names or self.get_output_names():
+        for output_name in settings.output_names or self._get_output_names():
             for comparison_type in ["PDF", "CDF"]:
                 figures[f"{comparison_type}_comparison_{output_name}"] = create_figure(
                     DistributionComparison,
