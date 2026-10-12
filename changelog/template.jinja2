@@ -1,0 +1,22 @@
+{{ top_line }}
+{% set section = sections[''] %}
+{% for category, _ in definitions.items() if category in section %}
+{% set definition = definitions[category] %}
+## {{ definition['name'] }}
+
+{% if definition['showcontent'] %}
+{% for text, values in section[category].items() %}
+{% set issue_links = [] %}
+{% for value in values %}
+{% if not value.startswith('+') %}
+{% set _ = issue_links.append(value) %}
+{% endif %}
+{% endfor %}
+- {{ text }}
+{% if issue_links %}
+  {{ issue_links|join(',\n  ') }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% endfor %}

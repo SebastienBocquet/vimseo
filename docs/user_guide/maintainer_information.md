@@ -21,9 +21,12 @@ release is a tag `X.Y.Z` on `main`, and nothing else in the code holds the versi
 ### Prepare the release
 
 1. Create a branch `release/X.Y.Z` from `upstream/main`.
-2. In `CHANGELOG.md`, rename the section `# Unreleased` to
-   `# Version X.Y.Z (MM/DD/YYYY)`, with the date of the release, and review its
-   entries. Commit with the message `docs(changelog): release X.Y.Z`.
+2. Compile the changelog fragments of `changelog/fragments/` into `CHANGELOG.md`
+   with `towncrier build --version X.Y.Z --date MM/DD/YYYY`: it writes the section
+   `# Version X.Y.Z (MM/DD/YYYY)` and deletes the fragments. Move the entries left in
+   the section `# Unreleased`, if any, into this new section, remove the section
+   `# Unreleased` and review the entries. Commit with the message
+   `docs(changelog): release X.Y.Z`.
 3. Open a pull request to `main`, titled `docs(changelog): release X.Y.Z`, and merge
    it once the tests pass.
 

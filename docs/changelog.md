@@ -6,4 +6,7 @@ International License. To view a copy of this license, visit
 http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative
 Commons, PO Box 1866, Mountain View, CA 94042, USA.
 -->
+Contributors: see [`changelog/fragments/README.md`](https://github.com/vimseo/vimseo/blob/main/changelog/fragments/README.md)
+for how to add a changelog entry for your pull request.
+
 --8<-- "CHANGELOG.md"

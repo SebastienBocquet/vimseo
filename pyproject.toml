@@ -80,6 +80,7 @@ dev = [
     "pytest-cov >=5",
     "pytest-csv >=3",
     "pytest-xdist >=3",
+    "towncrier >=24",
 ]
 doc = [
     "black",
