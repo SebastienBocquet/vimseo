@@ -27,7 +27,7 @@ class ParameterSpaceReaderFileSettings(BaseFileReaderSettings):
 
 
 class ParameterSpaceReader(BaseReaderFile):
-    results: SpaceToolResult
+    result: SpaceToolResult
 
     _EXTENSION = ".json"
 

@@ -158,7 +158,7 @@ class ReaderFileTecplotSettings(BaseFileReaderSettings):
 class ReaderFileTecplot(BaseReaderFile):
     """Reads a Tecplot ASCII file into a mesh-based field."""
 
-    results: FieldResult
+    result: FieldResult
 
     _EXTENSION = ".dat"
 

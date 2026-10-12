@@ -38,7 +38,7 @@ class StreamlitReaderFileGemseoDatasetSettings(StreamlitBaseFileReaderSettings):
 class ReaderFileGemseoDataset(BaseReaderFile):
     """Reads a GEMSEO dataset."""
 
-    results: IODataset
+    result: DatasetResult
 
     _EXTENSION = ".csv"
 
