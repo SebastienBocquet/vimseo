@@ -48,3 +48,16 @@ jobs:
           fail_ci_if_error: true
           files: ./coverage.xml
           verbose: true
+
+  changelog:
+    name: changelog fragment check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Check for a changelog fragment on public API changes
+        run: >-
+          python .github/scripts/check_changelog_fragment.py
+          "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}"
