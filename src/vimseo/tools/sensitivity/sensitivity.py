@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING
 
 from gemseo.algos.parameter_space import ParameterSpace
 from gemseo.uncertainty import create_sensitivity_analysis
-from gemseo.uncertainty import get_available_sensitivity_analyses
 from gemseo.utils.directory_creator import DirectoryNamingMethod
 from pydantic import Field
 
@@ -30,7 +29,6 @@ from vimseo.tools.base_analysis_tool import BaseAnalysisTool
 from vimseo.tools.base_settings import BaseInputs
 from vimseo.tools.base_settings import BaseSettings
 from vimseo.tools.base_tool import BaseTool
-from vimseo.tools.post_tools.sensitivity_plot_factory import SensitivityPlotFactory
 from vimseo.tools.sensitivity.sensitivity_result import SensitivityResult
 
 if TYPE_CHECKING:
@@ -72,7 +70,7 @@ class SensitivityTool(BaseAnalysisTool):
     """Run a sensitivity analysis on the outputs of an :class:`~.IntegratedModel` over a
     :class:`~.gemseo.algos.parameter_space.ParameterSpace`."""
 
-    results: SensitivityResult
+    result: SensitivityResult
 
     _INPUTS = SensitivityToolInputs
 
@@ -94,7 +92,6 @@ class SensitivityTool(BaseAnalysisTool):
             **options,
         )
         self.result = SensitivityResult()
-        self.sensitivity_plot_factory = SensitivityPlotFactory()
 
     @BaseTool.validate
     def execute(
@@ -173,8 +170,3 @@ class SensitivityTool(BaseAnalysisTool):
             name: len(model.get_output_data()[name]) for name in output_names
         })
         return self.result
-
-    @staticmethod
-    def get_available_sensitivity_analyses():
-        """Get the available sensitivity analysis."""
-        return get_available_sensitivity_analyses()

@@ -138,8 +138,8 @@ class VerificationResult(BaseResult):
         from vimseo.tools.post_tools.verification_plots import (
             ErrorMetricHistogramPlotter,
         )
-        from vimseo.tools.verification.base_verification import comparison_renaming
-        from vimseo.tools.verification.base_verification import prepare_overall_dataset
+        from vimseo.tools.verification.base_verification import _comparison_renaming
+        from vimseo.tools.verification.base_verification import _prepare_overall_dataset
         from vimseo.utilities.datasets import get_nb_input_variables
 
         figures = {}
@@ -149,13 +149,13 @@ class VerificationResult(BaseResult):
         )
         for metric_name in settings.metric_names or tuple(self.integrated_metrics):
             if has_several_inputs:
-                dataset = prepare_overall_dataset(
+                dataset = _prepare_overall_dataset(
                     self,
                     [metric_name],
                     self.simulation_and_reference.get_variable_names(
                         IODataset.OUTPUT_GROUP
                     ),
-                    renamer=comparison_renaming,
+                    renamer=_comparison_renaming,
                     add_output_data=True,
                 )
                 figures[f"input_scatter_matrix_{metric_name}"] = ScatterMatrix(

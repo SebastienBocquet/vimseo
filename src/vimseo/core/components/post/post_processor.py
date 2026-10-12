@@ -83,7 +83,7 @@ class PostProcessor(ExternalSoftwareComponent):
     def _run(self, input_data):
         raise NotImplementedError
 
-    def plot_output_data(self, data, x_data, y_data, save_path, save, show, fig_id):
+    def _plot_output_data(self, data, x_data, y_data, save_path, save, show, fig_id):
         """Plot output data of post-processor.
 
         Args:
