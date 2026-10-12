@@ -28,6 +28,8 @@ The format is based on
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!-- towncrier release notes start -->
+
 # Version 0.1.6 (05/12/2026)
 
 ## Added

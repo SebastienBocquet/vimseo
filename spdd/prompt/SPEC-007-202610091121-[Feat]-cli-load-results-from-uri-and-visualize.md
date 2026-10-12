@@ -3,7 +3,7 @@ id: SPEC-007
 title: Load tool results and simulations by reference; visualize_tool_result CLI
 status: Draft
 requirements: [REQ-RES-005, REQ-UX-001, REQ-UX-002, REQ-UX-004]
-depends_on: [SPEC-004, SPEC-005, SPEC-006]
+depends_on: [SPEC-004, SPEC-005, SPEC-006, SPEC-011]
 commits: [2be35ef8, 60e117d7, 8cd10f28, 10f42738, 286219b3, 575a1088]
 owner: Sebastien Bocquet
 ---
@@ -22,6 +22,11 @@ owner: Sebastien Bocquet
   settings of the models and the tools (`archive_manager`, `directory_archive_root`,
   SPEC-004), so that loading a model result and loading a tool result read alike
   (review feedback).
+- Iteration 2, aligned on SPEC-010 iteration 1: the loading functions and the CLI also
+  take `study_name`, the third archive setting (SPEC-011), so that one dict `archive` is
+  passed to every function; and the URI module resolves the URIs of the model results
+  too (`run:{run_id}`, a job directory, `runs:/{mlflow_run_id}`). SPEC-010 owns the
+  need and `vimseo.api.load_model_result`; this canvas owns the URI module and the CLI.
 - Out of scope: writing the archives (SPEC-004, SPEC-005), the figures themselves
   (SPEC-006), the reorganization of the examples and the simplification of the
   data roundtrip (SPEC-010).
@@ -53,6 +58,19 @@ Acceptance criteria:
   `{output_dir}/{name}/` holds the figures, the tables (CSV) and the metadata of each
   result; `--list-options` prints the visualization settings; `--option key=json`
   sets one.
+- Given the API after iteration 2, then `load_tool_result(uri, archive_manager,
+  directory_archive_root, study_name)` and `load_model_results(run_ids,
+  archive_manager, directory_archive_root, study_name)` accept `study_name`, which does
+  not restrict the search: `tool-run:` and `run_id` are searched in every study.
+- Given `visualize_tool_result --study-name <study>`, then the option is accepted and
+  does not restrict the search, as in the API.
+- Given `run:{run_id}`, the path of a job directory or `runs:/{mlflow_run_id}` of a
+  simulation, when `uri.load_model_result(uri, archive_manager,
+  directory_archive_root)` is called, then the `ModelResult` of that simulation is
+  returned.
+- Given a URI of a simulation passed to `load_tool_result`, or of a tool run passed to
+  `load_model_result`, then a `ValueError` names the other function; given an unknown
+  `run:{run_id}`, a `KeyError` names the root searched.
 
 ## Entities
 
@@ -61,17 +79,23 @@ classDiagram
 direction TB
 
 class uri {
+    +RUN_SCHEME = "run"
     +TOOL_RUN_SCHEME = "tool-run"
     +MLFLOW_RUN_SCHEME = "runs"
     +URI_RESOLVERS: dict~str,Callable~
+    +MODEL_URI_RESOLVERS: dict~str,Callable~
     +load_tool_result(uri, archive_manager, directory_archive_root) BaseResult
+    +load_model_result(uri, archive_manager, directory_archive_root) ModelResult
     +guess_archive_manager(directory_archive_root) str
     +get_default_archive_root()
     +get_default_archive_manager() str
 }
 class api {
-    +load_tool_result(uri, archive_manager, directory_archive_root) BaseResult
-    +load_model_results(run_ids, archive_manager, directory_archive_root) list~ModelResult~
+    +load_tool_result(uri, archive_manager, directory_archive_root, study_name) BaseResult
+    +load_model_results(run_ids, archive_manager, directory_archive_root, study_name) list~ModelResult~
+}
+class ModelResult {
+    +from_data(data) ModelResult
 }
 class BaseArchiveManager {
     +get_results_by_run_id(run_ids) list
@@ -86,6 +110,8 @@ api --> uri
 api --> BaseArchiveManager
 uri --> BaseToolArchive : get_tool_result
 uri --> MlflowToolArchive : get_tool_result_of_mlflow_run
+uri --> BaseArchiveManager : get_results_by_run_id, get_result
+uri --> ModelResult : from_data
 visualize_tool_result --> uri
 visualize_tool_result --> BaseResult : visualize, tabulate
 ```
@@ -125,12 +151,35 @@ visualize_tool_result --> BaseResult : visualize, tabulate
      `get_tool_result(tool_run_id)` of an archive manager already opened, and
      `vimseo.api.load_tool_result(uri)`, which opens what it needs. The examples show
      them side by side (SPEC-010).
-5. Rejected alternatives:
+5. The same archive settings everywhere, and URIs for the model results (iteration 2,
+   SPEC-010 iteration 1):
+   - The loading functions and the CLI take `study_name` after `directory_archive_root`
+     (`--study-name`). It does not restrict anything: an identifier is searched in
+     every study (SPEC-011 Approach 3). It is accepted so that the user passes the same
+     dict `archive` to the models, the tools, the searches and the loads.
+   - The URI module resolves both kinds of results, with two registries: `URI_RESOLVERS`
+     for the tool results, `MODEL_URI_RESOLVERS` for the model results. `run:{run_id}`
+     mirrors `tool-run:{tool_run_id}` and uses `get_results_by_run_id`; a path without
+     scheme is a job directory (its `results.json`); `runs:/{mlflow_run_id}` uses
+     `MlflowArchive.get_result`. The result is built by `ModelResult.from_data`.
+   - `runs:/` and the paths name either kind. Each loader checks the kind first: the
+     tag `vimseo.kind` of an MLflow run (SPEC-011), or the files of a directory
+     (`results.json` for a simulation, the result HDF5 and summary for a tool run). A
+     URI of the other kind raises a `ValueError` naming the right function, before any
+     deserialization.
+   - The module stays in `storage_management/tool_archive/`: moving it would break the
+     imports for a naming gain only; its module docstring says it resolves the URIs of
+     both kinds.
+6. Rejected alternatives:
    - One function per archive kind: users would need to know where the result is.
    - Always using the configured archive manager for `tool-run:`: it failed with the
      root of an MLflow archive (`286219b3`).
    - Keeping `load_simulation_results` as an alias: the feature is not released, an
      alias would keep two names for one function.
+   - A single registry and a `load_result(uri)` returning either kind (iteration 2):
+     hides what is returned (SPEC-010 Approach 7).
+   - Rejecting `study_name` in the load functions: the user would need one dict to
+     write and another to read.
 
 ## Structure
 
@@ -142,14 +191,18 @@ visualize_tool_result --> BaseResult : visualize, tabulate
 ### Dependencies
 
 1. `vimseo.api` → `storage_management.tool_archive.uri`, `get_archive_class`.
-2. `uri` → `open_tool_archive`, `DirectoryToolArchive`, `load_result_file`.
+2. `uri` → `open_tool_archive`, `DirectoryToolArchive`, `load_result_file`; for the
+   model results (iteration 2), `get_archive_class`,
+   `BaseArchiveManager.get_results_by_run_id`, `MlflowArchive.get_result`,
+   `ModelResult.from_data`, and `run_kind.KIND_TAG` (SPEC-011).
 3. `visualize_tool_result` → `uri.load_tool_result`, `BaseResult.visualize`,
    `BaseResult.tabulate`.
 
 ### Layered Architecture
 
 1. `api.py`: the public entry points (lazy imports).
-2. `storage_management/tool_archive/uri.py`: URI resolution.
+2. `storage_management/tool_archive/uri.py`: URI resolution, of the tool results and
+   (iteration 2) of the model results.
 3. `tools/visualize_tool_result.py`: the command line.
 
 ## Operations
@@ -213,15 +266,52 @@ visualize_tool_result --> BaseResult : visualize, tabulate
    `ModelResult` objects in the order of the `run_ids`.
 7. `CHANGELOG.md`: renamed function and arguments.
 
+### Iteration 2 (SPEC-010 iteration 1) - `study_name` and the URIs of the model results
+
+1. `vimseo/api.py`: `load_tool_result(uri, archive_manager="", directory_archive_root="",
+   study_name="")` and `load_model_results(run_ids, archive_manager="",
+   directory_archive_root="", study_name="")`; docstring of `study_name`: "Accepted so
+   that the same archive settings are passed to every function; the result is searched
+   in every study, whatever its value." `load_model_result` itself is added by
+   SPEC-010.
+2. `vimseo/storage_management/tool_archive/uri.py`:
+   - Add `RUN_SCHEME = "run"` and `MODEL_URI_RESOLVERS` (`run` → resolver by `run_id`
+     through `get_results_by_run_id` of the archive, `runs` → resolver reading the
+     MLflow run with `MlflowArchive.get_result`).
+   - Add `load_model_result(uri, archive_manager="", directory_archive_root="")`:
+     dispatch on the scheme with the same `_SCHEME_PATTERN`; no scheme: a job directory,
+     read from its `results.json`; returns `ModelResult.from_data`. The manager of
+     `run:` is resolved as for `tool-run:` (given, else guessed from the root, else the
+     configuration).
+   - Add a private check of the kind, shared by both loaders: tag `vimseo.kind` for
+     `runs:/`, files of the directory for a path. A mismatch raises a `ValueError`
+     naming `load_model_result` or `load_tool_result`.
+   - Unknown `run:{run_id}`: `KeyError` naming the root searched, as `tool-run:`.
+   - Module docstring: the URIs of both kinds, in one table.
+3. `vimseo/tools/visualize_tool_result.py`: option `--study-name` (default `""`), passed
+   to `load_tool_result`; help: "accepted for symmetry with the other commands; the
+   result is searched in every study".
+4. Tests:
+   - `tests/storage_management/test_model_result_uri.py` (`fast`; MLflow cases skipped
+     without the extra): the three forms on both backends, a Windows path, an unknown
+     `run_id`, a URI of the wrong kind.
+   - `tests/storage_management/test_tool_result_uri.py`: a URI of a simulation raises a
+     `ValueError` naming `load_model_result`.
+   - `tests/tools/test_visualize_tool_result.py`: `--study-name` accepted.
+5. `docs/user_guide/cli.md`: the option `--study-name`.
+
 ## Norms
 
 1. The shared norms of `docs/specs/index.md`.
 2. Every public loading function is exposed in `vimseo.api`, with lazy imports.
-3. A new URI scheme is added to `URI_RESOLVERS`, never by an `if` in
-   `load_tool_result`.
+3. A new URI scheme is added to `URI_RESOLVERS` (tool results) or
+   `MODEL_URI_RESOLVERS` (model results), never by an `if` in `load_tool_result` or
+   `load_model_result`.
 4. CLI errors are reported with a non-zero return code and a readable message.
 5. A loading function is named `load_<what it returns>`; its archive arguments are
-   `archive_manager`, `directory_archive_root`, in this order.
+   `archive_manager`, `directory_archive_root`, `study_name`, in this order, in the
+   API and the CLI (iteration 2; the private functions of the URI module take the
+   first two only).
 
 ## Safeguards
 
@@ -234,6 +324,14 @@ visualize_tool_result --> BaseResult : visualize, tabulate
    `load_model_results`, `archive_root` → `directory_archive_root` in the API and the
    URI module, `--archive-root` → `--directory-archive-root` in the CLI. Not released
    yet: no alias.
+7. Compatibility (iteration 2): `study_name` is the fourth parameter of
+   `load_tool_result` and `load_model_results`, after `directory_archive_root`;
+   existing calls are unchanged. A path or `runs:/` URI that used to be read without a
+   check of its kind now fails with a `ValueError` when it is of the other kind,
+   instead of a deserialization error.
+8. Integration (iteration 2): the check of the kind of a `runs:/` URI imports MLflow
+   through `import_optional`; `run_kind` imports nothing from MLflow (SPEC-011), so
+   `run:` and paths work in the core profile.
 
 ## Open questions
 
@@ -246,3 +344,5 @@ visualize_tool_result --> BaseResult : visualize, tabulate
 4. Should `model.archive_manager.get_results_by_run_id`, which returns raw dicts, also
    return `ModelResult` objects, so that both ways to read simulations give the same
    type? Left to the retro-specification of `JobBundle` (SPEC-009) and to SPEC-010.
+5. Should the URI module move out of `tool_archive/`, now that it resolves the model
+   results too (e.g. `storage_management/uri.py`)? Not in iteration 2 (Approach 5).
