@@ -21,20 +21,19 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 
 import matplotlib.pyplot as plt
-import numpy as np
 from numpy import array
 from numpy import atleast_1d
 from numpy import interp
 from numpy import linspace
 from numpy import nan
 
-import vimseo.lib_vimseo.solver_utilities as utils
 from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.components.external_software_component import ExternalSoftwareComponent
 from vimseo.core.model_metadata import MetaDataNames
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Mapping
 
     from numpy import ndarray
 
@@ -47,20 +46,28 @@ LOGGER = logging.getLogger(__name__)
 class PostProcessor(ExternalSoftwareComponent):
     """Class defining library of components dedicated to post-processing.
 
-    _run method to be overloaded.
+    Subclasses implement :meth:`_postprocess`, and may override :meth:`_is_run_faulty`
+    and :meth:`_can_postprocess`: :meth:`_run` then decides, from these hooks and
+    :attr:`POSTPROCESS_DESPITE_FAULTY_RUN`, whether to postprocess or to return NaN
+    outputs. Overriding :meth:`_run` bypasses this logic.
     """
-
-    del_jobdir: bool
-    """Whether to delete the job directory after post-processing."""
-
-    DELETE_JOB_DIR: bool = False
-    """If True deletes the Abaqus job directory after post-processing."""
 
     _OUTPUTS_TO_RESAMPLE: ClassVar[Iterable[str]] = []
     """List of names of curves outputs to be resampled into a specific size."""
 
     _RESAMPLING_OUTPUT_SIZE = 100
     """Number of points to have on resampled curves."""
+
+    POSTPROCESS_DESPITE_FAULTY_RUN: ClassVar[bool] = False
+    """Whether to still attempt postprocessing when the RUN stage reported an error.
+
+    When False (default, legacy behavior), the postprocessor returns NaN outputs
+    without attempting any real postprocessing as soon as :meth:`_is_run_faulty`
+    reports an error. When True, :meth:`_postprocess` is still called, provided that
+    :meth:`_can_postprocess` finds enough to work with in the job directory. This
+    lets models opt in individually, so existing models can be migrated to the new
+    behavior progressively.
+    """
 
     def __init__(
         self,
@@ -81,7 +88,38 @@ class PostProcessor(ExternalSoftwareComponent):
         })
 
     def _run(self, input_data):
+        if self._is_run_faulty(input_data) and not self.POSTPROCESS_DESPITE_FAULTY_RUN:
+            return self._generate_failed_output_data()
+        if not self._can_postprocess():
+            return self._generate_failed_output_data()
+        return self._postprocess(input_data)
+
+    def _postprocess(self, input_data) -> dict[str, ndarray]:
+        """Compute the output data from the RUN results.
+
+        Called only when :meth:`_run` decided that postprocessing can be attempted,
+        possibly after a faulty run (see :attr:`POSTPROCESS_DESPITE_FAULTY_RUN`), in
+        which case :meth:`_is_run_faulty` tells the two situations apart.
+        """
         raise NotImplementedError
+
+    def _is_run_faulty(self, input_data) -> bool:
+        """Whether the RUN stage reported an error.
+
+        How the RUN stage reports an error is solver-specific: the base implementation
+        assumes it succeeded, solver-specific subclasses should override this method.
+        """
+        return False
+
+    def _can_postprocess(self) -> bool:
+        """Whether the job directory contains what postprocessing needs (e.g. a
+        result file).
+
+        Checked whether the RUN stage succeeded or not. Base implementation assumes
+        the run can be post-processed; solver-specific subclasses should override this
+        method (e.g. checking for an ODB file for Abaqus).
+        """
+        return True
 
     def plot_output_data(self, data, x_data, y_data, save_path, save, show, fig_id):
         """Plot output data of post-processor.
@@ -109,69 +147,23 @@ class PostProcessor(ExternalSoftwareComponent):
         if show:
             plt.show()
 
-    def evaluate_modulus_10_50(
-        self,
-        strain_history: ndarray,
-        stress_history: ndarray,
-        strain_at_max_strength: float | None = None,
-    ):
-        """Evaluate the modulus between 10 % and 50 % of the maximum strength. Maximum
-        strength can be provided as a reference value If max_strength is None, else the
-        maximum strength is estimated from the stress_history. The maximum strength is
-        computed as the maximum of the stress history for a tension configuration, or the
-        minimum for a compression config. The tension or compression configuration
-        is determined thanks to the sign of the stress in the middle of the history.
+    def _generate_nan_outputs(self, existing_data: Mapping[str, ndarray] | None = None):
+        """Generates dummy outputs for all outputs expected by the output grammar of this
+        component, that are not already present in ``existing_data``.
 
         Args:
-            strain_history: array of strain data
-            stress_history: array of stress data
-            strain_at_max_strength: ultimate strain considered for the calculation
-        """
-
-        if strain_at_max_strength is None:
-            if stress_history[int(len(stress_history) / 2)] > 0:
-                index_max_strength = np.argmax(stress_history)
-            else:
-                index_max_strength = np.argmin(stress_history)
-
-            strain_at_max_strength = strain_history[index_max_strength]
-
-        return utils.local_slope_computation(
-            strain_history,
-            stress_history,
-            x_min=0.10 * strain_at_max_strength,
-            x_max=0.50 * strain_at_max_strength,
-            method="regression",
-        )
-
-    def evaluate_modulus_e005_e025(self, strain_history, stress_history):
-        """Evaluate the modulus between 0.0005 and 0.0025 strain (500 and 2500 micro-
-        def).
-
-        :param strain_history: array of strain data
-        :param stress_history: array of stress data
-        """
-
-        return utils.local_slope_computation(
-            strain_history,
-            stress_history,
-            x_min=0.0005,
-            x_max=0.0025,
-            method="average",
-        )
-
-    def _generate_nan_outputs(self):
-        """Generates dummy outputs for all outputs expected by the output grammar of this
-        component.
-
-        This is useful in case of any error in the model workflow, to get valid dummy
-        outputs that pass the output grammar.
+            existing_data: Output values already computed, keyed by output name. Keys
+                present here are kept as-is. If None, every output-grammar key is filled.
         """
 
         jsondata = self.output_grammar.schema
         output_data = {}
 
         for key in jsondata["properties"]:
+            if existing_data is not None and key in existing_data:
+                output_data[key] = existing_data[key]
+                continue
+
             var_type = jsondata["properties"][key]["items"].get("type")
             if var_type == "number" or var_type == "integer" or var_type == "array":
                 output_data.update({key: array([nan])})
@@ -184,6 +176,15 @@ class PostProcessor(ExternalSoftwareComponent):
                 )
                 raise TypeError(msg)
 
+        return output_data
+
+    def _generate_failed_output_data(self) -> dict[str, ndarray]:
+        """Dummy NaN-filled, resampled output data with the error code set, used
+        when postprocessing failed or could not be attempted at all.
+        """
+        output_data = self._generate_nan_outputs()
+        output_data = self._resample_curve_outputs(output_data)
+        output_data[MetaDataNames.error_code] = array([1])
         return output_data
 
     def _resample_curve_outputs(
