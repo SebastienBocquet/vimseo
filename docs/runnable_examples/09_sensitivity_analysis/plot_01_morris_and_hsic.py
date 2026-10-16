@@ -43,6 +43,10 @@ from __future__ import annotations
 
 import logging
 
+import mlflow
+from gemseo.core.discipline import Discipline
+from mlflow import delete_run
+
 from vimseo import EXAMPLE_RUNS_DIR
 from vimseo.api import activate_logger
 from vimseo.api import create_model
@@ -228,4 +232,85 @@ tool.execute(
         output_names=output_names, sensitivity_algo="HSICAnalysis"
     ),
 )
+tool.result.get_indices_dataframe()
+
+# %%
+# Using runs searched in an MLflow archive
+# ----------------------------------------
+# The samples of a HSIC analysis do not have to come from a DOE:
+# any dataset of runs can be passed as ``dataset``,
+# e.g. runs gathered over several studies and searched in an archive.
+# Here, the runs are archived in [MLflow](https://mlflow.org).
+# The model archives its runs in the experiment ``"hsic_samples"``.
+# Its cache only keeps the last evaluation in memory,
+# so that every point of the DOE is run and archived once,
+# even when the example is executed again.
+model = create_model(
+    model_name,
+    load_case,
+    model_options=IntegratedModelSettings(
+        directory_archive_root=EXAMPLE_RUNS_DIR / "mlflow_archive/sensitivity",
+        directory_scratch_root=EXAMPLE_RUNS_DIR / "scratch/sensitivity",
+        cache_file_path=EXAMPLE_RUNS_DIR
+        / f"caches/sensitivity/{model_name}_{load_case}_mlflow_cache.hdf",
+        archive_manager="MlflowArchive",
+    ),
+)
+model.set_cache(Discipline.CacheType.SIMPLE)
+experiment_name = "hsic_samples"
+model.archive_manager.set_experiment(experiment_name)
+
+# %%
+# The runs of a previous execution of this example are deleted:
+for run_id in mlflow.search_runs(experiment_names=[experiment_name])["run_id"]:
+    delete_run(run_id)
+
+# %%
+# The archive is populated by a Monte Carlo sampling;
+# in practice, the runs would come from previous studies.
+DOETool(working_directory="mlflow_doe_results").execute(
+    inputs=DOEInputs(model=model, parameter_space=space_tool.parameter_space),
+    settings=DOESettings(
+        output_names=output_names, algo="OT_MONTE_CARLO", n_samples=30
+    ),
+)
+
+# %%
+# The successful runs, whose error code is zero, are searched in the archive
+# (see the [MLflow search syntax](https://mlflow.org/docs/latest/ml/search/search-runs/));
+# the metadata of the runs, like the error code, are stored as tags.
+# The query could also filter on the inputs,
+# but it would then restrict their distribution,
+# so the samples would no longer follow the one of the parameter space.
+runs = mlflow.search_runs(
+    experiment_names=[experiment_name], filter_string="tags.error_code = '0'"
+)
+runs
+
+# %%
+# A cache is built from these runs,
+# and converted into a dataset restricted to the inputs of the parameter space
+# and to the analyzed outputs:
+cache = model.create_cache_from_archive(run_ids=runs["run_id"])
+dataset = cache.to_dataset(
+    input_names=space_tool.parameter_space.variable_names, output_names=output_names
+)
+dataset
+
+# %%
+# The dataset is passed to the HSIC analysis.
+# Its samples must still be i.i.d. according to the probability distribution
+# of the inputs, which the tool cannot check, hence a warning.
+# The tool wraps the dataset into a DOE result
+# whose DOE algorithm is ``"Unstructured"``;
+# like a DOE executed by the tool or prepared in advance,
+# this DOE result is saved in the subdirectory ``DOETool`` of the tool.
+tool = SensitivityTool(working_directory="hsic_from_mlflow_results")
+tool.execute(
+    inputs=SensitivityToolInputs(dataset=dataset),
+    settings=SensitivityToolSettings(
+        output_names=output_names, sensitivity_algo="HSICAnalysis"
+    ),
+)
+tool.save_results()
 tool.result.get_indices_dataframe()

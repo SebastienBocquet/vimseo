@@ -111,6 +111,10 @@ def test_prepared_doe(tmp_wd, oat_tool, parameter_space):
     assert_results_equal(tool.result.indices, oat_tool.result.indices)
     assert tool.result.two_sided
     assert tool.result.metadata.report["doe_dataset_name"] == doe_result.dataset.name
+    # The prepared DOE is saved as the result of the DOE sub-tool.
+    assert tool._subtools["DOETool"].result is doe_result
+    tool.save_results()
+    assert (tool.working_directory / "DOETool" / "DOETool_result.hdf5").is_file()
 
 
 def test_prepared_one_sided_doe_from_disk(tmp_wd, parameter_space):

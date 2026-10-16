@@ -156,6 +156,7 @@ class OATSensitivityTool(BaseAnalysisTool):
                 },
             )
         else:
+            self._subtools["DOETool"].result = doe_result
             ignored_names = [
                 name
                 for name in self._STAR_SETTING_NAMES
