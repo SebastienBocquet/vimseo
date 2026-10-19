@@ -69,10 +69,26 @@ def write_json_dict(output_file, dict_outputs):
         f.write(json.dumps(dict_outputs, indent=4))
 
 
-def write_job_outputs_csv_exhaustive(output_file, dict_scalars, dict_curves):
-    """Write an exhaustive CSV output file based on scalars and curves outputs,
-    formated for human reading."""
+def write_job_outputs_csv_exhaustive(odb_name, outputs, *legacy_args):
+    """Write an exhaustive CSV output file based on an outputs dict, formated
+    for human reading. Scalars and curves are split automatically based on
+    their size, and the output file name is derived from ``odb_name``."""
+    if legacy_args:
+        msg = (
+            "write_job_outputs_csv_exhaustive() now takes (odb_name, outputs) "
+            "instead of (output_file, dict_scalars, dict_curves) -- update this caller."
+        )
+        raise TypeError(msg)
 
+    dict_scalars = {}
+    dict_curves = {}
+    for key, value in outputs.items():
+        if np.size(value) > 1:
+            dict_curves[key] = value
+        else:
+            dict_scalars[key] = value
+
+    output_file = 'output_' + odb_name[:-4] + '_' + time_stamper_formatted() + '.csv'
     with open(output_file, 'w') as f:
         f.write(get_metadata_txt())
 
@@ -184,6 +200,71 @@ def local_slope_computation(
         raise ValueError(msg, method)
 
     return modulus
+
+
+def evaluate_modulus_10_50(
+    strain_history, stress_history, strain_at_max_strength=None, basis="strain"
+):
+    """Evaluate the modulus between 10 % and 50 % of the maximum strength, by linear
+    regression.
+
+    Args:
+        strain_history: array of strain data
+        stress_history: array of stress data
+        strain_at_max_strength: The strain at maximum strength, only used if
+            ``basis="strain"``. If None, it is estimated from the stress history: the
+            maximum strength is the maximum of the stress history for a tension
+            configuration, or the minimum for a compression one, the configuration
+            being determined by the sign of the stress in the middle of the history.
+        basis: Either "strain", to regress over the strain interval [10 %, 50 %] of
+            the strain at maximum strength, or "stress", to regress over the stress
+            interval [10 %, 50 %] of the maximum absolute stress.
+    """
+    if basis == "strain":
+        if strain_at_max_strength is None:
+            if stress_history[int(len(stress_history) / 2)] > 0:
+                index_max_strength = np.argmax(stress_history)
+            else:
+                index_max_strength = np.argmin(stress_history)
+            strain_at_max_strength = strain_history[index_max_strength]
+
+        return local_slope_computation(
+            strain_history,
+            stress_history,
+            x_min=0.10 * strain_at_max_strength,
+            x_max=0.50 * strain_at_max_strength,
+            method="regression",
+        )
+
+    if basis == "stress":
+        max_stress = np.max(np.abs(stress_history))
+        return local_slope_computation(
+            strain_history,
+            stress_history,
+            y_min=0.10 * max_stress,
+            y_max=0.50 * max_stress,
+            method="regression",
+        )
+
+    msg = "Unexpected value for basis, expected 'strain' or 'stress': "
+    raise ValueError(msg, basis)
+
+
+def evaluate_modulus_e005_e025(strain_history, stress_history):
+    """Evaluate the modulus between 0.0005 and 0.0025 strain (500 and 2500 micro-
+    def), as the slope between the two extreme points.
+
+    Args:
+        strain_history: array of strain data
+        stress_history: array of stress data
+    """
+    return local_slope_computation(
+        strain_history,
+        stress_history,
+        x_min=0.0005,
+        x_max=0.0025,
+        method="average",
+    )
 
 
 class EnhancedJSONEncoderModelWrapper(json.JSONEncoder):

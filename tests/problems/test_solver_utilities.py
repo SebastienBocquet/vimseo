@@ -131,3 +131,37 @@ def test_local_slope_computation_values(tmp_wd, coeff_power):
     assert computed_modulus_10_50 == pytest.approx(
         (stress_50p - stress_10p) / (strain_50p - strain_10p), rel=0.1
     )
+
+
+@pytest.fixture
+def linear_curve():
+    """A linear stress-strain curve of slope 200."""
+    strain = linspace(0.0, 0.01, 201)
+    return strain, 200.0 * strain
+
+
+@pytest.mark.fast
+@pytest.mark.parametrize("sign", [1.0, -1.0])
+@pytest.mark.parametrize(
+    "kwargs",
+    [{}, {"basis": "stress"}, {"strain_at_max_strength": 0.008}],
+)
+def test_evaluate_modulus_10_50(linear_curve, sign, kwargs):
+    """Both bases recover the slope of a linear curve, in tension and compression."""
+    strain, stress = linear_curve
+    if "strain_at_max_strength" in kwargs:
+        kwargs = {"strain_at_max_strength": sign * kwargs["strain_at_max_strength"]}
+    assert base_utils.evaluate_modulus_10_50(
+        sign * strain, sign * stress, **kwargs
+    ) == pytest.approx(200.0)
+
+
+@pytest.mark.fast
+def test_evaluate_modulus_10_50_wrong_basis(linear_curve):
+    with pytest.raises(ValueError, match="Unexpected value for basis"):
+        base_utils.evaluate_modulus_10_50(*linear_curve, basis="foo")
+
+
+@pytest.mark.fast
+def test_evaluate_modulus_e005_e025(linear_curve):
+    assert base_utils.evaluate_modulus_e005_e025(*linear_curve) == pytest.approx(200.0)

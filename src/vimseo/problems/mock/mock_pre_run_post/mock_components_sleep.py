@@ -79,7 +79,7 @@ class MockSleepPost_LC1(MockSleepPost):
     """Mock Class for post-processing with a loadcase, sleeping ``post_duration``
     seconds."""
 
-    def _run(self, input_data):
+    def _postprocess(self, input_data):
         time.sleep(float(input_data["post_duration"][0]))
         y1 = input_data["y0"] + 1
         return {"y1": y1, "error_code": array([0])}

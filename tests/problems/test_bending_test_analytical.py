@@ -20,6 +20,7 @@ import pytest
 from scipy.interpolate import interp1d
 
 from vimseo.api import create_model
+from vimseo.utilities.test_utils import check_model_outputs
 
 
 @pytest.mark.fast
@@ -39,13 +40,17 @@ from vimseo.api import create_model
 def test_cantilever(tmp_wd, input_data):
     """Check that the BendingTestAnalytical Cantilever model results obtained by
     integration correlate the literal expression."""
-    model = create_model("BendingTestAnalytical", "Cantilever")
-    model.EXTRA_INPUT_GRAMMAR_CHECK = True
-    model.execute(input_data)
+    # The maximum displacement is located at the free end of the beam.
+    model = check_model_outputs(
+        "BendingTestAnalytical",
+        "Cantilever",
+        input_data,
+        expected_outputs={"location_max_dplt": "length"},
+        relative_tolerance=1e-2,
+    )
 
     reaction_forces = model.get_output_data()["reaction_forces"][0]
     max_dplt = model.get_output_data()["maximum_dplt"][0]
-    location_max_dplt = model.get_output_data()["location_max_dplt"][0]
 
     imposed_dplt = model.get_input_data()["imposed_dplt"][0]
     young_modulus = model.get_input_data()["young_modulus"][0]
@@ -66,7 +71,6 @@ def test_cantilever(tmp_wd, input_data):
     )
     assert max_dplt == pytest.approx(expected_max_dplt, rel=1e-3)
     assert reaction_forces == pytest.approx(expected_reaction_forces, rel=1e-3)
-    assert location_max_dplt == pytest.approx(length, rel=1e-2)
 
 
 @pytest.mark.fast
@@ -93,9 +97,14 @@ def test_three_points(tmp_wd, input_data):
     Returns:
 
     """
-    model = create_model("BendingTestAnalytical", "ThreePoints")
-    model.EXTRA_INPUT_GRAMMAR_CHECK = True
-    model.execute(input_data)
+    # The expected values depend on pre-processor outputs, so they are checked below.
+    model = check_model_outputs(
+        "BendingTestAnalytical",
+        "ThreePoints",
+        input_data,
+        expected_outputs={},
+        relative_tolerance=0.0,
+    )
 
     reaction_forces = model.get_output_data()["reaction_forces"][0]
     max_dplt = model.get_output_data()["maximum_dplt"][0]

@@ -26,6 +26,7 @@ from vimseo.problems.tan_oh.tan_oht import PLY_THICKNESS
 from vimseo.problems.tan_oh.tan_oht import STIFFNESS_PROPERTY_NAMES
 from vimseo.problems.tan_oh.tan_oht import compute_c_strat
 from vimseo.problems.tan_oh.tan_oht import material
+from vimseo.utilities.test_utils import check_model_outputs
 
 # The default stacking is quasi-isotropic, which drives ``tan_lib`` to its two
 # degeneracies: the orthotropy axes are undefined (handled by the omega = 0
@@ -79,8 +80,14 @@ def test_tan_oh(tmp_wd, stacking, expected_sigma_xx_d0):
     pytest.importorskip("pyvista")
 
     # c_strat is now derived from the stacking, so only the stacking is passed.
-    model = create_model("TanOpenHole", "Tension")
-    output_data = model.execute({"layup": stacking})
+    model = check_model_outputs(
+        "TanOpenHole",
+        "Tension",
+        {"layup": stacking},
+        expected_outputs={"sigma_xx_d0": expected_sigma_xx_d0},
+        relative_tolerance=1e-2,
+    )
+    output_data = model.get_output_data()
     input_data = model.get_input_data()
     thickness = input_data["thickness"][0]
     model_result = ModelResult.from_data(
@@ -104,7 +111,6 @@ def test_tan_oh(tmp_wd, stacking, expected_sigma_xx_d0):
     applied_stress = input_data["load"][0]
     assert np.isfinite(sigma_xx_d0)
     assert sigma_xx_d0 > applied_stress
-    assert sigma_xx_d0 == pytest.approx(expected_sigma_xx_d0, rel=1e-2)
 
     assert (model.archive_manager.job_directory / "flux.vtk").exists()
 
