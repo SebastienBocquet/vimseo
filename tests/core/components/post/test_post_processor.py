@@ -36,14 +36,13 @@ LOAD_CASE_NAME = "LC1"
 
 def test_successful_run_postprocesses_normally(tmp_wd):
     """With a successful run, all outputs are computed normally."""
-    model = check_model_outputs(
+    check_model_outputs(
         MODEL_NAME,
         LOAD_CASE_NAME,
         input_data={"x1": atleast_1d(3.0), "run_succeeds": atleast_1d(True)},
         expected_outputs={"y1": atleast_1d(6.0), "y2": atleast_1d(9.0)},
         relative_tolerance=1e-6,
     )
-    assert model.get_output_data()[MetaDataNames.error_code][0] == 0
 
 
 def test_faulty_run_without_opt_in_returns_nan_outputs(tmp_wd):

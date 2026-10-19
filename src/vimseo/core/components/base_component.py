@@ -22,7 +22,9 @@ from typing import ClassVar
 from gemseo.core.discipline.discipline import Discipline
 from numpy import atleast_1d
 
+from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.gemseo_discipline_wrapper import GemseoDisciplineWrapper
+from vimseo.core.model_metadata import MetaDataNames
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -65,6 +67,16 @@ class BaseComponent(GemseoDisciplineWrapper):
         self._load_case = load_case
         self._job_directory = ""
         self._check_subprocess = check_subprocess
+
+        # Declared but not required: a component that returns an error code gets it
+        # propagated to the model metadata, instead of having it silently dropped.
+        if MetaDataNames.error_code.name not in self.output_grammar:
+            self.output_grammar.update_from_data({
+                MetaDataNames.error_code.name: atleast_1d(
+                    IntegratedModel._ERROR_CODE_DEFAULT
+                )
+            })
+            self.output_grammar.required_names.discard(MetaDataNames.error_code.name)
 
         # """Initialize input grammar and default values from the material.
 

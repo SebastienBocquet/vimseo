@@ -23,6 +23,7 @@ from numpy.testing import assert_array_equal
 
 from vimseo.api import create_model
 from vimseo.api import get_available_load_cases
+from vimseo.core.model_metadata import MetaDataNames
 from vimseo.problems.mock.output_data import MOCK_OUTPUT_DATA_DIR
 
 
@@ -64,3 +65,4 @@ def test_mock_models(tmp_wd, model_name, load_case):
     tested_names = m.get_output_data_names(remove_metadata=True)
     for name in tested_names:
         assert_array_equal(array(expected_output_data[name]), output_data[name])
+    assert output_data[MetaDataNames.error_code][0] == 0
