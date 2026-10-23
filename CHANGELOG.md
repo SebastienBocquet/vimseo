@@ -28,6 +28,15 @@ The format is based on
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+# Unreleased
+
+## Fixed
+
+- The cache of the discipline wrapped by a `BaseDisciplineModel` (GEMSEO sets a
+  `SimpleCache` by default) is now disabled, the model managing the cache. With the
+  model cache disabled, it still answered: the discipline was not executed but the
+  model archived a new simulation.
+
 # Version 0.1.7 (10/12/2026)
 
 ## Added
