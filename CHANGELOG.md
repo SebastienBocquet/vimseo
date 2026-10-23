@@ -30,6 +30,13 @@ and this project adheres to
 
 # Unreleased
 
+## Added
+
+- A `BaseDisciplineModel` takes a material, declared by `MATERIAL_FILE` or passed to its
+  constructor (`material=...`, also through `create_model`). The material values are
+  the default values of the discipline inputs of the same names. A `ValueError` is
+  raised when a material property is not an input of the discipline.
+
 ## Fixed
 
 - The cache of the discipline wrapped by a `BaseDisciplineModel` (GEMSEO sets a
