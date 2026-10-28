@@ -188,3 +188,16 @@ All settings classes inherit from `BaseSettings` (Pydantic `BaseModel` with `ext
 ### Test structure
 
 Tests mirror the source layout under `tests/`. Reference/mock problems used by tests live in `src/vimseo/problems/`. Test speed markers: `fast`, `medium_slow`, `slow`, `very_slow`. The default `tox`/`pytest` run excludes `slow` and `very_slow` tests.
+
+### Changelog
+
+Whenever a change adds, removes, renames, or changes the signature of a class, method,
+function, or attribute of `src/vimseo/` that has no leading `_` (i.e. a change to the
+public API), add a file to `changelog/fragments/` **before** considering the task
+done -- see [`changelog/fragments/README.md`](changelog/fragments/README.md) for the
+naming convention (`+<slug>.<type>.md`; a file named only by its type, e.g.
+`changed.md`, is silently dropped by towncrier) and the valid types (`added`,
+`changed`, `deprecated`, `removed`, `fixed`, `security`). This applies to an agent's
+own changes exactly as it does to a human contributor's: do not wait to be asked.
+A pull request that touches the public API without such a fragment fails CI
+(`.github/workflows/python-package.yml`).
