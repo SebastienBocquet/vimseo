@@ -39,6 +39,11 @@ and this project adheres to
 - A `BaseDisciplineModel` bounds its inputs with a JSON grammar file, declared by
   `_INPUT_GRAMMAR_FILE`, which can only restrict the input grammar of the discipline.
   The input bounds of a model are those of its input grammar when it is a JSON grammar.
+- A model wrapping a GEMSEO discipline can be declared in a YAML file, without writing
+  Python nor installing code. The models declared in the directories of
+  `VIMSEO_MODELS_PATH` are created by name, as any model. The command `vimseo_wrap`
+  writes the JSON input grammar of a declared model from its discipline
+  (`write-grammar`), to be completed with bounds, and checks a declaration (`check`).
 
 ## Fixed
 

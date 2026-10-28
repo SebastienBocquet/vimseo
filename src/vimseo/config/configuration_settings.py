@@ -72,6 +72,13 @@ class VimseoSettings(
         default="DirectoryArchive", description="The archive manager"
     )
 
+    models_path: str = Field(
+        default="",
+        description="The directories holding the YAML files that declare models "
+        "wrapping a GEMSEO discipline, separated by the path separator of the system "
+        "(``;`` on Windows, ``:`` otherwise).",
+    )
+
     database: DatabaseConfiguration = Field(
         default=DatabaseConfiguration(), description=""
     )

@@ -17,3 +17,4 @@ The following commands can be run in a terminal:
 | ``workflow_executor``    |  Runs a workflow (exported as a ``JSON`` file) |
 | ``dashboard_database_viewer``    |  Explore a database (either a Directory database or an ``MLflow`` database directory)  |
 | ``dashboard_mlflow``    | Opens the ``MLflow`` interface to explore the stored experiments |
+| ``vimseo_wrap``    | Writes the JSON input grammar of a model declared in a YAML file from its GEMSEO discipline (``write-grammar``), and checks the declaration (``check``) |
