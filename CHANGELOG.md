@@ -36,6 +36,9 @@ and this project adheres to
   constructor (`material=...`, also through `create_model`). The material values are
   the default values of the discipline inputs of the same names. A `ValueError` is
   raised when a material property is not an input of the discipline.
+- A `BaseDisciplineModel` bounds its inputs with a JSON grammar file, declared by
+  `_INPUT_GRAMMAR_FILE`, which can only restrict the input grammar of the discipline.
+  The input bounds of a model are those of its input grammar when it is a JSON grammar.
 
 ## Fixed
 
