@@ -29,6 +29,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
+    from gemseo.core.grammars.base_grammar import BaseGrammar
+
     from vimseo.core.load_case import LoadCase
     from vimseo.material.material import Material
 
@@ -39,6 +41,11 @@ class BaseComponent(GemseoDisciplineWrapper):
     """A base component.
 
     A ``IntegratedModel`` executes a chain of ``BaseComponent``.
+
+    Every component may read the error code of the upstream components, and may
+    return its own, both under the name ``MetaDataNames.error_code``. A component that
+    does not return an error code passes the upstream one on, so that the error code
+    of the model is the last one returned along the chain.
     """
 
     _job_directory: Path | str
@@ -55,6 +62,22 @@ class BaseComponent(GemseoDisciplineWrapper):
     default_cache_type = Discipline.CacheType.HDF5
     default_grammar_type = Discipline.GrammarType.JSON
 
+    def __init_subclass__(cls, **kwargs):
+        """Reject the components still declaring the removed ``_ERROR_CODE_NAME``.
+
+        Raises:
+            AttributeError: When the component declares ``_ERROR_CODE_NAME``.
+        """
+        super().__init_subclass__(**kwargs)
+        if "_ERROR_CODE_NAME" in cls.__dict__:
+            msg = (
+                f"The class attribute _ERROR_CODE_NAME of {cls.__name__} has been "
+                f"removed: every component reads and returns its error code as "
+                f"'{MetaDataNames.error_code.value}', so that the model gets it. "
+                f"Remove it, and use MetaDataNames.error_code instead."
+            )
+            raise AttributeError(msg)
+
     def __init__(
         self,
         load_case: LoadCase | None = None,
@@ -63,13 +86,11 @@ class BaseComponent(GemseoDisciplineWrapper):
         check_subprocess: bool = False,
     ) -> None:
         super().__init__()
-        # A component may return an error code; without it in its grammar,
-        # GEMSEO would drop it and the model would report the default one.
-        # It is optional.
-        error_code_name = MetaDataNames.error_code.value
-        if error_code_name not in self.output_grammar:
-            self.output_grammar.update_from_data({error_code_name: atleast_1d(0)})
-            self.output_grammar.required_names.discard(error_code_name)
+        # A component may read the upstream error code and return its own; without
+        # them in its grammars, GEMSEO would drop them and the model would report the
+        # default one.
+        self._declare_error_code(self.input_grammar)
+        self._declare_error_code(self.output_grammar)
         self._load_case = load_case
         self._job_directory = ""
         self._check_subprocess = check_subprocess
@@ -103,6 +124,34 @@ class BaseComponent(GemseoDisciplineWrapper):
                 name: atleast_1d(value)
                 for name, value in material.get_values_as_dict().items()
             })
+
+    @staticmethod
+    def _declare_error_code(grammar: BaseGrammar) -> None:
+        """Declare the error code in a grammar as an optional variable.
+
+        Args:
+            grammar: The grammar. If it already declares the error code (e.g. from a
+                grammar file), it is left unchanged.
+        """
+        error_code_name = MetaDataNames.error_code.value
+        if error_code_name not in grammar:
+            grammar.update_from_data({error_code_name: atleast_1d(0)})
+            grammar.required_names.discard(error_code_name)
+
+    @staticmethod
+    def _get_upstream_error_code(input_data) -> int:
+        """Return the error code reported by the upstream components.
+
+        Args:
+            input_data: The input data of the component.
+
+        Returns:
+            The upstream error code, or 0 if no upstream component reported one.
+        """
+        error_code = input_data.get(MetaDataNames.error_code.value)
+        if error_code is None:
+            return 0
+        return int(atleast_1d(error_code)[0])
 
     @property
     def job_directory(self):

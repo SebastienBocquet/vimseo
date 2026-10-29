@@ -103,7 +103,8 @@ verificator.save_results()
 
 # %%
 # The saved results can be loaded in a dashboard to be explored.
-# The dashboard is opened by typing ``dashboard_tool_result`` in a terminal.
+# The dashboard is opened by typing ``dashboard_results`` in a terminal
+# (page **Tool Results**); it is provided by the plugin vimseo-dashboards.
 # The figures and the tables can also be written in a directory by typing
 # ``visualize_tool_result --uri path/to/the/result.hdf5``.
 

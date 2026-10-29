@@ -18,7 +18,7 @@ The following commands can be run in a terminal:
 | ``dashboard_mlflow``    | Opens the ``MLflow`` interface to explore the stored experiments |
 | ``visualize_tool_result``    | Writes the figures, the tables and the metadata of tool results in a directory, from their URIs (result file, tool run directory, ``tool-run:{tool_run_id}`` or ``runs:/{mlflow_run_id}``) |
 
-The package [vimseo-dashboards](https://gitlab.com/gemseo/dev/vimseo-dashboards) adds
+The package [vimseo-dashboards](https://forge-is.pf.irt-saintexupery.com/vims/vimseo-dashboards) adds
 ``dashboard_results``, which explores any tool result loaded from a file, an archive
 or a URI (with a specific view for a validation case), edits a parameter space, and
 explores the model results of an archive (``DirectoryArchive`` or ``MlflowArchive``):

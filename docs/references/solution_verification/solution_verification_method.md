@@ -24,7 +24,8 @@ to estimate the confidence in Richardson extapolation.
     The time (for explicit models) or pseudo-time integration scheme could also be verified.
 
 These two methods are implemented in VIMSEO, in the tool named ``DiscretizationSolutionVerification``.
-and can be displayed by the dashboard ``dashboard_tool_result``,
+and can be displayed by the page **Tool Results** of the dashboard ``dashboard_results``
+(provided by the plugin [vimseo-dashboards](https://forge-is.pf.irt-saintexupery.com/vims/vimseo-dashboards)),
 or written in a directory with the command ``visualize_tool_result``.
 Solution verification is performed through a convergence study of the solution
 on four progressively refined meshes (only three meshes would be strictly necessary),

@@ -102,30 +102,30 @@ class MetaData:
 MetaDataNames = StrEnum("MetaDataNames", [field.name for field in fields(MetaData)])
 
 
+# Deliberately aberrant values: they only give the types of the metadata to the
+# output grammar of the models, and must never be found in the outputs of a model.
 DEFAULT_METADATA = {
     name.value: value
     for name, value in {
-        MetaDataNames.model: array(["model"]),
-        MetaDataNames.load_case: array(["load_case"]),
+        MetaDataNames.model: array(["__default_model__"]),
+        MetaDataNames.load_case: array(["__default_load_case__"]),
         MetaDataNames.error_code: array([-666]),
-        MetaDataNames.description: array(["this is a description"]),
-        MetaDataNames.job_name: array(["job_name"]),
-        MetaDataNames.persistent_result_files: array(["field.vtk", "img.png"]),
-        MetaDataNames.n_cpus: array([4]),
-        MetaDataNames.date: array(["2025-06-23 14:51:10.350905"]),
-        MetaDataNames.cpu_time: array([3600.0]),
-        MetaDataNames.user: array(["john.doe"]),
-        MetaDataNames.machine: array(["IPF7101"]),
-        MetaDataNames.vims_git_version: array(["cdb099aa152e5bf84ad3"]),
-        MetaDataNames.directory_archive_root: array(["my_archive/"]),
-        MetaDataNames.directory_archive_job: array([
-            "my_archive/BendingTestFem/Cantilever/3"
-        ]),
-        MetaDataNames.directory_scratch_root: array(["my_scratch/"]),
-        MetaDataNames.directory_scratch_job: array(["my_scratch/ddc2168sq4c4rr"]),
-        MetaDataNames.run_id: array(["5f0c1c1a2b3d4e6f8a9b0c1d2e3f4a5b"]),
-        MetaDataNames.tool_run_id: array(["a1b2c3d4e5f60718293a4b5c6d7e8f90"]),
-        MetaDataNames.study_name: array(["default_study"]),
-        MetaDataNames.status: array(["FINISHED"]),
+        MetaDataNames.description: array(["__default_description__"]),
+        MetaDataNames.job_name: array(["__default_job_name__"]),
+        MetaDataNames.persistent_result_files: array(["__default_file__"]),
+        MetaDataNames.n_cpus: array([-1]),
+        MetaDataNames.date: array(["1900-01-01 00:00:00"]),
+        MetaDataNames.cpu_time: array([-1.0]),
+        MetaDataNames.user: array(["__default_user__"]),
+        MetaDataNames.machine: array(["__default_machine__"]),
+        MetaDataNames.vims_git_version: array(["__default_git_version__"]),
+        MetaDataNames.directory_archive_root: array(["__default_archive_root__"]),
+        MetaDataNames.directory_archive_job: array(["__default_archive_job__"]),
+        MetaDataNames.directory_scratch_root: array(["__default_scratch_root__"]),
+        MetaDataNames.directory_scratch_job: array(["__default_scratch_job__"]),
+        MetaDataNames.run_id: array(["__default_run_id__"]),
+        MetaDataNames.tool_run_id: array(["__default_tool_run_id__"]),
+        MetaDataNames.study_name: array(["__default_study__"]),
+        MetaDataNames.status: array(["__default_status__"]),
     }.items()
 }

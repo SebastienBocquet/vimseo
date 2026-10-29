@@ -20,6 +20,8 @@ import shutil
 import subprocess
 from typing import TYPE_CHECKING
 
+from numpy import atleast_1d
+
 from vimseo.core.components.base_component import BaseComponent
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.job_executor.base_executor import JobExecutor
@@ -48,9 +50,6 @@ class ExternalSoftwareComponent(BaseComponent):
     _job_executor: JobExecutor
     """A job executor."""
 
-    _ERROR_CODE_NAME = MetaDataNames.error_code.value
-    """The name of the error code in the output grammar."""
-
     def __init__(
         self,
         load_case: LoadCase | None = None,
@@ -60,9 +59,11 @@ class ExternalSoftwareComponent(BaseComponent):
     ) -> None:
         super().__init__(load_case, material_grammar_file, material, check_subprocess)
 
-        # External software reports a scalar error code, which is required.
-        self.output_grammar.update_from_data({self._ERROR_CODE_NAME: 0})
-        self.output_grammar.required_names.add(self._ERROR_CODE_NAME)
+        # External software always reports an error code, which is thus required.
+        self.output_grammar.update_from_data({
+            MetaDataNames.error_code.value: atleast_1d(0)
+        })
+        self.output_grammar.required_names.add(MetaDataNames.error_code.value)
 
         self._job_executor = JobExecutor("")
         self._attached_files = []
@@ -98,14 +99,12 @@ class ExternalSoftwareComponent(BaseComponent):
         error_run = self._job_executor.execute(
             check_subprocess=self._check_subprocess,
         )
-        error_run = 0
         if error_run:
             LOGGER.warning(
                 f"An error has occurred in {self.__class__.__name__}, "
                 f"running command {self._job_executor._command_line}."
             )
 
-        error_run = 0
         error_run = self._check_subprocess_completion(
             error_run, self._check_subprocess, self._job_executor.command_line.split()
         )
@@ -118,7 +117,7 @@ class ExternalSoftwareComponent(BaseComponent):
 
         output_data = {}
         self.post_run(input_data, output_data)
-        output_data[self._ERROR_CODE_NAME] = error_run
+        output_data[MetaDataNames.error_code] = atleast_1d(error_run)
 
         return output_data
 
@@ -151,7 +150,9 @@ class ExternalSoftwareComponent(BaseComponent):
             check: Whether the subprocess raises an error if it fails.
             cmd: The subprocess command.
 
-        Returns: The error code.
+        Returns: The error code, 1 if the subprocess failed, 0 otherwise.
+            A failed subprocess may return any non-zero code, e.g. a negative one
+            when killed by a signal, while a positive error code reports a failure.
         """
         if error_subprocess == 0:
             error_subprocess = int(not self._is_successful_execution())
@@ -166,11 +167,11 @@ class ExternalSoftwareComponent(BaseComponent):
                 )
 
             LOGGER.warning(
-                "Subprocess returned an error which is ignored "
+                f"Subprocess returned an error {error_subprocess} which is ignored "
                 "(``check_subprocess=False``)."
             )
 
-        return error_subprocess
+        return int(error_subprocess != 0)
 
     def add_attached_files(self, files_to_attach: list[str, Path]) -> None:
         """Add files to be copied to job directory.

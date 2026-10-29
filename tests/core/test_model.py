@@ -33,6 +33,7 @@ from vimseo.core.model_metadata import DEFAULT_METADATA
 from vimseo.core.model_metadata import MetaDataNames
 from vimseo.core.pre_run_post_model import PreRunPostModel
 from vimseo.job_executor.base_user_job_options import BaseUserJobSettings
+from vimseo.problems.mock import X1_DEFAULT_VALUE
 from vimseo.problems.mock.mock_pre_run_post.mock_components_lc1 import MockPost_LC1
 from vimseo.problems.mock.mock_pre_run_post.mock_components_lc2 import MockPost_LC2
 from vimseo.problems.mock.mock_pre_run_post.mock_with_material import (
@@ -44,6 +45,7 @@ from vimseo.problems.mock.mock_reference_data.mock_main_reference_functions impo
 from vimseo.problems.mock.mock_reference_data.mock_main_reference_functions import (
     mock_model_lc2_overall_function,
 )
+from vimseo.utilities.test_utils import check_model_outputs
 
 JOB_NAME = "DummyJobDir"
 
@@ -65,21 +67,21 @@ def test_check_data_flow(tmp_wd):
                 "x1",
                 "x1_minimum_only",
                 "x1_no_bounds",
+                "error_code",
             ],
             "outputs": ["x2", "error_code"],
         },
         "MockRun": {
-            "inputs": [
-                "x2",
-            ],
+            "inputs": ["x2", "error_code"],
             "outputs": ["y0", "error_code"],
         },
         "MockPost_LC1": {
-            "inputs": ["y0"],
+            "inputs": ["y0", "error_code"],
             "outputs": ["y1", "error_code"],
         },
     }
-    # Every component declares an optional error code.
+    # Every component declares an optional error code, as input and output, but the
+    # error code is not an input of the model.
 
     for io_key in ["model_inputs", "model_outputs"]:
         assert set(expected[io_key]) == set(model.get_dataflow()[io_key])
@@ -94,21 +96,19 @@ def test_check_data_flow(tmp_wd):
 def test_execute(tmp_wd, load_case):
     """Check that after model execution, the output value is coherent regarding the
     default inputs."""
-    model = create_model("MockModel", load_case)
-    model.EXTRA_INPUT_GRAMMAR_CHECK = True
-    out = model.execute()
+    expected_outputs = {
+        "y1": atleast_1d(mock_model_lc1_overall_function(X1_DEFAULT_VALUE))
+    }
+    if load_case == "LC2":
+        expected_outputs["y1_2"] = atleast_1d(
+            mock_model_lc2_overall_function(X1_DEFAULT_VALUE, 0.0)[1]
+        )
+    model = check_model_outputs(
+        "MockModel", load_case, {}, expected_outputs, relative_tolerance=1e-12
+    )
     assert (
         model.default_input_data["x1"] == model._pre_processor.default_input_data["x1"]
     )
-    assert out["y1"] == array([
-        mock_model_lc1_overall_function(model.default_input_data["x1"])
-    ])
-    if load_case == "LC2":
-        assert out["y1_2"] == array([
-            mock_model_lc2_overall_function(
-                model.default_input_data["x1"], model.default_input_data["x1_2"]
-            )[1]
-        ])
 
 
 def test_metadata_added_to_outputs(tmp_wd):

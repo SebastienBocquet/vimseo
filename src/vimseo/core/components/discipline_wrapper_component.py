@@ -18,12 +18,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from gemseo.core.execution_status import ExecutionStatus
-from numpy import atleast_1d
-
-from vimseo.core.base_integrated_model import IntegratedModel
 from vimseo.core.components.base_component import BaseComponent
-from vimseo.core.model_metadata import MetaDataNames
 
 if TYPE_CHECKING:
     from gemseo.core.discipline import Discipline
@@ -42,11 +37,8 @@ class DisciplineWrapperComponent(BaseComponent):
         self._discipline = discipline
         self.input_grammar = discipline.input_grammar
         self.output_grammar = deepcopy(discipline.output_grammar)
-        self.output_grammar.update_from_data({
-            MetaDataNames.error_code.name: atleast_1d(
-                IntegratedModel._ERROR_CODE_DEFAULT
-            )
-        })
+        # The error code of a wrapped model is passed on as is.
+        self._declare_error_code(self.output_grammar)
 
     @property
     def job_executor(self):
@@ -64,8 +56,6 @@ class DisciplineWrapperComponent(BaseComponent):
         return getattr(self._discipline, "job_executor", None)
 
     def _run(self, input_data):
-        output_data = self._discipline.execute(input_data)
-        output_data[MetaDataNames.error_code] = atleast_1d(
-            1 if self.execution_status.value == ExecutionStatus.Status.FAILED else 0
-        )
-        return output_data
+        # The output data of the wrapped discipline, including its error code if any,
+        # are returned unchanged; a failure of the wrapped discipline raises.
+        return self._discipline.execute(input_data)

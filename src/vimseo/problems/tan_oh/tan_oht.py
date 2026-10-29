@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -60,7 +61,6 @@ from vimseo.utilities.plotting_utils import plotly_save_and_show
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from collections.abc import Sequence
-    from pathlib import Path
 
     from vimseo.core.load_case import LoadCase
     from vimseo.tools.post_tools.plot_parameters import Plot
@@ -611,9 +611,9 @@ class TanOpenHole(IntegratedModel):
                             jac_layup[arg_index][out_index]
                         ).reshape(1, -1)
 
-    def _plot_curves(self, figures, result, directory_path, save, show):
+    def _plot_curves(self, figures, result, directory_path, save, show, prefix=""):
         figures = super()._plot_curves(
-            figures, result, directory_path, save=False, show=False
+            figures, result, directory_path, save=False, show=False, prefix=prefix
         )
         fig = figures["line_center_sigma_xx_vs_line_center_y"]
 
@@ -676,9 +676,9 @@ class TanOpenHole(IntegratedModel):
         )
 
         for key, fig in figures.items():
-            file_name = f"{self.name}_{self._load_case.name}_{key}.html"
+            file_name = f"{prefix}{key}.html"
             plotly_save_and_show(
-                fig, save=save, show=show, file_path=directory_path / file_name
+                fig, save=save, show=show, file_path=Path(directory_path) / file_name
             )
 
         return figures

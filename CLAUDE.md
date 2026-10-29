@@ -14,12 +14,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 **Python environment:** run the tests, the examples and any script with the tox
-environment `.tox/py312/` (`.tox/py312/Scripts/python.exe` on Windows), which holds
-every extra and the dev dependencies with VIMSEO installed in editable mode. Do not use
-`.venv/`: it is not kept in sync with `pyproject.toml` (e.g. it lacks `kaleido`).
+environment `.tox/py312/` (`.tox/py312/bin/python` on Linux,
+`.tox/py312/Scripts/python.exe` on Windows), which holds every extra and the dev
+dependencies with VIMSEO installed in editable mode. Do not use `.venv/`: it is not
+kept in sync with `pyproject.toml` (e.g. it lacks `kaleido` and `pyvista`, so tests
+needing them are silently skipped).
 
 ```bash
-.tox/py312/Scripts/python.exe -m pytest tests/tools/test_doe.py
+.tox/py312/bin/python -m pytest tests/tools/test_doe.py          # Linux
+.tox/py312/Scripts/python.exe -m pytest tests/tools/test_doe.py  # Windows
 ```
 
 **Install (editable, with every extra and the dev dependencies):**

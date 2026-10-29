@@ -71,6 +71,28 @@ Install them all at once with `pip install "vimseo[all]"`.
 
 Asking for a feature whose extra is missing raises an error naming the extra to install.
 
+### Plugins
+
+`pip install vimseo` installs the latest release of **VIMSEO**. Its plugins, such as
+[vimseo-dashboards](https://forge-is.pf.irt-saintexupery.com/vims/vimseo-dashboards),
+are not necessarily released for it.
+
+To benefit from the latest developments, install **VIMSEO** from its branch `main`
+and the plugins from their branch `develop`:
+
+```
+pip install "vimseo[dashboard,mlflow] @ git+https://github.com/vimseo/vimseo.git@main"
+pip install git+https://forge-is.pf.irt-saintexupery.com/vims/vimseo-dashboards.git@develop
+```
+
+**vimseo-dashboards** provides the command `dashboard_results`, whose pages are:
+
+- **Tool Results**: the values and the figures of a tool result,
+  loaded from a file, an archive of tool runs or a URI;
+- **Parameter Space**: the edition of a parameter space;
+- **Model Results**: the model results of an archive, refined by study, model,
+  load case, status or query.
+
 ---
 **NOTE**
 

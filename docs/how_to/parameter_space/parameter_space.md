@@ -43,8 +43,8 @@ Indeed, the distributions can be truncated by the bounds and, for example,
 a triangular distribution may have a shape very different from the expected one.
 
 As a result, VIMSEO has a dedicated dashboard to set up a parameter space.
-The dashboard can be displayed by typing ``dashboard_space`` in a console
-where VIMSEO is installed.
+The dashboard is the page **Parameter Space** of the command ``dashboard_results``,
+provided by the plugin [vimseo-dashboards](https://forge-is.pf.irt-saintexupery.com/vims/vimseo-dashboards).
 The following inputs can be used to initialize the parameter space:
   - a model
   - a ``SpaceTool`` result

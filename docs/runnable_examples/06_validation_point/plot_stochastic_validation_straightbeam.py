@@ -214,13 +214,12 @@ figures["PDF_comparison_reaction_forces"]
 figures["CDF_comparison_reaction_forces"]
 
 # %%
-# The saved result can be visualised in a dashboard by typing in a terminal
-# where the vims_composites Python environment is activated:
-# ``dashboard_validation_point_viewer``
+# The saved result can be visualised in the page **Tool Results**
+# of the dashboard ``dashboard_results``, provided by the plugin vimseo-dashboards.
 
 # %%
 # The simulated input space can be exported to disk, to be visualized with
-# ``dashboard_space``.
+# the page **Parameter Space** of ``dashboard_results``.
 # In HDF5 format:
 space_tool_result = SpaceToolResult(
     parameter_space=validation_point_tool.simulated_input_space

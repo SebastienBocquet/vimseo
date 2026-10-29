@@ -18,7 +18,7 @@ from __future__ import annotations
 import pytest
 from numpy import atleast_1d
 
-from vimseo.api import create_model
+from vimseo.utilities.test_utils import check_model_outputs
 
 pytestmark = pytest.mark.fast
 
@@ -28,15 +28,16 @@ def test_mock_model_sleep_executes_with_overridden_durations(tmp_wd):
 
     The default 30s-per-phase durations are overridden to 0 so the test stays fast.
     """
-    model = create_model("MockModelSleep", "LC1")
-    model.default_input_data["x1"] = atleast_1d(1.0)
-    model.default_input_data["pre_duration"] = atleast_1d(0.0)
-    model.default_input_data["run_duration"] = atleast_1d(0.0)
-    model.default_input_data["post_duration"] = atleast_1d(0.0)
-    model.EXTRA_INPUT_GRAMMAR_CHECK = True
-
-    out = model.execute()
-
     # x2 = x1 + 2, y0 = x2 * 2, y1 = y0 + 1
-    assert out["y1"][0] == pytest.approx(7.0)
-    assert out["error_code"][0] == 0
+    check_model_outputs(
+        "MockModelSleep",
+        "LC1",
+        input_data={
+            "x1": atleast_1d(1.0),
+            "pre_duration": atleast_1d(0.0),
+            "run_duration": atleast_1d(0.0),
+            "post_duration": atleast_1d(0.0),
+        },
+        expected_outputs={"y1": atleast_1d(7.0)},
+        relative_tolerance=1e-6,
+    )
