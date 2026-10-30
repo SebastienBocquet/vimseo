@@ -22,14 +22,14 @@
 #        :author: Ludovic BARRIERE
 #    OTHER AUTHORS   - MACROSCOPIC CHANGES
 """
-Usage of the SurrogateTool for semi-analytical beam Model
+Usage of the SurrogateAnalysisNode for semi-analytical beam Model
 =========================================================
 
-:class:`~.SurrogateTool` provides methods for the generation of surrogate models.
+:class:`~.SurrogateAnalysisNode` provides methods for the generation of surrogate models.
 It identifies the best surrogate and associated quality measures within a list of
 default surrogate candidates.
 It uses either a default list of candidates or candidates specified by the user.
-The :class:`~.BendingTestAnalytical` is used to illustrate the use of this tool.
+The :class:`~.BendingTestAnalytical` is used to illustrate the use of this analysis node.
 """
 
 # %%
@@ -45,12 +45,12 @@ from gemseo.post.dataset.scatter_plot_matrix import ScatterMatrix
 from numpy import array
 
 from vimseo import EXAMPLE_RUNS_DIR
+from vimseo.analysis_nodes.doe.doe import DOEAnalysisNode
+from vimseo.analysis_nodes.space.space_analysis_node import SpaceAnalysisNode
+from vimseo.analysis_nodes.surrogate.surrogate import SurrogateAnalysisNode
 from vimseo.api import activate_logger
 from vimseo.api import create_model
 from vimseo.core.model_settings import IntegratedModelSettings
-from vimseo.tools.doe.doe import DOETool
-from vimseo.tools.space.space_tool import SpaceTool
-from vimseo.tools.surrogate.surrogate import SurrogateTool
 
 activate_logger(level=logging.INFO)
 
@@ -73,15 +73,15 @@ model = create_model(
 )
 
 # %%
-# The SpaceTool provides methods to build parameter spaces.
+# The SpaceAnalysisNode provides methods to build parameter spaces.
 # One can check available builders first:
 
-space_tool = SpaceTool(working_directory="SpaceTool_results")
+space_analysis_node = SpaceAnalysisNode(working_directory="SpaceAnalysisNode_results")
 
 # %%
 # Build a parameter space based on custom minimum and maximum values.
 # This parameter space has 2 scalar variables with large variations.
-space_tool.execute(
+space_analysis_node.execute(
     distribution_name="OTTriangularDistribution",
     space_builder_name="FromMinAndMax",
     minimum_values={
@@ -99,21 +99,21 @@ space_tool.execute(
         # "relative_dplt_location": 1.0,
     },
 )
-print(space_tool.parameter_space)
+print(space_analysis_node.parameter_space)
 
 # %%
 # Create a :class:`~.gemseo.datasets.dataset.Dataset` (from a DOE)
 # ----------------------------------------------------------------
-# The :class:`~.SurrogateTool` used a dataset from which the surrogate model is generated.
+# The :class:`~.SurrogateAnalysisNode` used a dataset from which the surrogate model is generated.
 # In this example we build the dataset by
 # creating a DOE. However, the dataset could be manually created,
 # or imported from a HDF5 cache file.
-# To generate a dataset from a DOE we use the :class:`~.DOETool`, along with the :class:`~.SpaceTool`.
+# To generate a dataset from a DOE we use the :class:`~.DOEAnalysisNode`, along with the :class:`~.SpaceAnalysisNode`.
 
-doe_tool = DOETool(working_directory="doe_tool_results")
-dataset = doe_tool.execute(
+doe_analysis_node = DOEAnalysisNode(working_directory="doe_analysis_node_results")
+dataset = doe_analysis_node.execute(
     model=model,
-    parameter_space=space_tool.parameter_space,
+    parameter_space=space_analysis_node.parameter_space,
     output_names=["reaction_forces"],
     algo="OT_OPT_LHS",
     n_samples=200,
@@ -133,22 +133,24 @@ fig
 # Building a surrogate model
 # --------------------------
 
-surrogate_tool = SurrogateTool(working_directory="surrogate_tool_results")
+surrogate_analysis_node = SurrogateAnalysisNode(
+    working_directory="surrogate_analysis_node_results"
+)
 
 # %%
-# Settings of the tool can be checked (other options can be redefined throughout
-# :code:`surrogate_tool.update_options()`):
+# Settings of the analysis node can be checked (other options can be redefined throughout
+# :code:`surrogate_analysis_node.update_options()`):
 
-pprint.pprint(surrogate_tool.options)
+pprint.pprint(surrogate_analysis_node.options)
 
 # %%
-# There are two main ways for using the SurrogateTool:
+# There are two main ways for using the SurrogateAnalysisNode:
 #
 # * One wants to use a specific surrogate function (e.g. 2nd order polynomial regression)
 #
 # .. code::
 #
-#    surrogates = surrogate_tool.execute(model=model, doe_results=dataset,
+#    surrogates = surrogate_analysis_node.execute(model=model, doe_results=dataset,
 #                                        algo="PolynomialRegressor", algo_options={"degree": 2, "fit_intercept": True}
 #                                        output_names=["dplt_at_force_location"])
 
@@ -156,19 +158,19 @@ pprint.pprint(surrogate_tool.options)
 #
 # * One wants to select the best surrogate function over a set of candidates and their
 # parameters (default candidates and other options can be redefined throughout
-# :code:`surrogate_tool.update_options()`). A quality measure (associated with an
+# :code:`surrogate_analysis_node.update_options()`). A quality measure (associated with an
 # evaluation method) is used. By default, it uses "Mean Squared Error" with
 # "kfolds" evaluation method.
 
-surrogate_results = surrogate_tool.execute(
+surrogate_results = surrogate_analysis_node.execute(
     model=model,
     dataset=dataset,
     output_names=["reaction_forces"],
     quality_measures=["MSEMeasure", "R2Measure"],
 )
-surrogate_tool.save_results()
+surrogate_analysis_node.save_results()
 surrogate = surrogate_results.model
-print(surrogate_tool.selected_algo)
+print(surrogate_analysis_node.selected_algo)
 
 # %%
 # !!! note
@@ -181,7 +183,7 @@ print(surrogate_tool.selected_algo)
 #                          "LinearRegressor", {'fit_intercept': [True, False]},
 #                          "PolynomialRegressor", {'degree': [4, 5], 'fit_intercept': [True, False]}
 #                          }
-#     surrogate_tool.set_candidates(custom_candidates)
+#     surrogate_analysis_node.set_candidates(custom_candidates)
 #     ```
 #
 
@@ -207,7 +209,7 @@ true_output["reaction_forces"]
 # %%
 # Analysing the quality of surrogates
 # -----------------------------------
-# SurrogateTool comes with functions to analyse several quality measures that could be complementary.
+# SurrogateAnalysisNode comes with functions to analyse several quality measures that could be complementary.
 # One can define the quality measures to be evaluated, as well as the evaluation methods
 # (alternatively, use default selection). Here, default ones are considered.
 #
@@ -216,12 +218,14 @@ true_output["reaction_forces"]
 #
 # Then, show the quality measures:
 
-print(surrogate_tool.result)
+print(surrogate_analysis_node.result)
 
 # %%
 # Predictions versus observations can be plotted:
 
-figures = surrogate_tool.result.plot(output_names=["reaction_forces"], show=True)
+figures = surrogate_analysis_node.result.plot(
+    output_names=["reaction_forces"], show=True
+)
 
 # %%
 # The user is invited to visit the |gemseo| documentation for a complete view of the
