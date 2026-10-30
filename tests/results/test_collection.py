@@ -21,6 +21,7 @@ import pytest
 from numpy import atleast_1d
 
 from vimseo.analysis_nodes.mock.mock_analysis_node import MyAnalysisNode
+from vimseo.analysis_nodes.mock.mock_analysis_node import MyBaseCompositeAnalysisNode
 from vimseo.api import create_model
 from vimseo.api import load_analysis_node_results
 from vimseo.api import load_model_results
@@ -180,6 +181,26 @@ def test_analysis_node_results(tmp_wd):
     loaded = load_analysis_node_results(analysis_node_run_id, **archive)
     assert loaded[0].metadata.analysis_node_run_id == analysis_node_run_id
     assert len(search_analysis_node_runs(**archive, query="`inputs.foo` == 'b'")) == 1
+
+
+def test_analysis_node_results_children(tmp_wd):
+    """The results of the sub-analysis nodes of a run are loaded from the archive."""
+    archive = {
+        "archive_manager": "DirectoryArchive",
+        "directory_archive_root": tmp_wd / "archive",
+    }
+    sub_analysis_node = MyAnalysisNode()
+    composite = MyBaseCompositeAnalysisNode(
+        sub_analysis_nodes=[sub_analysis_node], **archive
+    )
+    composite.execute()
+
+    children = open_analysis_node_results(**archive).children(
+        composite.result.metadata.analysis_node_run_id
+    )
+    sub_run_id = sub_analysis_node.result.metadata.analysis_node_run_id
+    assert list(children.summaries["analysis_node_run_id"]) == [sub_run_id]
+    assert children[0].metadata.analysis_node_run_id == sub_run_id
 
 
 def _create_analysis_node_results() -> AnalysisNodeResults:

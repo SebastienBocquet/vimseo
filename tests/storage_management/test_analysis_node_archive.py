@@ -78,8 +78,17 @@ from vimseo.storage_management.analysis_node_archive import open_analysis_node_a
 from vimseo.storage_management.analysis_node_archive.base_analysis_node_archive import (
     NullAnalysisNodeArchive,
 )
+from vimseo.storage_management.analysis_node_archive.base_analysis_node_archive import (
+    _to_json_value,
+)
+from vimseo.storage_management.analysis_node_archive.base_analysis_node_archive import (
+    summary_to_json,
+)
 from vimseo.storage_management.analysis_node_archive.directory_analysis_node_archive import (
     DirectoryAnalysisNodeArchive,
+)
+from vimseo.storage_management.analysis_node_archive.uri import (
+    get_default_archive_manager,
 )
 from vimseo.utilities.datasets import Variable
 from vimseo.utilities.datasets import generate_dataset
@@ -707,3 +716,162 @@ def test_archive_root_is_no_longer_accepted():
     """The former name of directory_archive_root raises an error."""
     with pytest.raises(TypeError, match="archive_root"):
         MyAnalysisNode(archive_root="root")
+
+
+def test_to_json_value_never_fails(monkeypatch):
+    """A value that cannot be described in clear is described by its short form."""
+    from vimseo.utilities import ot_distribution_io
+
+    value = object()
+    assert _to_json_value(value) == repr(value)
+
+    def fail(distribution):
+        msg = "not describable"
+        raise ValueError(msg)
+
+    monkeypatch.setattr(ot_distribution_io, "ot_distribution_to_dict", fail)
+    distribution = Uniform(0, 1)
+    assert _to_json_value(distribution) == str(distribution)
+
+
+def test_summary_to_json_skips_the_keys_which_are_not_strings():
+    summary = json.loads(summary_to_json({"settings": {(1, 2): 3, "a": 4}}))
+    assert summary == {"settings": {"a": 4}}
+
+
+def test_study_name_of_an_archive(archive):
+    archive.set_study_name("other_study")
+    assert archive.study_name == "other_study"
+
+
+def test_null_archive():
+    archive = NullAnalysisNodeArchive()
+    with pytest.raises(KeyError, match="disabled"):
+        archive.get_analysis_node_result("run_id")
+    assert archive.search_analysis_node_runs() == []
+    assert archive.find_analysis_node_runs_of_simulation("run_id") == []
+
+
+def test_default_archive_manager_when_the_archive_is_disabled(monkeypatch):
+    """Disabling the archive of the new analysis node runs does not prevent from reading
+    the former ones, from the archive of the simulations."""
+    monkeypatch.setattr(config, "analysis_node_archive_manager", "none")
+    monkeypatch.setattr(config, "run_archive_manager", "DirectoryArchive")
+    assert get_default_archive_manager() == "DirectoryArchive"
+
+    monkeypatch.setattr(config, "analysis_node_archive_manager", "MlflowArchive")
+    assert get_default_archive_manager() == "MlflowArchive"
+
+
+def test_mlflow_result_found_from_its_analysis_node_name(
+    directory_archive_root, parameter_space
+):
+    pytest.importorskip("mlflow")
+    analysis_node, _ = execute_doe(
+        directory_archive_root, parameter_space, "MlflowArchive"
+    )
+    run_id = analysis_node.result.metadata.analysis_node_run_id
+    archive = open_analysis_node_archive("MlflowArchive", directory_archive_root)
+    assert_results_equal(
+        analysis_node.result,
+        archive.get_analysis_node_result(run_id, analysis_node_name="DOEAnalysisNode"),
+    )
+    with pytest.raises(KeyError):
+        archive.get_analysis_node_result(run_id, analysis_node_name="MyAnalysisNode")
+
+
+def test_mlflow_link_error_does_not_lose_the_result(
+    directory_archive_root, parameter_space, monkeypatch, caplog
+):
+    """The links to the simulations are a convenience: failing to create them is logged."""
+    pytest.importorskip("mlflow")
+    from vimseo.storage_management.analysis_node_archive.mlflow_analysis_node_archive import (
+        MlflowAnalysisNodeArchive,
+    )
+
+    def fail(self, result):
+        msg = "no link"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(MlflowAnalysisNodeArchive, "_link_simulations", fail)
+    with caplog.at_level(logging.ERROR):
+        analysis_node, _ = execute_doe(
+            directory_archive_root, parameter_space, "MlflowArchive"
+        )
+
+    assert "could not be linked to its simulations" in caplog.text
+    archive = open_analysis_node_archive("MlflowArchive", directory_archive_root)
+    assert_results_equal(
+        analysis_node.result,
+        archive.get_analysis_node_result(
+            analysis_node.result.metadata.analysis_node_run_id
+        ),
+    )
+
+
+def _execute_custom_does(directory_archive_root, n_does):
+    """Execute DOEs archived in MLflow, sharing a single simulation."""
+    model = _create_mlflow_model(directory_archive_root)
+    input_dataset = generate_dataset(
+        {IODataset.INPUT_GROUP: [Variable("x1", 0.5, is_constant_value=True)]}, 2
+    )
+    analysis_nodes = []
+    for _ in range(n_does):
+        analysis_node = CustomDOEAnalysisNode(
+            archive_manager="MlflowArchive",
+            directory_archive_root=directory_archive_root,
+        )
+        analysis_node.execute(
+            model=model, input_dataset=input_dataset, output_names=["y1"]
+        )
+        analysis_nodes.append(analysis_node)
+    return analysis_nodes, model
+
+
+def test_mlflow_links_of_a_simulation_are_truncated(
+    directory_archive_root, monkeypatch
+):
+    """The tag of a simulation keeps the most recent analysis node runs which fit in it,
+    and a result published again is not linked twice."""
+    pytest.importorskip("mlflow")
+    from vimseo.storage_management.analysis_node_archive import (
+        mlflow_analysis_node_archive,
+    )
+
+    # Room for a single identifier.
+    monkeypatch.setattr(mlflow_analysis_node_archive, "_MAX_TAG_LENGTH", 40)
+    analysis_nodes, model = _execute_custom_does(directory_archive_root, 2)
+    second_id = analysis_nodes[1].result.metadata.analysis_node_run_id
+
+    archive = open_analysis_node_archive("MlflowArchive", directory_archive_root)
+    (simulation,) = _get_simulation_runs(archive, model)
+    tags = simulation.data.tags
+    assert json.loads(tags["vimseo.analysis_node_run_ids"]) == [second_id]
+    assert tags["vimseo.analysis_node_run_ids_truncated"] == "true"
+
+    analysis_nodes[1]._republish_result()
+    (simulation,) = _get_simulation_runs(archive, model)
+    assert json.loads(simulation.data.tags["vimseo.analysis_node_run_ids"]) == [
+        second_id
+    ]
+
+
+def test_mlflow_long_links_are_in_the_summary_artifact(
+    directory_archive_root, monkeypatch
+):
+    """The simulations of an analysis node run too long for a tag are read from the
+    summary artifact."""
+    pytest.importorskip("mlflow")
+    from vimseo.storage_management.analysis_node_archive import (
+        mlflow_analysis_node_archive,
+    )
+
+    monkeypatch.setattr(mlflow_analysis_node_archive, "_MAX_TAG_LENGTH", 5)
+    (_analysis_node,), model = _execute_custom_does(directory_archive_root, 1)
+
+    archive = open_analysis_node_archive("MlflowArchive", directory_archive_root)
+    (summary,) = archive.search_analysis_node_runs()
+    run = archive._client.get_run(summary["mlflow_run_id"])
+    assert run.data.tags["vimseo.simulation_run_ids"] == "in_artifact"
+    (simulation,) = _get_simulation_runs(archive, model)
+    assert summary["simulation_run_ids"] == [simulation.data.tags["vimseo.run_id"]]

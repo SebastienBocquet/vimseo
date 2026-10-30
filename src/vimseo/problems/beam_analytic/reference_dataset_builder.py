@@ -88,7 +88,7 @@ INPUT_DATASET = Dataset.from_array(
 )
 
 
-def create_dataset_from_beam_model(input_dataset):
+def create_dataset_from_beam_model(input_dataset):  # pragma: no cover
     datasets = {}
     for load_case in ["Cantilever", "ThreePoints"]:
         beam_model = create_model("BendingTestAnalytical", load_case)

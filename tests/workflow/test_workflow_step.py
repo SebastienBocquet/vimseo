@@ -28,6 +28,7 @@ from vimseo.analysis_nodes.calibration.calibration_step import CalibrationStepSe
 from vimseo.workflow.workflow_step import Input
 from vimseo.workflow.workflow_step import Output
 from vimseo.workflow.workflow_step import WorkflowStep
+from vimseo.workflow.workflow_step import _deserialize_pydantic_settings
 
 
 @pytest.mark.parametrize(
@@ -113,3 +114,35 @@ def test_serialized_settings_to_step():
     }
     assert isinstance(analysis_node_settings.optimizer_settings, NLOPT_COBYLA_Settings)
     assert analysis_node_settings.optimizer_settings.model_dump()["init_step"] == 0.5  # ruff: ignore[float-equality-comparison]
+
+
+_METRIC_SETTINGS = {
+    "__pydantic_model__": (
+        "vimseo.analysis_nodes.calibration.calibration_metrics",
+        "CalibrationMetricSettings",
+    ),
+    "metric_name": "MSE",
+}
+
+
+def test_serialized_settings_with_a_mapping_of_pydantic_models_to_step():
+    """A pydantic model which is a value of a mapping setting is deserialized."""
+    step = WorkflowStep.from_serialized_settings(
+        name="a step",
+        analysis_node_name="CalibrationStep",
+        analysis_node_settings={
+            "name_to_models": {"Cantilever": "BendingTestAnalytical"},
+            "control_outputs": {"reaction_forces": dict(_METRIC_SETTINGS)},
+        },
+    )
+    metric_settings = step.analysis_node_settings.control_outputs["reaction_forces"]
+    assert isinstance(metric_settings, CalibrationMetricSettings)
+    assert metric_settings.metric_name == "MSE"
+
+
+def test_deserialize_pydantic_models_nested_in_mappings():
+    """The pydantic models are deserialized up to two levels of mappings."""
+    settings = _deserialize_pydantic_settings({
+        "a": {"b": {"c": dict(_METRIC_SETTINGS)}},
+    })
+    assert isinstance(settings["a"]["b"]["c"], CalibrationMetricSettings)

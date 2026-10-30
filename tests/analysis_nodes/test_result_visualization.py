@@ -44,6 +44,7 @@ from vimseo.analysis_nodes.result_visualization import flatten_numbers
 from vimseo.analysis_nodes.result_visualization import get_file_stem
 from vimseo.analysis_nodes.result_visualization import mapping_to_dataframe
 from vimseo.analysis_nodes.result_visualization import save_figures
+from vimseo.analysis_nodes.result_visualization import show_figures
 from vimseo.analysis_nodes.result_visualization import to_cell
 
 
@@ -184,6 +185,20 @@ def test_save_figures(tmp_wd):
     paths = save_figures({"x": Figure(), "y": figure}, "dir")
     assert [path.name for path in paths] == ["x.html", "y.png"]
     assert all(path.is_file() for path in paths)
+
+
+def test_show_figures(monkeypatch):
+    """The plotly figures are shown one by one, the matplotlib figures all at once."""
+    shown = []
+    monkeypatch.setattr(Figure, "show", lambda self: shown.append("plotly"))
+    monkeypatch.setattr(plt, "show", lambda: shown.append("matplotlib"))
+    figure, _ = plt.subplots()
+    show_figures({"x": Figure(), "y": figure, "z": Figure()})
+    assert shown == ["plotly", "plotly", "matplotlib"]
+
+    shown.clear()
+    show_figures({"x": Figure()})
+    assert shown == ["plotly"]
 
 
 def test_save_figures_as_images(tmp_wd):

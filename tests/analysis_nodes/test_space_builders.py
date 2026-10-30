@@ -837,3 +837,5 @@ def test_grammar_names(tmp_wd):
         "lower_bounds",
         "upper_bounds",
     ]
+    builder = FromMinAndMax()
+    assert builder.grammar_names == list(builder._grammar.names)
