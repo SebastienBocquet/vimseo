@@ -37,16 +37,28 @@ and this project adheres to
   the default values of the discipline inputs of the same names. A `ValueError` is
   raised when a material property is not an input of the discipline.
 - A `BaseDisciplineModel` bounds its inputs with a JSON grammar file, declared by
-  `_INPUT_GRAMMAR_FILE`, which can only restrict the input grammar of the discipline.
-  The component wrapping the discipline gets a JSON grammar built from the discipline
-  one and restricted by the file, from which the model input bounds are read; the
-  input grammar of the model remains a `SimplerGrammar`, and the discipline keeps its
-  own grammar. An input out of the bounds makes the simulation fail.
+  `_INPUT_GRAMMAR_FILE`, which replaces the input grammar of the discipline: it declares
+  all the inputs of the discipline and can only restrict them. The component wrapping
+  the discipline gets the JSON grammar of the file, from which the model input bounds
+  are read; the input grammar of the model remains a `SimplerGrammar`, and the
+  discipline keeps its own grammar. An input out of the bounds makes the simulation
+  fail.
 - A model wrapping a GEMSEO discipline can be declared in a YAML file, without writing
   Python nor installing code. The models declared in the directories of
   `VIMSEO_MODELS_PATH` are created by name, as any model. The command `vimseo_wrap`
   writes the JSON input grammar of a declared model from its discipline
-  (`write-grammar`), to be completed with bounds, and checks a declaration (`check`).
+  (`write-grammar`), to be completed with bounds, and checks a declaration (`check`),
+  telling whether `create_model` finds the model.
+
+## Changed
+
+- Breaking change: the bounds of the material of a model shall be within the bounds of
+  the JSON input grammars of its components, so that an uncertain space built from the
+  material only yields valid inputs. Otherwise, the construction of the model raises a
+  `ValueError` naming the properties concerned. A material property without bounds
+  (±1e12 by default) is thus rejected when the grammar bounds the input.
+- Breaking change: the value of a `MaterialProperty` shall be within its bounds;
+  otherwise, a `ValueError` is raised.
 
 ## Fixed
 

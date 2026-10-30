@@ -299,3 +299,13 @@ def test_create_material_from_legacy_grammar():
     values = material.get_values_as_dict()
     assert values["young_modulus"] == 2.1e5  # ruff: ignore[float-equality-comparison]
     assert values["nu_p"] == 0.3  # ruff: ignore[float-equality-comparison]
+
+
+def test_material_property_value_out_of_bounds():
+    """A material property value shall be within the bounds of the property."""
+    with pytest.raises(
+        ValueError,
+        match=r"The value 3\.0 of the material property E is out of its bounds "
+        r"\[0\.0, 2\.0\]\.",
+    ):
+        MaterialProperty(name="E", value=3.0, lower_bound=0.0, upper_bound=2.0)
