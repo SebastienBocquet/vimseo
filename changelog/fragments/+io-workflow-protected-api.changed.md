@@ -7,10 +7,10 @@
  Commons, PO Box 1866, Mountain View, CA 94042, USA.
 -->
 
-Continued the public-API restriction pass on `tools/io/` and `workflow/`:
+Continued the public-API restriction pass on `analysis_nodes/io/` and `workflow/`:
 
 - Fixed the stale `results` class annotations on the file readers of
-  `vimseo.tools.io` (`ReaderFileDataFrame`, `ReaderFileGemseoDataset`, `ReaderFileTecplot`,
+  `vimseo.analysis_nodes.io` (`ReaderFileDataFrame`, `ReaderFileGemseoDataset`, `ReaderFileTecplot`,
   `MaterialReader`, `ParameterSpaceReader`): the real attribute is singular, `result`,
   and in one case (`ReaderFileGemseoDataset`) the annotated type itself was wrong
   (`IODataset` instead of `DatasetResult`).
@@ -21,7 +21,7 @@ Continued the public-API restriction pass on `tools/io/` and `workflow/`:
   everything else on `Workflow`/`WorkflowStep` (all exercised directly by
   `tests/workflow/`).
 
-`storage_management/` (archive and scratch managers, excluding `tool_archive/`
+`storage_management/` (archive and scratch managers, excluding `analysis_node_archive/`
 already audited) was also reviewed: its public surface is a cross-module contract
 between `IntegratedModel` and the `DirectoryArchive`/`MlflowArchive`/`DirectoryScratch`
 backends, and every member is either an abstract interface method or directly tested

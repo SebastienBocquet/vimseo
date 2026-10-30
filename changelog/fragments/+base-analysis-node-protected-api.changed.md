@@ -7,14 +7,14 @@
  Commons, PO Box 1866, Mountain View, CA 94042, USA.
 -->
 
-Renamed several `BaseTool` members that had no real usage outside the tool framework
+Renamed several `BaseAnalysisNode` members that had no real usage outside the analysis node framework
 itself (verified against `vimseo-abaqus`, `vimseo-airframe`, `vimseo-composites`,
 `vimseo-dashboards`, and the VTT GUI adapter) to be `_protected`:
-`validate` (and `BaseCompositeTool.validate`), `report_name`, `time`, `option_names`,
-`grammar`, `settings_names`, `settings`. Also renamed the `BaseTool.results` class
+`validate` (and `BaseCompositeAnalysisNode.validate`), `report_name`, `time`, `option_names`,
+`grammar`, `settings_names`, `settings`. Also renamed the `BaseAnalysisNode.results` class
 annotation, which never matched a real attribute (the actual one is `result`,
 singular), to `result`.
 
-Renamed four module-level helpers of `vimseo.tools.result_visualization` that are
+Renamed four module-level helpers of `vimseo.analysis_nodes.result_visualization` that are
 only used within that module to be `_protected`: `is_scalar`, `value_to_dataframe`,
 `get_number`, `is_matplotlib_figure`.
