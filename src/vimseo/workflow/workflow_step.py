@@ -238,18 +238,12 @@ class WorkflowStep(Discipline):
                 Output(**options) for options in settings["outputs"]
             ]
 
-        if analysis_node._SETTINGS:
-            step_settings["analysis_node_settings"] = analysis_node._SETTINGS(
-                **_deserialize_pydantic_settings(settings["analysis_node_settings"])
-            )
-            analysis_node.update_options(
-                **step_settings["analysis_node_settings"].model_dump()
-            )
-        else:
-            step_settings["analysis_node_settings"] = _deserialize_pydantic_settings(
-                settings["analysis_node_settings"]
-            )
-            analysis_node.update_options(**step_settings["analysis_node_settings"])
+        step_settings["analysis_node_settings"] = analysis_node._SETTINGS(
+            **_deserialize_pydantic_settings(settings["analysis_node_settings"])
+        )
+        analysis_node.update_options(
+            **step_settings["analysis_node_settings"].model_dump()
+        )
 
         return cls(**step_settings)
 
