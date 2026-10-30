@@ -20,9 +20,11 @@ import json
 import pytest
 from gemseo.algos.opt.nlopt.settings.nlopt_cobyla_settings import NLOPT_COBYLA_Settings
 
-from vimseo.tools.calibration.calibration_metrics import CalibrationMetricSettings
-from vimseo.tools.calibration.calibration_step import CalibrationStep
-from vimseo.tools.calibration.calibration_step import CalibrationStepSettings
+from vimseo.analysis_nodes.calibration.calibration_metrics import (
+    CalibrationMetricSettings,
+)
+from vimseo.analysis_nodes.calibration.calibration_step import CalibrationStep
+from vimseo.analysis_nodes.calibration.calibration_step import CalibrationStepSettings
 from vimseo.workflow.workflow_step import Input
 from vimseo.workflow.workflow_step import Output
 from vimseo.workflow.workflow_step import WorkflowStep
@@ -36,7 +38,7 @@ from vimseo.workflow.workflow_step import WorkflowStep
             "CalibrationStep",
             inputs=[Input("my_ref", "reference_data")],
             outputs=[Output("my_posterior", "posterior_parameters")],
-            tool_settings=CalibrationStepSettings(
+            analysis_node_settings=CalibrationStepSettings(
                 name_to_models={"Cantilever": "BendingTestAnalytical"},
                 control_outputs={
                     "reaction_forces": CalibrationMetricSettings(metric_name="MSE")
@@ -59,10 +61,10 @@ def test_to_serializable_settings(step):
     # ``mesh_name``, ``mesh_name`` defaulting to ``""`` rather than ``None``).
     assert (
         json.dumps(step.serialized_settings)
-        == '{"name": "calibration step", "tool_name": "CalibrationStep", "inputs": '
+        == '{"name": "calibration step", "analysis_node_name": "CalibrationStep", "inputs": '
         '[{"name": "my_ref", "option_key": "reference_data"}], "outputs": '
         '[{"name": "my_posterior", "attr_name": "posterior_parameters"}], '
-        '"tool_constructor_options": {}, "tool_settings": '
+        '"analysis_node_constructor_options": {}, "analysis_node_settings": '
         '{"name_to_models": {"Cantilever": "BendingTestAnalytical"}, '
         '"control_outputs": {"reaction_forces": '
         '{"output_name": "", "metric_name": "MSE", "mesh_name": "", "weight": null, '
@@ -87,10 +89,10 @@ def test_to_serializable_settings(step):
 def test_serialized_settings_to_step():
     serialized_settings = {
         "name": "a step",
-        "tool_name": "CalibrationStep",
+        "analysis_node_name": "CalibrationStep",
         "inputs": [{"name": "i1", "option_key": "starting_point"}],
         "outputs": [{"name": "o1", "attr_name": "posterior_parameters"}],
-        "tool_settings": {
+        "analysis_node_settings": {
             "name_to_models": {"Cantilever": "BendingTestAnalytical"},
             "optimizer_settings": {
                 "__pydantic_model__": (
@@ -102,10 +104,12 @@ def test_serialized_settings_to_step():
         },
     }
     step = WorkflowStep.from_serialized_settings(**serialized_settings)
-    assert isinstance(step.tool, CalibrationStep)
+    assert isinstance(step.analysis_node, CalibrationStep)
     assert isinstance(step.inputs[0], Input)
     assert isinstance(step.outputs[0], Output)
-    tool_settings = step.tool_settings
-    assert tool_settings.name_to_models == {"Cantilever": "BendingTestAnalytical"}
-    assert isinstance(tool_settings.optimizer_settings, NLOPT_COBYLA_Settings)
-    assert tool_settings.optimizer_settings.model_dump()["init_step"] == 0.5  # ruff: ignore[float-equality-comparison]
+    analysis_node_settings = step.analysis_node_settings
+    assert analysis_node_settings.name_to_models == {
+        "Cantilever": "BendingTestAnalytical"
+    }
+    assert isinstance(analysis_node_settings.optimizer_settings, NLOPT_COBYLA_Settings)
+    assert analysis_node_settings.optimizer_settings.model_dump()["init_step"] == 0.5  # ruff: ignore[float-equality-comparison]

@@ -13,8 +13,8 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-"""A wrapping of a ``BaseTool`` in a GEMSEO Discipline to enable running workflows of
-tools."""
+"""A wrapping of a ``BaseAnalysisNode`` in a GEMSEO Discipline to enable running workflows of
+analysis nodes."""
 
 from __future__ import annotations
 
@@ -29,13 +29,13 @@ from docstring_inheritance import GoogleDocstringInheritanceMeta
 from gemseo.core.discipline.discipline import Discipline
 from pydantic import BaseModel
 
-from vimseo.tools.tools_factory import ToolsFactory
+from vimseo.analysis_nodes.analysis_nodes_factory import AnalysisNodesFactory
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Mapping
 
-    from vimseo.tools.base_settings import BaseSettings
+    from vimseo.analysis_nodes.base_settings import BaseSettings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ def _deserialize_pydantic_settings(input_settings: Mapping[str, Any]):
 def _serialize_pydantic_settings(
     input_settings: BaseSettings, attr_names: Iterable[str] = ()
 ):
-    """Serialize (JSON compatible) a ``BaseSettings`` Pydantic model defining a tool
+    """Serialize (JSON compatible) a ``BaseSettings`` Pydantic model defining an analysis node
     settings.
 
     It handles the case where a field of ``BaseSettings`` is a Pydantic model.
@@ -130,40 +130,44 @@ def get_pydantic_model_item(model: BaseModel):
     }
 
 
-def _create_pydantic_model(name, value, tool_settings):
+def _create_pydantic_model(name, value, analysis_node_settings):
     module, klass_name = value["__pydantic_model__"]
     del value["__pydantic_model__"]
     model = getattr(__import__(module, fromlist=[klass_name]), klass_name)
-    tool_settings[name] = model(**value)
+    analysis_node_settings[name] = model(**value)
 
 
 class WorkflowStep(Discipline):
     default_grammar_type = "SimplerGrammar"
 
-    _tool_settings: BaseSettings
-    """The settings of the tool executed by the step."""
+    _analysis_node_settings: BaseSettings
+    """The settings of the analysis node executed by the step."""
 
     def __init__(
         self,
         name: str,
-        tool_name: str,
-        tool_settings: BaseSettings,
-        tool_constructor_options: dict | None = None,
+        analysis_node_name: str,
+        analysis_node_settings: BaseSettings,
+        analysis_node_constructor_options: dict | None = None,
         inputs: Iterable[Input] = (),
         outputs: Iterable[Output] = (),
     ):
         super().__init__(name)
-        self._tool_name = tool_name
-        self._tool_constructor_options = tool_constructor_options or {}
-        tool = ToolsFactory().create(tool_name, **self._tool_constructor_options)
-        tool.update_options(**tool_settings.model_dump())
-        self._tool = tool
+        self._analysis_node_name = analysis_node_name
+        self._analysis_node_constructor_options = (
+            analysis_node_constructor_options or {}
+        )
+        analysis_node = AnalysisNodesFactory().create(
+            analysis_node_name, **self._analysis_node_constructor_options
+        )
+        analysis_node.update_options(**analysis_node_settings.model_dump())
+        self._analysis_node = analysis_node
         self._inputs = inputs
         self._outputs = outputs
-        self._tool_settings = tool_settings
+        self._analysis_node_settings = analysis_node_settings
 
         for i in self._inputs:
-            data = self._tool._options[i.option_key]
+            data = self._analysis_node._options[i.option_key]
             if data is None:
                 self.input_grammar.update_from_types({i.name: None})
             else:
@@ -171,9 +175,9 @@ class WorkflowStep(Discipline):
 
         for output in self._outputs:
             output_data = (
-                self._tool.result
+                self._analysis_node.result
                 if output.attr_name == "result"
-                else getattr(self._tool.result, output.attr_name)
+                else getattr(self._analysis_node.result, output.attr_name)
             )
             if output_data is None:
                 self.output_grammar.update_from_types({output.name: None})
@@ -189,22 +193,24 @@ class WorkflowStep(Discipline):
         return self._outputs
 
     @property
-    def tool(self):
-        return self._tool
+    def analysis_node(self):
+        return self._analysis_node
 
     @property
-    def tool_settings(self) -> BaseSettings:
-        return self._tool_settings
+    def analysis_node_settings(self) -> BaseSettings:
+        return self._analysis_node_settings
 
     @property
     def serialized_settings(self):
         return {
             "name": self.name,
-            "tool_name": self._tool_name,
+            "analysis_node_name": self._analysis_node_name,
             "inputs": [asdict(i) for i in self._inputs],
             "outputs": [asdict(output) for output in self._outputs],
-            "tool_constructor_options": self._tool_constructor_options,
-            "tool_settings": _serialize_pydantic_settings(self._tool_settings),
+            "analysis_node_constructor_options": self._analysis_node_constructor_options,
+            "analysis_node_settings": _serialize_pydantic_settings(
+                self._analysis_node_settings
+            ),
         }
 
     @classmethod
@@ -212,13 +218,14 @@ class WorkflowStep(Discipline):
         step_settings = {}
 
         step_settings["name"] = settings["name"]
-        step_settings["tool_name"] = settings["tool_name"]
-        step_settings["tool_constructor_options"] = settings.get(
-            "tool_constructor_options", {}
+        step_settings["analysis_node_name"] = settings["analysis_node_name"]
+        step_settings["analysis_node_constructor_options"] = settings.get(
+            "analysis_node_constructor_options", {}
         )
 
-        tool = ToolsFactory().create(
-            settings["tool_name"], **step_settings["tool_constructor_options"]
+        analysis_node = AnalysisNodesFactory().create(
+            settings["analysis_node_name"],
+            **step_settings["analysis_node_constructor_options"],
         )
 
         if "inputs" in settings:
@@ -231,47 +238,52 @@ class WorkflowStep(Discipline):
                 Output(**options) for options in settings["outputs"]
             ]
 
-        if tool._SETTINGS:
-            step_settings["tool_settings"] = tool._SETTINGS(
-                **_deserialize_pydantic_settings(settings["tool_settings"])
+        if analysis_node._SETTINGS:
+            step_settings["analysis_node_settings"] = analysis_node._SETTINGS(
+                **_deserialize_pydantic_settings(settings["analysis_node_settings"])
             )
-            tool.update_options(**step_settings["tool_settings"].model_dump())
+            analysis_node.update_options(
+                **step_settings["analysis_node_settings"].model_dump()
+            )
         else:
-            step_settings["tool_settings"] = _deserialize_pydantic_settings(
-                settings["tool_settings"]
+            step_settings["analysis_node_settings"] = _deserialize_pydantic_settings(
+                settings["analysis_node_settings"]
             )
-            tool.update_options(**step_settings["tool_settings"])
+            analysis_node.update_options(**step_settings["analysis_node_settings"])
 
         return cls(**step_settings)
 
     def _run(self, input_data):
-        if not self._tool._INPUTS:
+        if not self._analysis_node._INPUTS:
             if self._inputs:
                 LOGGER.warning(
-                    f"Some inputs are defined but tool {self._tool_name} takes no inputs."
+                    f"Some inputs are defined but analysis node {self._analysis_node_name} takes no inputs."
                 )
-            self._tool.execute(settings=self._tool_settings)
+            self._analysis_node.execute(settings=self._analysis_node_settings)
         else:
             inputs = {}
             for i in self._inputs:
                 inputs.update(**{i.option_key: self.get_input_data()[i.name]})
-            self._tool.execute(
-                inputs=self._tool._INPUTS(**inputs), settings=self._tool_settings
+            self._analysis_node.execute(
+                inputs=self._analysis_node._INPUTS(**inputs),
+                settings=self._analysis_node_settings,
             )
         output_data = {}
         for output in self._outputs:
             if output.attr_name == "result":
-                output_data[output.name] = self._tool.result
+                output_data[output.name] = self._analysis_node.result
             else:
-                output_data[output.name] = getattr(self._tool.result, output.attr_name)
-        self._tool.save_results(prefix=self.name)
+                output_data[output.name] = getattr(
+                    self._analysis_node.result, output.attr_name
+                )
+        self._analysis_node.save_results(prefix=self.name)
         # self.io.update_output_data(output_data)
         return output_data
 
     # def __str__(self):
     #     msg = MultiLineString()
     #     msg.add(f"Name: {self.name}")
-    #     msg.add(f"Tool name: {self.name}")
+    #     msg.add(f"Analysis node name: {self.name}")
     #     msg.add("Inputs:")
     #     for input in self._inputs:
     #         msg.indent()
@@ -282,7 +294,7 @@ class WorkflowStep(Discipline):
     #         msg.indent()
     #         msg.add(str(output))
     #         msg.dedent()
-    #     msg.add("Tool settings:")
-    #     # msg.add(dumps(self.tool_settings, sort_keys=True, indent=4))
-    #     msg.add(str(self.tool_settings))
+    #     msg.add("Analysis node settings:")
+    #     # msg.add(dumps(self.analysis_node_settings, sort_keys=True, indent=4))
+    #     msg.add(str(self.analysis_node_settings))
     #     return str(msg)
